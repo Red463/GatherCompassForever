@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.16.1
+
+- Remove the artificial 40-row/0.1-second import limit. Imports now use their own per-frame coroutine with a soft 4ms budget and a work cap for missing or frozen timers.
+- Use a disposable spatial index for duplicate checks, retaining first-match order, the 5-yard merge radius, aliases, object separation and personal gather history.
+- Rebuild indexes after live gathers or changed zone metrics, and yield during large index construction. Release temporary state after completion/errors.
+- Avoid distance API calls for exact repeat locations and cache resource names by type/ID during each import.
+- Refresh the panel/maps immediately when an import finishes and keep route guidance on its independent tick. Preserve partial-error retry and all-zone coverage.
+- Add a repeatable synthetic first/repeat import benchmark with stored-node-count validation.
+
 ## 0.16.0
 
 - Rename the addon, folder, TOC, saved-variable namespace, slash command, frame identifiers, repository links and packages to Gatherly. The command is now /gatherly.

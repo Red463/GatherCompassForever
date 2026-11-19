@@ -14,6 +14,8 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--rows', type=int, default=20000)
 parser.add_argument('--check', action='store_true', help='Require completion within 120 simulated 60 Hz frames')
 args = parser.parse_args()
+if not 1 <= args.rows <= 160000:
+    parser.error('--rows must be between 1 and 160000 for this fixture grid')
 lua = LuaRuntime(unpack_returned_tuples=True)
 lua.execute(r'''
 A={};for _,name in ipairs({'Store','Imports'}) do assert(loadfile(name..'.lua'))('Gatherly',A) end
@@ -53,5 +55,6 @@ for label in ('initial', 'repeat'):
     results.append(frames)
     print(f'{label}: {args.rows} rows, {nodes} stored, {frames} frames ({frames/60:.2f}s simulated), {elapsed:.1f}ms CPU/wall; distances={distances}, name lookups={names}, UI={refreshes}, map={maps}')
     assert not lua.globals().A.importJob, status
+    assert nodes == args.rows, 'Import lost or incorrectly merged fixture nodes'
 if args.check:
     assert max(results) <= 120, 'Import pacing exceeds two seconds at 60 Hz'

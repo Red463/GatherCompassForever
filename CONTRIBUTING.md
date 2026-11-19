@@ -1,5 +1,11 @@
 # Contributing
 
+To profile all-zone import throughput, run `python tools/benchmark_import.py --rows 20000`.
+The synthetic harness exercises the real provider, store and Core scheduler, with UI/map
+rendering replaced by counters. It reports both processing time and simulated 60 Hz
+completion time for first/repeat imports, checks the stored node count, and counts
+distance/name lookups. Timings depend on the machine and are not native-client measurements.
+
 Bug reports and pull requests are welcome.
 
 For a bug, include the addon version, Forever client build, zone, steps to reproduce,

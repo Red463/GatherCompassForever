@@ -46,6 +46,10 @@ function V.New(parent,U)
   A.SkillTooltip.Bind(b,'Material selection',function() return b.materialDetails and {{node=b.materialNode,details=b.materialDetails}} or {} end)
   view.rows[index]=b;return b
  end
+ function view:Layout(width,height)
+  self.frame:SetSize(width,height);local listHeight=math.max(48,height-272)
+  self.scroll:SetSize(150,listHeight);self.scrollbar:SetSize(14,listHeight);self.empty:SetHeight(listHeight-8)
+ end
  function view.Refresh(player)
   local filter=U.Filter();local scope=U.tab=='atlas' and U.atlasView and U.atlasView.scope or 'current'
   local mapID=scope=='current' and player and player.mapID or A.Store.Number(scope) and scope or nil

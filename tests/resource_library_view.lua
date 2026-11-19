@@ -58,7 +58,7 @@ test('resource page skips hidden or compact work and restores the original sideb
  A.ResourceLibrary.Query=function(...) calls=calls+1;return query(...) end
  A.UI.frame:Hide();A.UI.Refresh();eq(calls,0);A.UI.frame:Show();A.UI.SetCompact(true);A.UI.Refresh();eq(calls,0)
  A.UI.SetCompact(false);assert(calls>0);A.UI.SetTab('settings');calls=0;A.UI.Refresh();eq(calls,0)
- eq(A.UI.sidebar:IsShown(),true);eq(A.UI.content:GetWidth(),742);eq(A.UI.resourceLibraryView.frame:IsShown(),false)
+ eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936);eq(A.UI.resourceLibraryView.frame:IsShown(),false)
  A.UI.SetTab('resources');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
 end)
 

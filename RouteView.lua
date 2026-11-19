@@ -16,6 +16,16 @@ function V.New(parent,U)
  button('removeNode','Remove node',0,382,128)
  button('undoNode','Undo removal',136,382,128)
  button('map','World map',574,382,136)
+ function v.Layout(width,height)
+  local w,h=width-32,height-8;v.frame:SetSize(w,h);v.narrow=w<710
+  local function move(f,x,y,fw,fh) f:ClearAllPoints();f:SetPoint('TOPLEFT',v.frame,'TOPLEFT',x,-y);f:SetSize(fw,fh) end
+  local top=v.narrow and 36 or 0
+  move(U.controls.generateStart,w-336,top,162,26);move(U.controls.generateReview,w-166,top,166,26)
+  move(v.info,0,33+top,w,32);move(U.controls.routeStyle,w-172,69+top,172,26)
+  move(v.selection,0,74+top,w-182,20)
+  move(v.sketch.frame,0,102+top,w,math.max(80,h-134-top))
+  for _,e in ipairs({{U.controls.removeNode,0,128},{U.controls.undoNode,136,128},{U.controls.map,w-136,136}}) do move(e[1],e[2],h-26,e[3],26) end
+ end
  function v.Refresh()
   local plan=A.plan;local route=plan and plan.route;local nodes=U.SelectedNodes()
   local text=plan and plan.message or 'Tick the materials you want, then generate a nearby route. No save step is needed.'

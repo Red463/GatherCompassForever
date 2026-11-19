@@ -3,12 +3,14 @@ function fakeUI()
  local methods={}
  function methods:SetScript(k,v) self.scripts[k]=v end
  function methods:HookScript(k,v) local old=self.scripts[k]; self.scripts[k]=function(...) if old then old(...) end; v(...) end end
+ function methods:SetPoint(...) self.point={...} end
  function methods:SetText(t) self.text=t; if rawget(self,'fontString') then self.fontString:SetText(t) end end
  function methods:SetTitle(text) self.title=text end
  function methods:SetFontString(t) self.fontString=t end
  function methods:GetFontString() return self.fontString end
  function methods:SetColorTexture(r,g,b,a) self.color={r,g,b,a or 1} end
  function methods:SetTextColor(r,g,b,a) self.textColor={r,g,b,a or 1} end
+ function methods:SetFont(path,size,flags) self.fontPath=path;self.fontSize=size;self.fontFlags=flags end
  function methods:SetScale(v) self.scale=v end
  function methods:SetOrientation(v) self.orientation=v end
  function methods:SetAlpha(v) self.alpha=v end
@@ -70,7 +72,7 @@ function fakeUI()
  PanelTemplates_TabResize=function(tab,_,width) assert(type(tab.Text)=='table' and type(tab.Left)=='table');tab:SetWidth(width or 100) end
  PanelTemplates_SelectTab=function(tab) assert(type(tab.LeftActive)=='table');tab:Disable() end
  PanelTemplates_DeselectTab=function(tab) assert(type(tab.Left)=='table');tab:Enable() end
- UIParent=CreateFrame('Frame'); Minimap=CreateFrame('Frame'); Minimap:SetSize(200,200)
+ UIParent=CreateFrame('Frame');UIParent:SetSize(1920,1080); Minimap=CreateFrame('Frame'); Minimap:SetSize(200,200)
  WorldMapFrame=CreateFrame('Frame'); WorldMapFrame.ScrollContainer=CreateFrame('Frame'); WorldMapFrame.canvas=CreateFrame('Frame',nil,WorldMapFrame)
  WorldMapFrame.GetCanvas=function(self) return self.canvas end
  WorldMapFrame.GetMapID=function() return 1 end

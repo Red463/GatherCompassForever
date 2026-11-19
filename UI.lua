@@ -75,7 +75,7 @@ local function buildHeader()
  U.header:SetFrameLevel(U.frame:GetFrameLevel()+2)
  U.zone=label(U.header,'',68,34,776,20,12,S.muted)
  U.header:EnableMouse(true); U.header:RegisterForDrag('LeftButton')
- U.header:SetScript('OnDragStart',function() U.frame:StartMoving() end); U.header:SetScript('OnDragStop',function() U.frame:StopMovingOrSizing();if U.window then U.window:SavePosition() end end)
+ U.header:SetScript('OnDragStart',function() U.window:StartMoving() end); U.header:SetScript('OnDragStop',function() U.window:StopMoving() end)
  button(U.header,'minimize','-',864,2,25,22,'subtle')
  U.controls.close=U.chrome.CloseButton; U.controls.close:SetScript('OnClick',U.actions.close)
  U.controls.close:SetFrameLevel(math.max(U.controls.close:GetFrameLevel(),U.header:GetFrameLevel()+2))
@@ -91,7 +91,8 @@ local function buildSidebar()
  U.materialRows=U.filterSidebar.rows;U.materialEmpty=U.filterSidebar.empty;U.sourceCounts=U.filterSidebar.count
 end
 local function buildPreferences()
- U.preferences=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,377)
+ U.preferencesScroll=A.ScrollPanel.New(U.content);U.preferencesViewport=U.preferencesScroll.frame
+ place(U.preferencesViewport,U.content,20,19,896,395);U.preferences=U.preferencesScroll.body
  label(U.preferences,'Options',0,0,600,26,18,S.gold,true)
  local function rule(y) local t=S.Fill(U.preferences,{.35,.30,.22,1},'ARTWORK');place(t,U.preferences,0,y,710,1) end
  rule(42);label(U.preferences,'Navigation',12,58,670,22,15,S.gold,true)
@@ -111,6 +112,10 @@ local function buildPreferences()
  U.controls.minimapButton=place(S.Check(U.preferences,'Show minimap button',U.actions.minimapButton),U.preferences,472,314,24,24)
  U.controls.minimapButton.label:SetWidth(200)
  S.Hint(U.controls.minimapButton,'Minimap launcher','Show the compass button beside your minimap. Click it to toggle this panel; drag it to reposition. Use /gcf to reopen the panel when the button is hidden.')
+ rule(386);label(U.preferences,'Panel size',12,402,200,22,15,S.gold,true)
+ U.panelSizeValue=label(U.preferences,'',20,436,300,24,13,S.text)
+ button(U.preferences,'resetPanel','Reset panel size',474,436,220,26,'subtle',function() U.window:Reset() end)
+ label(U.preferences,'Drag the bottom-right corner to resize. Text and controls keep their normal size.',20,470,710,32,12,S.muted):SetWordWrap(true)
  local hint=label(U.preferences,'Drag the guide arrow to move it. Click it to reopen this window.',20,350,670,20,12,S.muted);hint:SetWordWrap(true)
 end
 local function buildNodeOptions() U.nodeDisplayView=A.NodeDisplayView.New(U.content,U);U.nodeOptions=U.nodeDisplayView.frame end
@@ -123,7 +128,7 @@ local function buildFooter()
  button(U.footer,'followReverse','Reverse',551,18,79,32,'quiet',U.actions.reverse)
  button(U.footer,'workReturn','Return to draft',760,18,180,32,'gold'); button(U.footer,'expand','+',914,19,28,30,'quiet')
  U.footer:EnableMouse(true); U.footer:RegisterForDrag('LeftButton')
- U.footer:SetScript('OnDragStart',function() if U.compact then U.frame:StartMoving() end end); U.footer:SetScript('OnDragStop',function() U.frame:StopMovingOrSizing();if U.window then U.window:SavePosition() end end)
+ U.footer:SetScript('OnDragStart',function() if U.compact then U.window:StartMoving() end end); U.footer:SetScript('OnDragStop',function() U.window:StopMoving() end)
  U.status=label(U.frame,'',18,623,924,25,10,S.muted); U.status:SetWordWrap(true)
  U.statusHover=place(CreateFrame('Frame',nil,U.frame),U.frame,14,621,932,28); U.statusHover:EnableMouse(true)
  S.Hint(U.statusHover,'Gather Compass status',function() return U.status:GetText() end)
@@ -158,15 +163,34 @@ function U.Build()
 end
 function U.RefreshMode()
  local compact=U.compact;local width,height=U.window:Apply()
+ place(U.header,U.frame,12,2,width-24,60);place(U.zone,U.header,68,34,width-160,20)
+ place(U.controls.minimize,U.header,width-96,2,25,22)
+ place(U.nav,U.frame,12,64,width-24,32)
+ local tabWidth=math.min(154,(width-60)/5-10)
+ local index=0;for _,id in ipairs({'welcome','routes','codex','nodes','settings'}) do
+  local tab=U.tabs[id];place(tab,U.nav,8+index*(tabWidth+10),0,tabWidth,32)
+  tab.label:SetWidth(tabWidth-16);index=index+1
+ end
+ place(U.body,U.frame,12,100,width-24,math.max(1,height-210))
+ local full=U.tab~='routes';place(U.content,U.body,full and 0 or 194,0,width-24-(full and 0 or 194),math.max(1,height-210))
+ if not compact then
+  U.filterSidebar:Layout(194,height-210)
+  U.routeView.Layout(U.content:GetWidth(),U.content:GetHeight())
+  U.codexView.Layout(width-24,height-210);U.nodeDisplayView.Layout(width-24,height-210);U.welcomeView.Layout(width-24,height-210)
+  U.preferencesScroll:Layout(math.min(896,width-64),height-229,508)
+  U.panelSizeValue:SetText(math.floor(width+.5)..' x '..math.floor(height+.5)..' UI units')
+ end
  show(U.chrome,not compact);show(U.compactBackground,compact);show(U.header,not compact); show(U.nav,not compact); show(U.body,not compact)
- place(U.footer,U.frame,compact and 1 or 12,compact and 1 or 520,width-(compact and 2 or 24),64)
- place(U.status,U.frame,18,compact and 72 or 588,width-36,25); place(U.statusHover,U.frame,14,compact and 70 or 586,width-28,28)
+ place(U.footer,U.frame,compact and 1 or 12,compact and 1 or height-104,width-(compact and 2 or 24),64)
+ place(U.status,U.frame,18,compact and 72 or height-36,width-36,25); place(U.statusHover,U.frame,14,compact and 70 or height-38,width-28,28)
  local shift=compact and 36 or 24
  for _,key in ipairs({'start','pause'}) do place(U.controls[key],U.footer,width-170-shift,18,150,26) end
  place(U.controls.skip,U.footer,width-250-shift,18,70,26); place(U.controls.stop,U.footer,width-320-shift,18,60,26)
  place(U.controls.followReverse,U.footer,width-409-shift,18,79,26); place(U.controls.expand,U.footer,width-45,19,28,30)
  place(U.controls.workReturn,U.footer,width-200-shift,18,180,26)
- U.footerName:SetWidth(compact and 250 or 340); U.footerMeta:SetWidth(compact and 280 or 370)
+ local active=A.follower and (A.follower.status=='running' or A.follower.status=='paused' or A.follower.status=='suspended')
+ U.footerName:SetWidth(compact and 250 or math.max(140,width-(active and 530 or 300)))
+ U.footerMeta:SetWidth(compact and 280 or math.max(140,width-(active and 530 or 300)))
 end
 local function refreshSidebar(p) U.filterSidebar.Refresh(p) end
 local function refreshFooter(p)
@@ -199,10 +223,10 @@ function U.Refresh()
  if not U.frame:IsShown() then return end
  local p=A.Client.Position(); local work=A.editor or A.recording or A.recordedDraft
  if U.compact then U.RefreshMode(); refreshFooter(p); refreshStatus(p); return end
- local resource=U.tab=='codex';local welcome=U.tab=='welcome';local full=resource or welcome or U.tab=='nodes';local nodes=full and {} or U.SelectedNodes()
+ local resource=U.tab=='codex';local welcome=U.tab=='welcome';local full=U.tab~='routes';local nodes=full and {} or U.SelectedNodes()
  show(U.sidebar,not full);place(U.content,U.body,full and 0 or 194,0,full and 936 or 742,414)
  U.RefreshMode(); for id,b in pairs(U.tabs) do S.Selected(b,id==U.tab) end
- show(U.library,U.tab=='routes'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
+ show(U.library,U.tab=='routes'); show(U.preferencesViewport,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
  show(U.resourceLibraryView.frame,resource)
  show(U.welcomeView.frame,welcome)
  if not full then refreshSidebar(p) end

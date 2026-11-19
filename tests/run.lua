@@ -33,4 +33,3 @@ for _,suite in ipairs(suites) do
 end
 print(string.format('RESULT %d passed, %d failed',passed,failed))
 assert(failed==0,'test failures')
-

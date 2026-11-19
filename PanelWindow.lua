@@ -23,16 +23,28 @@ function P.New(U)
  local self={driver=CreateFrame('Frame',nil,U.frame)}
  function self:Cancel() self.drag=nil;self.driver:SetScript('OnUpdate',nil) end
  function self:Apply()
-  local g=P.Resolve(A.db.settings,UIParent:GetWidth(),UIParent:GetHeight(),U.compact);self.geometry=g
+  local g=P.Resolve(A.db.settings,UIParent:GetWidth(),UIParent:GetHeight(),U.compact)
+  local old=self.geometry
+  if old and (old.width~=g.width or old.height~=g.height or old.scale~=g.scale) then
+   A.Skin.CloseDropdown();if U.routeSketch then U.routeSketch.picker:Close() end
+  end
+  self.geometry=g
   U.frame:SetSize(g.width,g.height);U.frame:SetScale(g.scale)
-  U.frame:ClearAllPoints();U.frame:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',g.left/g.scale,g.top/g.scale)
+  if not self.moving then U.frame:ClearAllPoints();U.frame:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',g.left/g.scale,g.top/g.scale) end
   if U.compact then self.grip:Hide() else self.grip:Show() end
   return g.width,g.height
+ end
+ function self:StartMoving()
+  self:Cancel();self.moving=true;U.frame:StartMoving()
+ end
+ function self:StopMoving()
+  U.frame:StopMovingOrSizing();self:SavePosition();self.moving=nil
  end
  function self:SavePosition()
   local x,y=U.frame:GetCenter();local scale=U.frame:GetEffectiveScale()/UIParent:GetEffectiveScale()
   if A.Store.Number(x) and A.Store.Number(y) then
    local p=preference(A.db.settings);p.x=number(x*scale/UIParent:GetWidth(),.5,0,1);p.y=number(y*scale/UIParent:GetHeight(),.5,0,1)
+   self.geometry=P.Resolve(A.db.settings,UIParent:GetWidth(),UIParent:GetHeight(),U.compact)
   end
  end
  function self:Resize(w,h)
@@ -58,6 +70,7 @@ function P.New(U)
   self.elapsed=(self.elapsed or 0)+elapsed;if self.elapsed<.05 then return end;self.elapsed=0
   local x,y=GetCursorPosition();if not A.Store.Number(x) or not A.Store.Number(y) then self:Cancel();return end
   local d=self.drag;self:Resize(d.width+(x-d.x)/d.scale,d.height-(y-d.y)/d.scale)
+  if type(IsMouseButtonDown)=='function' and not IsMouseButtonDown('LeftButton') then self:Cancel() end
  end
  grip:SetScript('OnMouseDown',function(_,button)
   if button~='LeftButton' or U.compact or type(GetCursorPosition)~='function' then return end
@@ -68,6 +81,6 @@ function P.New(U)
   self.driver:SetScript('OnUpdate',update)
  end)
  grip:SetScript('OnMouseUp',function() if self.drag then update(nil,.05);self:Cancel() end end)
- U.frame:HookScript('OnHide',function() self:Cancel() end)
+ U.frame:HookScript('OnHide',function() if self.moving then self:StopMoving() end;self:Cancel() end)
  return self
 end

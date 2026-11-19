@@ -4,7 +4,8 @@ function V.New(parent,U)
  local v={page='world',opacityLabels={}}
  local function place(f,p,x,y,w,h) f:SetPoint('TOPLEFT',p,'TOPLEFT',x,-y);f:SetSize(w,h);return f end
  local function label(p,text,x,y,w,h,size,color) return place(S.Label(p,text,size or 12,color or S.text),p,x,y,w,h) end
- local f=place(CreateFrame('Frame',nil,parent),parent,20,19,896,395);v.frame=f
+ local scroller=A.ScrollPanel.New(parent);v.scroller=scroller;v.frame=scroller.frame
+ place(v.frame,parent,20,19,896,395);local f=scroller.body;f:SetSize(896,395)
  label(f,'Node display',0,0,500,26,18,S.gold)
  label(f,'Set how known locations and guidance appear on each map.',0,33,896,20,12,S.muted)
  local function check(p,key,text,x,y,width)
@@ -61,6 +62,15 @@ function V.New(parent,U)
  v.miniCount=label(field,'3',77,17,28,20,12,S.gold)
  S.Hint(U.controls.nodeDistance,'Keep native tracking visible','Hide nearby resource icons and grouped counts. Hollow outlines remain at their real known locations.')
  S.Hint(U.controls.nodeRouteLine,'Minimap route overlay','Applies to both Lines and Heatmap. Node-marker visibility is independent of route guidance.')
+ function v.Layout(width,height)
+  local w,h=width-40,height-19;v.stacked=w<896
+  local content=v.stacked and 682 or 395;local available=scroller:Layout(w,h,content)
+  v.world:SetSize(available,content-106);v.mini:SetSize(available,content-106)
+  local left=v.stacked and math.max(0,(available-442)/2) or math.max(0,(available-896)/2)
+  for _,e in ipairs({{world,v.world,false},{preview,v.world,true},{mini,v.mini,false},{guidance,v.mini,true}}) do
+   e[1]:ClearAllPoints();e[1]:SetPoint('TOPLEFT',e[2],'TOPLEFT',left+(e[3] and not v.stacked and 454 or 0),e[3] and v.stacked and -296 or 0)
+  end
+ end
  function v.Refresh()
   local s=A.Resources.Settings(A.db.settings);local worldPage=v.page=='world'
   if worldPage then v.world:Show();v.mini:Hide() else v.world:Hide();v.mini:Show() end

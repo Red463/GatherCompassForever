@@ -75,6 +75,8 @@ def rgba(t,default=(0,0,0,0)):
     a=vals(t);return tuple(round(max(0,min(1,v))*255) for v in (a+[1])[:4])
 def render(scene):
     lua=LuaRuntime(unpack_returned_tuples=True);lua.execute(CAPTURE)
+    screen_w,screen_h=(1600,1080) if scene.endswith(('_wide','_tall')) else (1280,800)
+    lua.execute(f'UIParent:SetSize({screen_w},{screen_h})')
     if scene not in ('empty','atlas_empty'):lua.execute('populate()')
     if scene.startswith('resources'):
         lua.execute("codexPopulate();A.UI.SetTab('resources')")
@@ -113,7 +115,16 @@ def render(scene):
     if scene in ('arrow_name','arrow_name_no_progress'):lua.execute('A.db.settings.arrowNodeName=true')
     if scene=='arrow_name_no_progress':lua.execute('A.db.settings.arrowProgress=false')
     if scene in ('arrow','arrow_name','arrow_name_no_progress'):lua.execute("A.UI.controls.start.scripts.OnClick();A.Arrow.Update(A.Client.Position(),0,A.follower:Target(),A.Client.Distance,A.follower:Snapshot())")
-    objects=vals(lua.globals().captured);byid={int(o['captureID']):o for o in objects}; boxes={0:(0,0,1280,800)};resolving=set()
+    if scene.startswith('resize_'):
+        size={'min':(860,600),'wide':(1400,900),'tall':(960,900)}[scene.split('_')[-1]]
+        lua.execute(f'A.UI.window:Resize({size[0]},{size[1]})')
+    if scene in ('codex_min','codex_wide','nodes_min','welcome_min','preferences_min'):
+        lua.execute('A.UI.window:Resize('+('1400,900' if scene.endswith('wide') else '860,600')+')')
+        if scene.startswith('codex'):lua.execute("codexPopulate();A.UI.SetTab('codex')")
+        if scene.startswith('nodes'):lua.execute("A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('mini')")
+        if scene.startswith('welcome'):lua.execute("A.UI.SetTab('welcome')")
+        if scene.startswith('preferences'):lua.execute("A.UI.SetTab('settings')")
+    objects=vals(lua.globals().captured);byid={int(o['captureID']):o for o in objects}; boxes={0:(0,0,screen_w,screen_h)};resolving=set()
     def ident(o):return int(o['captureID']) if o and o['captureID'] is not None else 0
     def box(o):
         k=ident(o)
@@ -138,7 +149,7 @@ def render(scene):
         if o['scrollOwner'] is not None:r=(r[0],r[1]-(o['scrollOwner']['verticalScroll'] or 0),r[2],r[3])
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
-    im=Image.new('RGBA',(1280,800),'#0c1711');d=ImageDraw.Draw(im)
+    im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
     d.text((160,27),'GATHER COMPASS FOREVER 0.11.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
@@ -278,8 +289,8 @@ def render(scene):
         if before is not None:
             mask=Image.new('L',im.size);ImageDraw.Draw(mask).rectangle(clipping,fill=255)
             im=Image.composite(im,before,mask);d=ImageDraw.Draw(im)
-    d.text((160,768),'Rendered from native Lua definitions. Native Blizzard textures and fonts are approximated; live Forever rendering still needs checking.',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#839785')
+    d.text((160,screen_h-32),'Rendered from native Lua definitions. Native Blizzard textures and fonts are approximated; live Forever rendering still needs checking.',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#839785')
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

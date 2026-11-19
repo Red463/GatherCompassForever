@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.0
+
+- Optimize generated route order with a bounded 2-opt pass and remove redundant travel-only stops. Reduce avoidable crossings and backtracking while keeping every currently included farming area, its gather identity and the nearest start.
+- Preserve the 450-yard limit for every connection and final closure. Required branch returns remain; geometric routes still cannot determine terrain passability.
+- Use the optimized plan for both Lines and Heatmap, the guide arrow and removal/undo rebuilds. Existing active routes remain intact until explicitly replaced.
+- Add route-quality, narrow-branch, coverage, metadata and rebuild tests, plus a synthetic before/after example. Fixed sample circuits are 16–21% shorter; results vary with node layout and connection constraints.
+
 ## 0.16.4
 
 - Brighten minimap heat to amber/gold and strengthen sparse corridor centres so guidance stands out over dark forest, cave and swamp terrain. Preserve soft edges, player/destination clearance and the existing overlay opacity control.

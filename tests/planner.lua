@@ -59,3 +59,49 @@ test('generation keeps the nearest candidate beyond old input cap and leaves dis
  local r=A.Planner.Generate(nodes,point(.1),distance);assert(r and r.points[1].nodeKey=='near');eq(r.includedCount,1);eq(r.omittedCount,301)
  eq(A.Planner.Generate({nodes[1]},point(.1),distance),nil)
 end)
+
+local function circuitMetrics(route,distance)
+ local length,crossings,gathers=0,0,{}
+ local points=route.points
+ local function side(a,b,c) return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x) end
+ for i,a in ipairs(points) do
+  local b=points[i%#points+1];local d=distance(a,b)
+  assert(d<=450.00001,'Optimized route has a long outgoing or closing leg');length=length+d
+  if a.kind=='gather' then assert(not gathers[a.nodeKey],'Duplicate gather stop');gathers[a.nodeKey]=true end
+  for j=i+1,#points do
+   local c,e=points[j],points[j%#points+1]
+   if side(a,b,c)*side(a,b,e)<-1e-15 and side(c,e,a)*side(c,e,b)<-1e-15 then
+    assert(distance(a,c)>450 or distance(b,e)>450,'A crossing still has a valid short uncrossing')
+    crossings=crossings+1
+   end
+  end
+ end
+ local count=0;for _ in pairs(gathers) do count=count+1 end
+ return length,crossings,count,gathers
+end
+
+for _,fixture in ipairs({{15,31932,2,83,92},{29,35950,6,94,101},{47,38000,6,95,101}}) do
+ test('circuit optimization reduces travel and crossings without losing farming areas for seed '..fixture[1],function()
+  local A={};module('Store',A);module('Planner',A)
+  local seed=fixture[1];local function rng() seed=(seed*16807)%2147483647;return seed/2147483647 end
+  local start={mapID=1,x=.2,y=.8};local nodes={{mapID=1,x=.2,y=.8,kind='herb',materialID='herb',key='n0'}}
+  for i=1,223 do nodes[#nodes+1]={mapID=1,x=.05+rng()*.9,y=.05+rng()*.9,kind='herb',materialID='herb',key='n'..i} end
+  local function d(a,b) return math.sqrt(((a.x-b.x)*6000)^2+((a.y-b.y)*4000)^2) end
+  local route=A.Planner.Generate(nodes,start,d);local length,crossings,gathers=circuitMetrics(route,d)
+  assert(length<fixture[2]*.9,'Circuit still takes '..length..' yards')
+  assert(crossings<=fixture[3],'Optimization added crossings: '..crossings)
+  eq(route.areaCount,fixture[4]);eq(gathers,fixture[4]);eq(route.includedCount,fixture[5]);eq(route.points[1].nodeKey,'n0')
+  for _,p in ipairs(route.points) do eq(p.resourceKind,'herb');eq(p.materialID,'herb');assert(route.includedKeys[p.nodeKey]) end
+  local again=A.Planner.Generate(nodes,start,d);eq(#again.points,#route.points)
+  for i,p in ipairs(route.points) do eq(again.points[i].nodeKey,p.nodeKey);eq(again.points[i].kind,p.kind) end
+ end)
+end
+
+test('circuit optimization preserves the necessary return path through a narrow hub',function()
+ local A={};module('Store',A);module('Planner',A)
+ local nodes={};for i,p in ipairs({{.5,.5},{.1,.5},{.9,.5},{.5,.1},{.5,.9}}) do nodes[i]={mapID=1,x=p[1],y=p[2],kind='herb',materialID='herb',key='n'..i} end
+ local function d(a,b) return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*1000)^2) end
+ local route=A.Planner.Generate(nodes,nodes[1],d);local length,_,count,gathers=circuitMetrics(route,d)
+ near(length,3200);eq(count,5);eq(route.areaCount,5);eq(#route.points,8)
+ for i=1,5 do assert(gathers['n'..i],'Necessary farming branch was dropped') end
+end)

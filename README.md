@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.16.4 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.17.0 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -47,7 +47,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.16.4.zip` from
+1. Download `Gatherly-0.17.0.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -138,6 +138,18 @@ is not covered, the sketch falls back to native explored artwork. No OpenMap add
 is required.
 
 ![Large map-backed route review with node selection, removal and undo](docs/images/routes.png)
+
+The generator optimizes the order of the current farming areas to reduce crossings
+and repeated travel. It keeps the same included areas, nearest starting node and
+450-yard connection limit, including the closing leg. Lines, Heatmap and the guide
+arrow all follow that same plan. Regenerate a route to use the improved ordering;
+an existing active route is preserved until you replace it.
+
+Some return trips remain necessary where a farming branch has only one short
+connection. Routes use map distances and cannot identify mountains, bridges or
+walkable roads from spawn coordinates.
+
+![Synthetic comparison with the same 94 farming areas before and after route-order optimization](docs/images/route-order.png)
 
 ### Overlapping nodes
 

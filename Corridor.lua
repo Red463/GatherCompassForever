@@ -2,6 +2,38 @@ local _,A=...
 local C={};A.Corridor=C
 local S=A.Store
 local function nodeKey(n) return type(n.key)=='string' and n.key or string.format('%.17g:%.17g:%s',n.x,n.y,tostring(n.materialID)) end
+local function optimize(trace,edges)
+ local function link(a,b) if a==b then return 0 end;return edges[a][b] end
+ local function prune()
+  local i=2 -- Keep the nearest starting gather fixed.
+  while i<=#trace do
+   local p=trace[i];local a,b=trace[i-1].index,trace[i%#trace+1].index
+   local shortcut=link(a,b)
+   if p.travel and shortcut and shortcut<=link(a,p.index)+link(p.index,b)+.000001 then table.remove(trace,i) else i=i+1 end
+  end
+ end
+ prune()
+ -- Best-improvement 2-opt over a feasible closed walk. Cached graph edges
+ -- enforce the same 450-yard limit for swaps and final closure; branch
+ -- returns remain when no short alternative connects their neighbours.
+ for _=1,32 do
+  local gain,left,right=.000001
+  for i=1,#trace-2 do
+   local a,b=trace[i].index,trace[i+1].index
+   for j=i+2,#trace do
+    local c,d=trace[j].index,trace[j%#trace+1].index
+    local ac,bd=link(a,c),link(b,d)
+    if ac and bd then
+     local improvement=link(a,b)+link(c,d)-ac-bd
+     if improvement>gain then gain,left,right=improvement,i+1,j end
+    end
+   end
+  end
+  if not left then break end
+  while left<right do trace[left],trace[right]=trace[right],trace[left];left=left+1;right=right-1 end
+  prune()
+ end
+end
 function C.Generate(nodes,start,distance,options)
  options=options or {}
  if not S.Position(start) then return nil,'A readable player position is required.' end
@@ -72,11 +104,7 @@ function C.Generate(nodes,start,distance,options)
  end
  walk(1)
  if #trace>1 then table.remove(trace) end
- local i=2
- while i<=#trace do
-  local p=trace[i];local previous=trace[i-1];local following=trace[i%#trace+1]
-  if p.travel and edges[previous.index][following.index] then table.remove(trace,i) else i=i+1 end
- end
+ optimize(trace,edges)
  local points,included,includedNodes={},0,{}
  for _,g in ipairs(queue) do for _,n in ipairs(groups[g].members) do included=included+1;includedNodes[#includedNodes+1]=n end end
  for _,step in ipairs(trace) do local g=groups[step.index];local n=g.point

@@ -31,3 +31,20 @@ test('session notices changed selections without rewriting the current generated
  local route=session.route;eq(session:Matches({source='combined',kind='herb'}),true)
  eq(session:Matches({source='confirmed',kind='herb'}),false);eq(session.route,route)
 end)
+
+test('optimized session removal and undo keep gather identities short closure and local guidance',function()
+ local A,nodes=setup();module('Follower',A)
+ local session=A.FarmingSession.New(nodes,point(.1),distance)
+ local function verify(removed)
+  local gathered={};local route=session.route
+  for i,p in ipairs(route.points) do
+   assert(distance(p,route.points[i%#route.points+1])<=450.00001)
+   if p.kind=='gather' then assert(not gathered[p.nodeKey]);gathered[p.nodeKey]=true;eq(p.resourceKind,'herb');eq(p.materialID,'herb') end
+  end
+  for i=1,5 do eq(not not gathered['n'..i],i~=removed) end
+  local start=point(.22);local f=A.Follower.New(route,start,distance);eq(f.status,'running');eq(f:Target().nodeKey,'n1')
+  f:Tick(start,0,false);assert(distance(start,f:Target())<=450.00001)
+ end
+ verify();assert(session:Remove('n3',point(.1)));verify(3)
+ assert(session:Undo(point(.1)));verify();eq(#nodes,5)
+end)

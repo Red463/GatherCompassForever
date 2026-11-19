@@ -6,6 +6,20 @@ local function setup()
  A.UI.Build();A.UI.OpenRoutes();return A,A.UI
 end
 
+test('mini panel colour choice applies immediately without changing the route and closes with controls',function()
+ local A,U=setup();U.actions.generateStart();local C=A.RouteControls;local f,plan=A.follower,A.plan
+ local redraw=0;A.Map={Refresh=function(db,route,follower)
+  redraw=redraw+1;eq(A.Resources.Settings(db.settings).miniHeatColour,'cyan');eq(route,f.route);eq(follower,f)
+ end}
+ eq(C.colour:GetValue(),'amber');C.colour.scripts.OnClick(C.colour);eq(A.Skin.dropdownOwner,C.colour)
+ C.colour:SelectValue('cyan');eq(redraw,1);eq(A.db.settings.nodeDisplay.miniHeatColour,'cyan');eq(C.colour:GetValue(),'cyan')
+ eq(U.frame:IsShown(),false);eq(A.follower,f);eq(A.plan,plan);eq(A.Skin.dropdownOwner,nil)
+ A.db=A.Store.Open(A.Store.Copy(A.db));C.Update(f);eq(C.colour:GetValue(),'cyan')
+ eq(C.swatch.color[1],.1);eq(C.swatch.color[2],.9);eq(C.swatch.color[3],1)
+ C.colour.scripts.OnClick(C.colour);assert(A.Skin.dropdownMenu:IsShown());A.db.settings.routeControls=false;U.Refresh()
+ eq(A.Skin.dropdownOwner,nil);eq(A.Skin.dropdownMenu:IsShown(),false);eq(A.follower,f)
+end)
+
 test('route controls appear on start, survive main panel hiding and use current route actions',function()
  local A,U=setup();U.actions.generateReview();eq(A.RouteControls.frame,nil)
  U.actions.start();local C=A.RouteControls;assert(C.frame:IsShown());eq(U.frame:IsShown(),false)

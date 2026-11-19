@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.18.2 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.18.3 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -47,17 +47,21 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Starting guidance opens a movable mini panel with **Stop route**, **Open panel** and
 **Skip next node**. Drag its heading to move it; Gatherly remembers its position.
 It remains available while paused and closes when the route stops or finishes.
+Use **Heatmap colour** to choose Amber, Yellow, Cyan, Pink, Green or White for the
+minimap terrain. The colour swatch shows your selection, which applies immediately
+and is remembered. Amber restores the original tint. World-map heat and opacity
+settings are unaffected.
 Untick **Show route controls** on the **Routes** page to disable it. The arrow and
 route guidance continue normally.
 
-![Movable Classic route controls with three actions](docs/images/route-controls.png)
+![Movable Classic route controls with a minimap heatmap colour menu](docs/images/route-controls.png)
 
 ## Install
 
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.18.2.zip` from
+1. Download `Gatherly-0.18.3.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever

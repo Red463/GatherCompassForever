@@ -3,7 +3,7 @@
 ## Notes: Gathering spawn memory, custom farming trails and route guidance. /gatherly
 ## Author: Tom
 ## X-License: MIT
-## Version: 0.18.2
+## Version: 0.18.3
 ## IconTexture: Interface\AddOns\Gatherly\Media\Icon
 ## SavedVariables: GatherlyDB
 ## OptionalDeps: GatherMate2

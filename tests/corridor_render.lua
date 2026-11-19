@@ -31,6 +31,15 @@ test('heat opacity is independent of lines and map surface and zero hides only i
  C_Minimap=nil;GetCVar=nil;GetMinimapShape=nil
 end)
 
+test('saved minimap heat colour reaches actual map rendering without recolouring world heat or changing guidance',function()
+ local A,db,s,route,f=setup();db.settings.routeStyle='heatmap';A.Map.Refresh(db,route,f)
+ local world=A.Store.Copy(A.Map.worldHeat[1].vertexColor);local alpha=A.Map.miniHeat[1].color[4];local target=f:Target()
+ s.miniHeatColour='cyan';A.Map.Refresh(db,route,f)
+ local mini=A.Map.miniHeat[1].color;near(mini[1],.1);near(mini[2],.9);near(mini[3],1);near(mini[4],alpha)
+ for i=1,4 do near(A.Map.worldHeat[1].vertexColor[i],world[i]) end;eq(f:Target(),target);eq(f.status,'running')
+ C_Minimap=nil;GetCVar=nil;GetMinimapShape=nil
+end)
+
 test('corridor paint radius is narrower than coverage and fixed independently of opacity',function()
  local A={};module('Heatmap',A)
  local route={mapID=1,width=1000,height=500,coverageRadius=180,heatRadius=117,corridor=true,points={point(.2),point(.6)}}

@@ -20,7 +20,7 @@ end
 function C.Build()
  if C.frame then return C.frame end
  local S=A.Skin;local f=S.Panel(UIParent);C.frame=f
- f:SetSize(344,80);f:SetFrameStrata('DIALOG');f:SetClampedToScreen(true);f:SetMovable(true);f:EnableMouse(true)
+ f:SetSize(344,116);f:SetFrameStrata('DIALOG');f:SetClampedToScreen(true);f:SetMovable(true);f:EnableMouse(true)
  local bar=CreateFrame('Frame',nil,f);C.titlebar=bar
  bar:SetPoint('TOPLEFT',f,'TOPLEFT',8,-5);bar:SetSize(328,30);bar:EnableMouse(true);bar:RegisterForDrag('LeftButton')
  local title=S.Label(bar,'Gatherly - Route controls',13,S.gold);title:SetPoint('LEFT',bar,'LEFT',4,0);title:SetSize(320,24)
@@ -28,7 +28,7 @@ function C.Build()
   if C.dragging then f:StopMovingOrSizing();C.dragging=false;C.SavePosition() end
  end
  bar:SetScript('OnDragStart',function() C.dragging=true;f:StartMoving() end)
- bar:SetScript('OnDragStop',finish);f:SetScript('OnHide',finish)
+ bar:SetScript('OnDragStop',finish);f:SetScript('OnHide',function() finish();S.CloseDropdown(C.colour) end)
  f:RegisterEvent('DISPLAY_SIZE_CHANGED');f:RegisterEvent('UI_SCALE_CHANGED')
  f:SetScript('OnEvent',function() finish();C.Position() end)
  S.Hint(bar,'Route controls','Drag this heading to move the panel. Its position is remembered.')
@@ -40,6 +40,15 @@ function C.Build()
   b:SetPoint('TOPLEFT',f,'TOPLEFT',spec[3],-42);b:SetSize(spec[4],26);C[key]=b
  end
  S.Hint(C.skip,'Skip next node','Advance to the next route waypoint. Corridor routes use points along the farming path.')
+ local label=S.Label(f,'Heatmap colour',12,S.text);label:SetPoint('TOPLEFT',f,'TOPLEFT',12,-78);label:SetSize(112,26)
+ C.colour=S.Dropdown(f,A.Resources.HeatColours,function(value)
+  A.Resources.Settings(A.db.settings).miniHeatColour=value;C.Update(A.follower)
+  if A.Map then A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.follower) end
+ end)
+ C.colour:SetPoint('TOPLEFT',f,'TOPLEFT',132,-78);C.colour:SetSize(202,26)
+ C.colour.label:ClearAllPoints();C.colour.label:SetPoint('LEFT',C.colour,'LEFT',32,0);C.colour.label:SetPoint('RIGHT',C.colour,'RIGHT',-28,0);C.colour.label:SetHeight(22)
+ C.swatch=C.colour:CreateTexture(nil,'ARTWORK');C.swatch:SetPoint('LEFT',C.colour,'LEFT',10,0);C.swatch:SetSize(14,14)
+ S.Hint(C.colour,'Minimap heatmap colour','Choose a colour that stands out against the terrain. Applies immediately to minimap heat only, without restarting guidance. Opacity is set in Node display. Amber restores the original tint.')
  C.Position();f:Hide();return f
 end
 function C.Update(follower)
@@ -47,5 +56,7 @@ function C.Update(follower)
  if not active or not A.db or A.db.settings.routeControls==false then
   if C.frame then C.frame:Hide() end;return
  end
- local f=C.Build();C.skip:SetEnabled(follower:Target()~=nil);f:Show()
+ local f=C.Build();C.skip:SetEnabled(follower:Target()~=nil)
+ local choice=A.Resources.HeatColour(A.Resources.Settings(A.db.settings).miniHeatColour)
+ C.colour:SetValue(choice.value);C.swatch:SetColorTexture(unpack(choice.swatch or choice.rgb));f:Show()
 end

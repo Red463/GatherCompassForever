@@ -2,6 +2,12 @@ local function resources()
  local A={}; module('Store',A); module('Client',A); module('Resources',A); return A
 end
 local herb={kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+test('minimap heat colour defaults validate independently and persist across saved-data reload',function()
+ local A=resources();local db=A.Store.Open();local s=A.Resources.Settings(db.settings)
+ eq(s.miniHeatColour,'amber');s.miniHeatColour='cyan';s.miniHeatOpacity=.35;s.worldHeatOpacity=.25
+ s=A.Resources.Settings(A.Store.Open(A.Store.Copy(db)).settings);eq(s.miniHeatColour,'cyan');eq(s.miniHeatOpacity,.35);eq(s.worldHeatOpacity,.25)
+ for _,bad in ipairs({'purple',42,{}}) do s.miniHeatColour=bad;eq(A.Resources.Settings({nodeDisplay=s}).miniHeatColour,'amber') end
+end)
 test('node opacity defaults validate independently and survive saved-data reload',function()
  local A=resources();local settings={};local s=A.Resources.Settings(settings)
  eq(s.worldIconOpacity,1);eq(s.miniIconOpacity,1);eq(s.miniOutlineOpacity,1)

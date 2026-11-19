@@ -1,4 +1,16 @@
 local function setup() dofile('tests/wow.lua');fakeUI();local A={};for _,n in ipairs({'Store','Client','Heatmap','MiniHeat'}) do module(n,A) end;return A end
+test('minimap heat palette changes only cell RGB and preserves density opacity and masking',function()
+ local A=setup();module('Resources',A)
+ local route={width=1000,height=500,points={point(.3),point(.7)}}
+ local field=A.MiniHeat.Field(route,function(p) return (p.x-.5)*500,0 end,200,200,'ROUND',{},.65,function(r) return r*.5,r*.5 end)
+ local pool={};A.MiniHeat.Draw(pool,Minimap,field,'ROUND');local alpha=pool[1].color[4]
+ for _,choice in ipairs(A.Resources.HeatColours) do
+  A.MiniHeat.Draw(pool,Minimap,field,'ROUND',choice.rgb)
+  near(pool[1].color[4],alpha);eq(#pool,#field);eq(#pool[1].masks,1)
+  if choice.rgb then for channel=1,3 do near(pool[1].color[channel],choice.rgb[channel]) end
+  else near(pool[1].color[1],1);near(pool[1].color[2],field[1].green);near(pool[1].color[3],.06) end
+ end
+end)
 test('minimap heat uses bounded nonoverlapping cells with safe opacity and tracking clearance',function()
  local A=setup();local r={mapID=1,width=1000,height=500,points={point(.1),point(.4)},loop=true}
  local field=A.MiniHeat.Field(r,function(p) return (p.x-.2)*500,0 end,200,200,'ROUND',{{x=0,y=0,r=8},{x=40,y=0,r=7}},.35,function(radius) return radius*.5,radius*.5 end)

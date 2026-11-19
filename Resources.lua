@@ -63,6 +63,20 @@ function R.Icon(node)
  end
  return fallback[node.kind] or 'Interface\\Icons\\INV_Misc_QuestionMark'
 end
+-- Amber retains the existing density-dependent tint; other choices use a fixed
+-- hue with the same density, opacity, edge feathering and tracking clearance.
+R.HeatColours={
+ {value='amber',label='Amber (default)',swatch={1,.6,.06}},
+ {value='yellow',label='Yellow',rgb={1,.95,.1}},
+ {value='cyan',label='Cyan',rgb={.1,.9,1}},
+ {value='pink',label='Pink',rgb={1,.3,.85}},
+ {value='green',label='Green',rgb={.3,1,.25}},
+ {value='white',label='White',rgb={1,1,1}},
+}
+function R.HeatColour(value)
+ for _,choice in ipairs(R.HeatColours) do if choice.value==value then return choice end end
+ return R.HeatColours[1]
+end
 local function finite(v,default,lo,hi) if not S.Number(v) then return default end; return math.max(lo,math.min(hi,v)) end
 function R.Settings(settings)
  local s=type(settings.nodeDisplay)=='table' and settings.nodeDisplay or {}; settings.nodeDisplay=s
@@ -80,6 +94,7 @@ function R.Settings(settings)
  -- Seed each minimap style only when its own saved value is missing.
  s.miniLineOpacity=finite(s.miniLineOpacity,s.miniLineOpacity==nil and s.routeOpacity or .65,0,1)
  s.miniHeatOpacity=finite(s.miniHeatOpacity,s.miniHeatOpacity==nil and s.routeOpacity or .65,0,1)
+ s.miniHeatColour=R.HeatColour(s.miniHeatColour).value
  return s
 end
 local function call(fn,...)

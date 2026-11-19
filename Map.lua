@@ -482,7 +482,7 @@ function M.Refresh(db,route,follower)
   local heatHoles={{x=0,y=0,r=4,feather=5}}
   if snapshot and snapshot.target then local x,y=project(snapshot.target);heatHoles[#heatHoles+1]={x=x,y=y,r=3,feather=4} end
   M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.miniHeatOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
-  A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape)
+  A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape,A.Resources.HeatColour(settings.miniHeatColour).rgb)
  end
  local wi,mi=0,0
  local zoom=map and map.GetCanvasScale and map:GetCanvasScale() or 1

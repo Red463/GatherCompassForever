@@ -54,7 +54,7 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
  return field
 end
 function H.Hide(pool) for _,t in ipairs(pool) do t:Hide() end end
-function H.Draw(pool,parent,field,shape)
+function H.Draw(pool,parent,field,shape,colour)
  H.Hide(pool);local slot=index[shape];if not slot then return end
  if not pool.mask and type(parent.CreateMaskTexture)=='function' then
   local ok,mask=pcall(parent.CreateMaskTexture,parent,nil,'ARTWORK')
@@ -64,6 +64,7 @@ function H.Draw(pool,parent,field,shape)
  for i,c in ipairs(field) do
   local t=pool[i]
   if not t then t=parent:CreateTexture(nil,'BACKGROUND',nil,1);pool[i]=t;if pool.mask and t.AddMaskTexture then t:AddMaskTexture(pool.mask) end end
-  t:SetColorTexture(1,c.green,.06,c.alpha);t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
+  t:SetColorTexture(colour and colour[1] or 1,colour and colour[2] or c.green,colour and colour[3] or .06,c.alpha)
+  t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
  end
 end

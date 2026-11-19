@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.3 - 2026-11-19
+
+- Add a Heatmap colour menu and current-colour swatch to the movable route controls. Choose Amber, Yellow, Cyan, Pink, Green or White to suit minimap terrain.
+- Apply and remember colour changes immediately without restarting guidance, changing opacity or recolouring world-map heat. Amber restores the original density tint.
+
 ## 0.18.2 - 2026-11-19
 
 - Default world-map heatmap opacity to 50%. Preserve saved opacity choices and all other overlay defaults.

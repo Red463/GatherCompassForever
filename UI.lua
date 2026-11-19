@@ -51,7 +51,7 @@ function U.ToggleMaterial(id)
 end
 function U.BulkMaterials(mode,on) local skills,context=A.Resources.Skills();A.Selection.Bulk(A.db,mode,on,skills,context);U.FiltersChanged() end
 function U.Edit(route)
- A.editor=A.Editor.New(route); A.editIndex=1; U.name:SetText(route.name or 'New route')
+ A.editor=A.Editor.New(route); A.editIndex=1
  A.mapPreviewRoute=nil
  U.frame:Show()
  if A.Map then A.Map.SetEditor(A.editor) end; U.compact=false; U.tab='routes'; U.Refresh()
@@ -62,11 +62,11 @@ function U.SelectRoute(id)
  if A.follower and (A.follower.status=='complete' or A.follower.status=='stopped') then A.follower=nil end
  A.selectedRoute=id; A.mapPreviewRoute=nil; U.Refresh()
 end
-function U.PreviewRoute() return A.editor and A.editor.draft or A.recordedDraft or A.selectedRoute and A.db.routes[A.selectedRoute] end
+function U.PreviewRoute() return A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute] end
 function U.DisplayRoute()
  if A.editor then return A.editor.draft end
  if A.follower and A.follower.status~='complete' and A.follower.status~='stopped' then return A.follower.route end
- return nil
+ return A.plan and A.plan.review and A.plan.route or nil
 end
 function U.SetTab(tab) if tab=='welcome' or tab=='routes' or tab=='atlas' or tab=='resources' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
 function U.SetCompact(on) S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
@@ -89,66 +89,6 @@ end
 local function buildSidebar()
  U.filterSidebar=A.FilterSidebar.New(U.body,U);U.sidebar=U.filterSidebar.frame
  U.materialRows=U.filterSidebar.rows;U.materialEmpty=U.filterSidebar.empty;U.sourceCounts=U.filterSidebar.count
-end
-local function buildLibrary()
- U.library=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,377)
- label(U.library,'Routes',0,0,250,26,18,S.gold,true)
- U.libraryInfo=label(U.library,'',0,31,360,18,12,S.muted)
- button(U.library,'new','+ New route',396,1,96,29,'subtle'); button(U.library,'generate','Generate',500,1,94,29,'gold'); button(U.library,'record','Record trail',602,1,108,29,'subtle')
- U.cards={}; U.routeRows=U.cards
- for i=1,ROUTES_PER_PAGE do
-  local b=button(U.library,'route'..i,'',0,66+(i-1)*46,252,45,'card',function(self) if self.routeID then U.SelectRoute(self.routeID) end end)
-  b.label:ClearAllPoints(); place(b.label,b,10,4,232,18); b.label:SetJustifyH('LEFT')
-  b.meta=label(b,'',10,24,232,16,11,S.muted)
-  S.Hint(b,'Route details',function()
-   local r=b.routeID and A.db.routes[b.routeID]
-   return r and (r.name..' / '..U.ZoneName(r.mapID)..' / '..#r.points..' waypoints') or ''
-  end)
-  U.cards[i]=b
- end
- button(U.library,'prevRoute','<',0,357,26,23,'quiet'); button(U.library,'nextRoute','>',226,357,26,23,'quiet')
- U.routePageLabel=label(U.library,'',33,358,182,20,10,S.dim); U.routePageLabel:SetJustifyH('CENTER')
- U.detail=place(S.Panel(U.library),U.library,270,66,440,310)
- U.routeSketch=A.RouteSketch.New(U.detail); place(U.routeSketch.frame,U.detail,1,1,438,154)
- U.previewName=label(U.detail,'',14,167,326,22,16,S.text)
- U.routeType=label(U.detail,'',349,168,75,20,10,S.gold); U.routeType:SetJustifyH('RIGHT')
- U.previewMeta=label(U.detail,'',14,194,410,18,11,S.muted); U.statValues={}
- for i,t in ipairs({'WAYPOINTS','HERB STOPS','ORE STOPS'}) do
-  local x=14+(i-1)*143; U.statValues[i]=label(U.detail,'',x+98,229,38,20,13,S.gold); label(U.detail,({'Waypoints:','Herb stops:','Ore stops:'})[i],x,229,96,20,12,S.muted)
- end
- button(U.detail,'edit','Edit path',14,275,126,26,'subtle');button(U.detail,'map','Open map',148,275,134,26,'subtle')
- button(U.detail,'deleteRoute','Delete route',290,275,134,26,'subtle')
- S.Hint(U.controls.deleteRoute,'Delete saved route','Remove this saved route after confirming its name. Known node locations are kept. Deleting the route you are following also stops its guidance.')
- U.empty=place(S.Panel(U.library,{.075,.12,.085,1},{.25,.32,.23,1}),U.library,0,66,710,310)
- local icon=S.Image(U.empty,'EmptyEmblem',96,96); icon:SetPoint('TOPLEFT',U.empty,'TOPLEFT',307,-16)
- local title=label(U.empty,'Your first trail starts here.',30,117,650,30,21,S.text,true); title:SetJustifyH('CENTER')
- local body=label(U.empty,'Gather a few herbs or ore, import known locations,\nor draw a route of your own.',80,157,550,46,13,S.muted); body:SetJustifyH('CENTER'); body:SetWordWrap(true)
- button(U.empty,'emptyWelcome','Get started',202,224,158,30,'primary',function() U.SetTab('welcome') end)
- button(U.empty,'emptyNew','Draw a route',370,224,138,30,'subtle',U.actions.new)
- local hint=label(U.empty,'Your discoveries are remembered across characters.',60,276,590,16,10,S.dim); hint:SetJustifyH('CENTER')
-end
-local function buildWork()
- U.workPanel=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,377)
- U.workTitle=label(U.workPanel,'ROUTE EDITOR',0,0,300,24,18,S.gold,true)
- U.workSubtitle=label(U.workPanel,'',0,27,480,18,11,S.muted)
- button(U.workPanel,'save','Save route',504,0,100,30,'primary'); button(U.workPanel,'discard','Discard draft',612,0,98,30,'subtle')
- button(U.workPanel,'finishRecording','Finish trail',504,0,100,30,'primary',U.actions.record)
- button(U.workPanel,'saveRecording','Save recording',484,0,120,30,'primary'); button(U.workPanel,'discardRecording','Discard',612,0,98,30,'subtle')
- U.name=place(S.Edit(U.workPanel,320),U.workPanel,0,54,320,29); U.name:SetText('My farming trail')
- button(U.workPanel,'loop','Loop: on',340,54,142,29,'subtle'); button(U.workPanel,'reverse','Reverse direction',492,54,218,29,'subtle')
- button(U.workPanel,'resumeRecording','Resume recording',492,54,218,29,'gold')
- U.pointsPanel=place(S.Panel(U.workPanel),U.workPanel,0,98,252,244)
- U.pointCount=label(U.pointsPanel,'WAYPOINTS',12,9,228,17,10,S.dim); U.pointRows={}
- U.pointCount:SetWidth(112); button(U.pointsPanel,'workMap','Edit on map',132,6,108,23,'quiet',U.actions.map)
- for i=1,6 do
-  local row=button(U.pointsPanel,'pointRow'..i,'',8,33+(i-1)*27,236,26,'quiet',function(self) if self.index then A.editIndex=self.index; U.Refresh() end end)
-  row.label:SetJustifyH('LEFT'); U.pointRows[i]=row
- end
- button(U.pointsPanel,'pointPrev','< Previous',12,208,107,25,'quiet'); button(U.pointsPanel,'pointNext','Next >',129,208,111,25,'quiet')
- U.editorSketch=A.RouteSketch.New(U.workPanel); place(U.editorSketch.frame,U.workPanel,270,98,440,164)
- U.editorInfo=label(U.workPanel,'',284,274,412,21,12,S.text)
- button(U.workPanel,'pointUp','Earlier',284,303,101,27,'subtle'); button(U.workPanel,'pointDown','Later',395,303,101,27,'subtle'); button(U.workPanel,'deletePoint','Remove point',506,303,190,27,'subtle')
- U.workHint=label(U.workPanel,'',0,349,710,28,11,S.muted); U.workHint:SetWordWrap(true)
 end
 local function buildAtlas()
  U.atlasView=A.AtlasView.New(U.content,U);U.atlas=U.atlasView.frame
@@ -241,7 +181,7 @@ local function buildWindow()
  U.frame:EnableMouse(true);U.frame:SetFrameStrata('DIALOG'); U.frame:SetClampedToScreen(true); U.frame:SetMovable(true); S.FitWindow(U.frame,W,H); buildHeader()
  U.body=place(CreateFrame('Frame',nil,U.frame),U.frame,12,100,936,414); buildSidebar()
  U.content=place(CreateFrame('Frame',nil,U.body),U.body,194,0,742,414)
- buildLibrary(); buildWork(); buildAtlas(); buildPreferences(); buildNodeOptions(); buildFooter()
+ U.routeView=A.RouteView.New(U.content,U);U.library=U.routeView.frame;buildAtlas(); buildPreferences(); buildNodeOptions(); buildFooter()
  U.resourceLibraryView=A.ResourceLibraryView.New(U.content,U)
  U.welcomeView=A.WelcomeView.New(U.content,U)
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherCompassForeverWindow' end
@@ -274,69 +214,19 @@ function U.RefreshMode()
  U.footerName:SetWidth(compact and 250 or 340); U.footerMeta:SetWidth(compact and 280 or 370)
 end
 local function refreshSidebar(p) U.filterSidebar.Refresh(p) end
-local function routeSummary(r)
- local nodes={}; for _,n in ipairs(A.db.nodes[r.mapID] or {}) do nodes[n.key]=n end
- local herbs,ore,unknown=0,0,false
- for _,p in ipairs(r.points) do if p.kind=='gather' then local n=p.nodeKey and nodes[p.nodeKey]; if not n then unknown=true elseif n.kind=='herb' then herbs=herbs+1 elseif n.kind=='ore' then ore=ore+1 end end end
- return #r.points,unknown and '?' or herbs,unknown and '?' or ore
-end
-local function refreshLibrary()
- local ids={}; for id in pairs(A.db.routes) do ids[#ids+1]=id end
- table.sort(ids,function(a,b) local x,y=A.db.routes[a].name,A.db.routes[b].name; if x==y then return a<b end; return x<y end)
- local pages=math.max(1,math.ceil(#ids/ROUTES_PER_PAGE)); U.routePage=math.max(1,math.min(U.routePage,pages))
- if not A.selectedRoute then A.selectedRoute=ids[(U.routePage-1)*ROUTES_PER_PAGE+1] end
- U.libraryInfo:SetText(#ids==0 and 'A new circuit starts with a discovery.' or (#ids..' saved '..(#ids==1 and 'route' or 'routes')..'  /  Select a trail to explore.'))
- for i,b in ipairs(U.cards) do
-  local id=ids[(U.routePage-1)*ROUTES_PER_PAGE+i]; b.routeID=id; show(b,id~=nil)
-  if id then local r=A.db.routes[id]; b:SetText(safe(r.name)); b.meta:SetText(#r.points..' waypoints   /   '..(r.loop and 'Loop' or 'One-way')); S.Selected(b,A.selectedRoute==id) end
- end
- U.routePageLabel:SetText(#ids>0 and (U.routePage..' / '..pages) or 'No saved routes'); U.controls.prevRoute:SetEnabled(U.routePage>1); U.controls.nextRoute:SetEnabled(U.routePage<pages)
- show(U.controls.prevRoute,#ids>0); show(U.controls.nextRoute,#ids>0); show(U.routePageLabel,#ids>0)
- local r=A.selectedRoute and A.db.routes[A.selectedRoute]; show(U.detail,r~=nil); show(U.empty,#ids==0)
- if r then
-  U.previewName:SetText(safe(r.name)); U.routeType:SetText(r.loop and 'LOOP' or 'ONE-WAY'); U.previewMeta:SetText(safe(U.ZoneName(r.mapID))..'  /  '..(r.recorded and 'Recorded trail' or r.generated and 'Direct connections' or 'Custom waypoints'))
-  local n,h,o=routeSummary(r); for i,v in ipairs({n,h,o}) do U.statValues[i]:SetText(v) end
- end
- U.routeSketch:Draw(r);U.controls.edit:SetEnabled(r~=nil);U.controls.deleteRoute:SetEnabled(r~=nil)
-end
-local function refreshWork()
- local recording=A.recording~=nil; local pending=A.recordedDraft~=nil; local editing=A.editor~=nil
- local r=A.editor and A.editor.draft or A.recordedDraft or A.recording and {mapID=A.recording.mapID,points=A.recording.points,loop=false}
- U.workTitle:SetText(editing and 'ROUTE EDITOR' or recording and 'RECORDING A TRAIL' or 'YOUR RECORDED TRAIL')
- U.workSubtitle:SetText(editing and 'Drag waypoints on the world map. Save or discard when finished.' or recording and 'Your travelled path, captured as waypoints.' or 'Give your trail a name, then save or discard it.')
- for _,key in ipairs({'save','discard','loop','reverse','pointUp','pointDown','deletePoint'}) do show(U.controls[key],editing) end
- show(U.controls.finishRecording,recording); show(U.controls.saveRecording,pending); show(U.controls.discardRecording,pending); show(U.controls.resumeRecording,recording and A.recording.paused)
- U.controls.saveRecording:SetEnabled(pending); U.controls.discardRecording:SetEnabled(pending)
- if not r then return end
- local points=r.points; A.editIndex=math.max(1,math.min(A.editIndex or 1,math.max(1,#points))); local page=math.floor((A.editIndex-1)/6)
- U.pointCount:SetText(#points..' WAYPOINTS'..(recording and ' CAPTURED' or ''))
- for i,row in ipairs(U.pointRows) do
-  local index=page*6+i; local p=points[index]; row.index=p and index or nil; show(row,p~=nil)
-  if p then row:SetText(string.format('%03d   %s',index,p.kind=='gather' and 'Gathering stop' or 'Travel waypoint')); S.Selected(row,index==A.editIndex); row:SetEnabled(not recording) end
- end
- U.controls.pointPrev:SetEnabled(A.editIndex>1); U.controls.pointNext:SetEnabled(A.editIndex<#points)
- U.controls.pointUp:SetEnabled(A.editIndex>1); U.controls.pointDown:SetEnabled(A.editIndex<#points); U.controls.deletePoint:SetEnabled(#points>0)
- U.editorSketch:Draw(r,A.editIndex)
- local p=points[A.editIndex]; U.editorInfo:SetText(p and string.format('Waypoint %d   /   %.1f, %.1f',A.editIndex,p.x*100,p.y*100) or 'Open the world map and click to add waypoints.')
- U.controls.loop:SetText(r.loop and 'Loop: on' or 'Loop: off'); S.Selected(U.controls.loop,r.loop)
- U.workHint:SetText(recording and (A.recording.reason or 'Recording your movement. Finish the trail when you are ready.') or pending and 'Recorded paths can be edited after saving. No terrain avoidance is assumed.' or 'Click the world map to add points; drag markers to move. Add detours through bridges, passes and cave entrances.')
-end
 local function refreshAtlas() U.atlasView.Refresh() end
 local function refreshFooter(p)
- local f=A.follower; local active=f and (f.status=='running' or f.status=='paused' or f.status=='suspended'); local work=A.editor or A.recording or A.recordedDraft
- local r=f and f.route or A.selectedRoute and A.db.routes[A.selectedRoute]; U.footerName:SetText(safe(r and r.name or 'Ready for your first discovery'))
- local detail='Select a route, or create a new trail.'
- if A.editor then U.footerName:SetText('Route draft'); detail=#A.editor.draft.points..' waypoints / Not saved'
- elseif A.recording then U.footerName:SetText('Recording your path'); detail='Recording / '..#A.recording.points..' waypoints'..(A.recording.paused and ' / Paused' or '')
- elseif A.recordedDraft then U.footerName:SetText('Your trail is ready to save'); detail=#A.recordedDraft.points..' waypoints / Awaiting save'
- elseif f then detail=(f.status=='complete' and 'Complete' or f.status=='paused' and 'Paused by you' or f.status=='suspended' and 'Guidance suspended' or 'Following route')..' / '..f.index..' of '..#f.route.points..(f.route.loop and (' / Lap '..(f.lap+1)) or '')
- elseif r then detail='Ready to follow / Join near your current position' end
+ local f=A.follower;local active=f and (f.status=='running' or f.status=='paused' or f.status=='suspended')
+ local r=active and f.route or A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute]
+ U.footerName:SetText(safe(r and r.name or 'Ready to farm'))
+ local detail='Choose materials, then Generate & start or Generate & review.'
+ if active then detail=(f.status=='paused' and 'Paused' or f.status=='suspended' and 'Guidance suspended' or 'Following route')..' / '..f.index..' of '..#r.points..(r.loop and (' / Lap '..(f.lap+1)) or '')
+ elseif r then detail='Ready to follow / Join at the nearest route point' end
  U.footerMeta:SetText(detail)
- show(U.controls.start,not active and not work); show(U.controls.pause,active and not work); show(U.controls.skip,active and not work); show(U.controls.stop,active and not work)
- show(U.controls.followReverse,active and not work and not U.compact); show(U.controls.expand,U.compact); show(U.controls.workReturn,work and (U.tab~='routes' or U.compact))
+ show(U.controls.start,not active);show(U.controls.pause,active);show(U.controls.skip,active);show(U.controls.stop,active)
+ show(U.controls.followReverse,active and not U.compact);show(U.controls.expand,U.compact);show(U.controls.workReturn,false)
  U.controls.pause:SetText(f and f.status=='paused' and 'Resume' or 'Pause')
- local selected=A.selectedRoute and A.db.routes[A.selectedRoute]
- U.controls.start:SetEnabled(selected~=nil and p~=nil and selected.mapID==p.mapID and A.Client.Distance(p,selected.points[1])~=nil)
+ U.controls.start:SetEnabled(r~=nil and p~=nil and r.mapID==p.mapID and A.Client.Distance(p,r.points[1])~=nil)
 end
 local function refreshStatus(p)
  local text=A.status or 'Ready. Gather normally to remember your discoveries.'
@@ -358,12 +248,12 @@ function U.Refresh()
  local resource=U.tab=='resources';local welcome=U.tab=='welcome';local full=resource or welcome;local nodes=full and {} or U.SelectedNodes()
  show(U.sidebar,not full);place(U.content,U.body,full and 0 or 194,0,full and 936 or 742,414)
  U.RefreshMode(); for id,b in pairs(U.tabs) do S.Selected(b,id==U.tab) end
- show(U.library,U.tab=='routes' and not work); show(U.workPanel,U.tab=='routes' and work~=nil); show(U.atlas,U.tab=='atlas'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
+ show(U.library,U.tab=='routes'); show(U.atlas,U.tab=='atlas'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
  show(U.resourceLibraryView.frame,resource)
  show(U.welcomeView.frame,welcome)
  if not full then refreshSidebar(p) end
- if U.tab=='routes' then if work then refreshWork() else refreshLibrary() end elseif U.tab=='atlas' then refreshAtlas() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
- refreshFooter(p); refreshStatus(p); U.controls.generate:SetEnabled(#nodes>0)
+ if U.tab=='routes' then U.routeView.Refresh() elseif U.tab=='atlas' then refreshAtlas() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
+ refreshFooter(p); refreshStatus(p)
  local marker=A.Resources.Settings(A.db.settings)
  U.controls.nodeWorld:SetChecked(marker.world);U.controls.nodeMini:SetChecked(marker.mini)
  U.controls.nodeRouteLine:SetChecked(marker.routeLines)

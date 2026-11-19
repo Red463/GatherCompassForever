@@ -12,14 +12,15 @@ function module(name,A)
  local f=loadfile(name..'.lua'); assert(f, 'Missing module '..name); f('GatherCompassForever',A)
 end
 function moduleUI(A)
- for _,name in ipairs({'Resources','Selection','Atlas','ResourceLibrary','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI'}) do module(name,A) end
+ if not A.FarmingSession then module('FarmingSession',A) end
+ for _,name in ipairs({'Resources','Selection','Atlas','ResourceLibrary','Skin','Dropdown','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI'}) do module(name,A) end
 end
 function distance(a,b)
  if not a or not b or a.mapID~=b.mapID then return nil end
  return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*500)^2)
 end
 function point(x,y) return {mapID=1,x=x,y=y or 0.5,kind='travel'} end
-local suites={'store','resources','selection','atlas','resource_library','client','gathering','imports','editor','recorder','planner','follower','map','skin','dropdown','arrow','minimap_button','difficulty_probe','filter_sidebar','welcome','ui','atlas_view','resource_library_view','expedition','bootstrap'}
+local suites={'store','resources','selection','atlas','resource_library','client','gathering','imports','editor','recorder','planner','farming_session','follower','map','skin','dropdown','arrow','minimap_button','difficulty_probe','filter_sidebar','welcome','route_view','ui','atlas_view','resource_library_view','expedition','bootstrap'}
 for _,suite in ipairs(suites) do
  local f=io.open('tests/'..suite..'.lua')
  assert(f,'Missing required test suite: '..suite); f:close(); dofile('tests/'..suite..'.lua')

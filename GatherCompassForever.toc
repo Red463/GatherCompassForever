@@ -25,12 +25,14 @@ Editor.lua
 Recorder.lua
 Corridor.lua
 Planner.lua
+FarmingSession.lua
 Follower.lua
 Map.lua
 Skin.lua
 Dropdown.lua
 Arrow.lua
 RouteSketch.lua
+RouteView.lua
 AtlasView.lua
 ResourceLibraryView.lua
 UIActions.lua

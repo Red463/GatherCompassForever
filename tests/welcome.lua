@@ -13,7 +13,7 @@ test('only Welcome has an import button and other pages provide navigation inste
  local A,U=setup();U.Toggle();assert(U.controls.import:IsVisible());eq(U.controls.emptyImport,nil);eq(U.controls.resourceImport,nil)
  eq(U.controls.import:GetParent(),U.welcomeView.cards[1])
  for _,tab in ipairs({'routes','atlas','resources','nodes','settings'}) do U.SetTab(tab);eq(U.controls.import:IsVisible(),false) end
- U.OpenRoutes();assert(U.controls.emptyWelcome);U.controls.emptyWelcome.scripts.OnClick();eq(U.tab,'welcome');eq(U.controls.import:IsVisible(),true)
+ U.OpenRoutes();U.controls.tabwelcome.scripts.OnClick();eq(U.tab,'welcome');eq(U.controls.import:IsVisible(),true)
  U.SetTab('resources');U.controls.resourceWelcome.scripts.OnClick();eq(U.tab,'welcome')
 end)
 test('Welcome import reports progress and prevents a second queued import',function()

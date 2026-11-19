@@ -45,11 +45,7 @@ function V.New(parent,U)
   if blocked(true) then return end
   local nodes,player=view.CurrentNodes()
   if not player or #nodes==0 then message('Plan a route after entering a zone containing this resource.');return end
-  local route,reason=A.Planner.Generate(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player.mapID),routes=A.db.routes})
-  if not route then message(reason);return end
-  A.follower=nil
-  if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil) end
-  U.Edit(route);message((reason and reason..' ' or '')..'Resource route draft ready. Review it, then save and start when ready.')
+  U.ReviewNodes(nodes,player)
  end
  function view.Guide()
   if blocked(true) then return end
@@ -130,7 +126,7 @@ function V.New(parent,U)
  button(f,'atlasPlan','Plan route',344,348,108,24,view.Plan)
  button(f,'atlasShow','Show map',460,348,108,24,view.ShowMap)
  button(f,'atlasGuide','Guide nearest',576,348,134,24,view.Guide)
- S.Hint(U.controls.atlasPlan,'Plan this resource','Creates a draft from matching current-zone locations. Stop active navigation and finish current work first. Sidebar filters and saved routes stay intact.')
+ S.Hint(U.controls.atlasPlan,'Plan this resource','Reviews a local route from matching current-zone locations. Stop active navigation and finish current work first. Sidebar filters and saved routes stay intact.')
  S.Hint(U.controls.atlasGuide,'Guide to nearest known location','Starts one-point guidance in your current zone. A known coordinate does not tell us whether a resource is currently spawned. Stop active navigation and finish current work first.')
  S.Hint(U.controls.atlasShow,'Show this resource on the map','Temporarily focuses world-map icons for this resource. Close the map to restore normal markers; minimap guidance continues.')
  function view.Refresh()

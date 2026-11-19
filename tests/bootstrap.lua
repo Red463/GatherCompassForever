@@ -1,4 +1,4 @@
-local runtime={'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','Follower','Map','Skin','Dropdown','Arrow','MinimapButton','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
+local runtime={'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Map','Skin','Dropdown','Arrow','MinimapButton','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
 local function setup(saved,configure)
  dofile('tests/wow.lua'); fakeUI(); local A={}; GatherCompassForeverDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}
@@ -15,48 +15,10 @@ local function setup(saved,configure)
  return A,function(t) clock=t end
 end
 
-local function deleteSetup()
- local prompt
- StaticPopupDialogs={};StaticPopup_Show=function(which,name,unused,data) prompt={which=which,name=name,data=data};return prompt end
- local A=setup();local first=A.Store.SaveRoute(A.db,{mapID=1,name='First | trail',points={point(.3),point(.4)}})
- local second=A.Store.SaveRoute(A.db,{mapID=1,name='Second',points={point(.5),point(.6)}})
- A.selectedRoute=first;A.UI.OpenRoutes()
- return A,first,second,function() return prompt end,function() local p=prompt;StaticPopupDialogs[p.which].OnAccept({},p.data) end
-end
 
-test('Delete route requires a named confirmation and acts on its captured route',function()
- local A,first,second,prompt,accept=deleteSetup();assert(A.UI.controls.deleteRoute)
- A.UI.controls.deleteRoute.scripts.OnClick();assert(A.db.routes[first]);eq(prompt().name,'First || trail')
- A.UI.SelectRoute(second);accept();eq(A.db.routes[first],nil);assert(A.db.routes[second]);eq(A.selectedRoute,second)
- A.UI.controls.deleteRoute.scripts.OnClick();assert(A.db.routes[second]);accept();eq(next(A.db.routes),nil);eq(A.selectedRoute,nil)
- eq(A.UI.empty:IsShown(),true);eq(A.UI.detail:IsShown(),false)
-end)
 
-test('Delete route revalidates changed routes and unfinished drafts before accepting',function()
- local A,first,second,prompt,accept=deleteSetup();A.UI.actions.deleteRoute()
- A.Store.SaveRoute(A.db,{id=first,mapID=1,name='Updated',points={point(.3)}});accept();eq(A.db.routes[first].name,'Updated')
- A.UI.actions.deleteRoute();A.editor=A.Editor.New(A.db.routes[first]);accept();assert(A.db.routes[first]);assert(A.editor)
- A.editor=nil;StaticPopup_Show=nil;A.UI.actions.deleteRoute();assert(A.db.routes[first]);assert(A.status:find('confirmation',1,true))
-end)
 
-test('deleting the followed route clears guidance while deleting a different route preserves it',function()
- local A,first,second,prompt,accept=deleteSetup();A.UI.actions.start();A.Tick(.1);local following=A.follower;assert(following)
- A.UI.OpenRoutes();A.UI.SelectRoute(second);A.mapPreviewRoute=A.db.routes[second];A.UI.actions.deleteRoute();accept()
- eq(A.follower,following);eq(A.mapPreviewRoute,nil);eq(A.db.routes[second],nil);assert(A.db.routes[first])
- A.selectedRoute=first;A.UI.Refresh();A.UI.actions.deleteRoute();accept();eq(A.follower,nil);eq(A.Arrow.frame:IsShown(),false)
- eq(next(A.db.routes),nil);for _,line in ipairs(A.Map.miniLines) do eq(line:IsShown(),false) end
-end)
 
-test('deleting from a later route page keeps the new selection visible and clamps the last page',function()
- local A,first,second,prompt,accept=deleteSetup()
- for i=1,9 do A.Store.SaveRoute(A.db,{mapID=1,name=string.format('Saved %02d',i),points={point(.3)}}) end
- A.UI.routePage=2;A.UI.Refresh();A.UI.SelectRoute(A.UI.cards[1].routeID);A.UI.actions.deleteRoute();accept()
- eq(A.UI.routePage,2)
- local visible=false;for _,row in ipairs(A.UI.cards) do if row:IsShown() and row.routeID==A.selectedRoute then visible=true end end
- assert(visible,'Deletion selects a route outside the visible page')
- while A.UI.routePage==2 do A.UI.SelectRoute(A.UI.cards[1].routeID);A.UI.actions.deleteRoute();accept() end
- eq(A.UI.routePage,1);eq(A.UI.controls.nextRoute:IsEnabled(),false)
-end)
 
 test('minimap launcher builds once at startup and its preference can restore a hidden button',function()
  local A=setup();assert(A.initialized);local b=A.MinimapButton.frame;assert(b and b:IsShown())
@@ -68,26 +30,14 @@ test('minimap launcher builds once at startup and its preference can restore a h
  A.OnEvent(nil,'PLAYER_LOGIN');eq(A.MinimapButton.frame,b)
 end)
 
-test('normal generation and atlas plans use contextual unique names and retain editable names',function()
+test('generation and Atlas use contextual names without saving or changing archived routes',function()
  local A=setup();A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='imported'})
- A.UI.actions.generate();eq(A.editor.draft.name,'Test Zone - Silverleaf Loop');eq(A.UI.name:GetText(),A.editor.draft.name)
- A.UI.actions.save();local first=A.selectedRoute;A.UI.actions.generate();eq(A.editor.draft.name,'Test Zone - Silverleaf Loop (2)')
- A.UI.name:SetText('My river trail');A.UI.actions.save();eq(A.db.routes[A.selectedRoute].name,'My river trail')
- A.UI.SetTab('atlas');A.UI.atlasView.Plan();eq(A.editor.draft.name,'Test Zone - Silverleaf Loop (2)')
+ A.UI.actions.generateReview();eq(A.plan.route.name,'Test Zone - Silverleaf Loop');eq(next(A.db.routes),nil)
+ local first=A.Store.SaveRoute(A.db,A.plan.route);A.UI.actions.generateReview();eq(A.plan.route.name,'Test Zone - Silverleaf Loop (2)')
+ A.UI.SetTab('atlas');A.UI.atlasView.Plan();eq(A.plan.route.name,'Test Zone - Silverleaf Loop (2)')
  eq(A.db.routes[first].name,'Test Zone - Silverleaf Loop')
 end)
 
-test('Edit path opens map editing immediately with instructions and a route panel return',function()
- local A=setup();local mapID;WorldMapFrame.SetMapID=function(_,id) mapID=id end
- A.selectedRoute=A.Store.SaveRoute(A.db,{name='Edit me',mapID=1,points={point(.3),point(.5)}})
- A.UI.OpenRoutes();A.UI.actions.edit();assert(A.editor);eq(mapID,1);eq(WorldMapFrame:IsShown(),true);eq(A.UI.frame:IsShown(),false)
- assert(A.Map.editorHelp and A.Map.editorHelp:IsShown());assert(A.Map.editorHelp.instructions:GetText():find('Drag',1,true))
- A.Map.editorHelp.back.scripts.OnClick();eq(WorldMapFrame:IsShown(),false);eq(A.UI.frame:IsShown(),true);assert(A.editor)
- assert(A.UI.controls.workMap:GetText():find('Edit',1,true))
- A.UI.controls.workMap.scripts.OnClick();eq(A.UI.frame:IsShown(),false)
- A.editor:Move(1,point(.4));A.Map.editorHelp.save.scripts.OnClick();eq(A.editor,nil)
- near(A.db.routes[A.selectedRoute].points[1].x,.4);eq(A.UI.frame:IsShown(),true);eq(WorldMapFrame:IsShown(),false)
-end)
 
 test('starting or explicitly opening a route restores its world line after resource map focus',function()
  local A=setup();A.selectedRoute=A.Store.SaveRoute(A.db,{name='Visible',mapID=1,points={point(.3),point(.5)}})
@@ -112,7 +62,7 @@ test('startup gather generate save follow and shared arrow map target cooperate'
  clock(1); A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast-1',2366); A.OnEvent(nil,'LOOT_READY'); A.OnEvent(nil,'LOOT_OPENED')
  eq(A.detector.reason,nil)
  local nodes=A.UI.SelectedNodes(); eq(#nodes,1); eq(nodes[1].count,1); eq(nodes[1].lastGathered,100000)
- A.UI.controls.generate.scripts.OnClick(); assert(A.editor); A.UI.controls.save.scripts.OnClick(); assert(A.selectedRoute)
+ A.UI.controls.generateReview.scripts.OnClick(); assert(A.plan);eq(A.editor,nil);eq(next(A.db.routes),nil)
  A.UI.controls.start.scripts.OnClick(); assert(A.follower); A.Tick(.5)
  eq(A.Map.targetIndex,A.follower.index); assert(A.Arrow.frame); eq(A.Arrow.frame:IsShown(),true)
  A.UI.controls.pause.scripts.OnClick(); A.Tick(.5); eq(A.Arrow.frame:IsShown(),true); eq(A.Arrow.frame.icon:IsShown(),false)
@@ -235,7 +185,7 @@ test('missing optional tab template falls back without aborting startup',functio
   end
  end)
  assert(A.initialized);eq(A.UI.tabs.routes.tabFallback,true)
- A.Command('');eq(A.UI.frame:IsShown(),true);assert(A.UI.controls.generate)
+ A.Command('');eq(A.UI.frame:IsShown(),true);assert(A.UI.controls.generateStart)
 end)
 test('a panel construction error keeps slash diagnostics registered and hides the partial window',function()
  local A=setup(nil,function(addon) addon.Skin.Window=function() error('test panel construction failure') end end)

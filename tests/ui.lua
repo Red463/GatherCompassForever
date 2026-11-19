@@ -32,13 +32,3 @@ test('material skill colours survive hover selection and scrolling then refresh 
  row('Wild Steelbloom').scripts.OnEnter(row('Wild Steelbloom'))
  assert(table.concat(tooltip,'\n'):find('Skill-up chance unknown',1,true))
 end)
-test('editor loop reverse save and recording save discard controls are wired',function()
- dofile('tests/wow.lua'); fakeUI(); local A={}; module('Store',A); module('Client',A); module('Editor',A); moduleUI(A)
- A.db=A.Store.Open(); A.Client.Position=function() return point(.1) end
- A.UI.Build(); A.editor=A.Editor.New({name='Trail',mapID=1,points={point(.1),point(.2)},loop=false})
- A.UI.controls.loop.scripts.OnClick(); eq(A.editor:Route().loop,true)
- A.UI.controls.reverse.scripts.OnClick(); near(A.editor:Route().points[1].x,.2)
- A.UI.name:SetText('Saved'); A.UI.controls.save.scripts.OnClick(); eq(A.db.routes[A.selectedRoute].name,'Saved')
- A.recordedDraft={name='Recorded',mapID=1,points={point(.3)}}; A.UI.controls.discardRecording.scripts.OnClick(); eq(A.recordedDraft,nil)
- A.recordedDraft={name='Recorded',mapID=1,points={point(.3)}}; A.UI.controls.saveRecording.scripts.OnClick(); assert(A.selectedRoute); eq(A.recordedDraft,nil)
-end)

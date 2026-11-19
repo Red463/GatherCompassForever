@@ -10,112 +10,56 @@ function A.UIActions.Bind(U)
  function actions.minimize() U.SetCompact(true) end
  function actions.expand() U.SetCompact(false) end
  function actions.workReturn() U.SetCompact(false); U.SetTab('routes') end
- function actions.new()
-  if guard() then return end
-  local p=position(); if not p then return end
-  if A.follower then A.follower:Stop(); A.follower=nil end
-  U.Edit({name='My '..U.ZoneName(p.mapID)..' trail',mapID=p.mapID,points={},loop=true})
-  actions.map(true)
+ local function refreshMap()
+  if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
  end
- function actions.generate()
-  if guard() then return end
-  local player=A.Client.Position()
-  local r,reason=A.Planner.Generate(U.SelectedNodes(),player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes})
-  if not r then say(reason); return end
-  A.follower=nil; U.Edit(r)
-  say((reason and reason..' ' or '')..'Direct connections: add detours for bridges, passes and caves before saving.')
+ local function clearArrow() if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end end
+ function U.ReviewNodes(nodes,player,startNow)
+  player=player or A.Client.Position()
+  local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter()})
+  if not plan then say(reason);return nil end
+  A.plan=plan;A.follower=nil;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
+  if A.Map and A.Map.SetEditor then A.Map.SetEditor(nil) end
+  U.tab='routes';U.compact=false;U.frame:Show()
+  if startNow then actions.start() else refreshMap();say(reason) end
+  return true
  end
- function actions.edit()
-  if guard() then return end
-  local r=A.selectedRoute and A.db.routes[A.selectedRoute]
-  if not r then say('Select a saved route first.'); return end
-  A.follower=nil; U.Edit(r);actions.map()
+ function actions.generateStart() return U.ReviewNodes(U.SelectedNodes(),nil,true) end
+ function actions.generateReview() return U.ReviewNodes(U.SelectedNodes()) end
+ function actions.selectNode(key)
+  if not A.plan or A.plan.excluded[key] then return end
+  for _,n in ipairs(A.plan.candidates) do if A.FarmingSession.Key(n)==key then A.plan.selected=key;U.Refresh();return end end
  end
- function actions.confirmDeleteRoute(data)
-  if guard() then return end
-  if type(data)~='table' or type(data.id)~='string' or A.db.routes[data.id]~=data.route then say('The saved route changed. Select it again to delete it.');return end
-  local ok,reason=A.Store.DeleteRoute(A.db,data.id);if not ok then say(reason);return end
-  if A.selectedRoute==data.id then A.selectedRoute=nil end
-  if A.mapPreviewRoute and (A.mapPreviewRoute==data.route or A.mapPreviewRoute.id==data.id) then A.mapPreviewRoute=nil end
-  local following=A.follower and A.follower.route and A.follower.route.id==data.id
-  if following then actions.stop() end
-  U.Refresh()
-  if not following and A.Map then A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
-  say('Deleted saved route: '..data.route.name..'. Known node locations are unchanged.')
+ local function rebuild(method)
+  local plan=A.plan;if not plan then return end
+  local old=A.follower;local ok,reason=plan[method](plan,method=='Remove' and plan.selected or A.Client.Position(),method=='Remove' and A.Client.Position() or nil)
+  if not ok then say(reason);return end
+  if old and old.status~='complete' and old.status~='stopped' then
+   A.follower=nil
+   if plan.route then
+    A.follower=A.Follower.New(plan.route,A.Client.Position(),A.Client.Distance,{arrival=A.db.settings.arrival})
+    A.follower.lap=old.lap;if old.status=='paused' then A.follower:Pause() end
+   else clearArrow();plan.review=true end
+  else plan.review=true end
+  refreshMap();say(plan.message)
  end
- local deleteDialog='GATHERCOMPASSFOREVER_DELETE_ROUTE'
- if StaticPopupDialogs then
-  StaticPopupDialogs[deleteDialog]={
-   text='Delete saved route "%s"?\n\nThis cannot be undone. Guidance for this route will stop. Known node locations are kept.',
-   button1='Delete route',button2='Cancel',timeout=0,whileDead=true,hideOnEscape=true,preferredIndex=3,
-   OnAccept=function(_,data) actions.confirmDeleteRoute(data) end,
-  }
+ function actions.removeNode() rebuild('Remove') end
+ function actions.undoNode() rebuild('Undo') end
+ function actions.routeStyle(value)
+  if value~='lines' and value~='heatmap' then return end
+  A.db.settings.routeStyle=value;refreshMap();U.Refresh()
  end
- function actions.deleteRoute()
-  if guard() then return end
-  local id=A.selectedRoute;local route=id and A.db.routes[id]
-  if not route then say('Select a saved route first.');return end
-  if not StaticPopupDialogs or not StaticPopupDialogs[deleteDialog] or type(StaticPopup_Show)~='function' then say('Delete confirmation is unavailable. The saved route is unchanged.');return end
-  StaticPopup_Show(deleteDialog,route.name:gsub('|','||'),nil,{id=id,route=route})
- end
- function actions.save()
-  if not A.editor then return end
-  local r=A.editor:Route(); r.name=U.name:GetText()
-  local id,reason=A.Store.SaveRoute(A.db,r)
-  if not id then say(reason); return end
-  A.selectedRoute=id; A.editor=nil; if A.Map then A.Map.SetEditor(nil) end; say('Route saved. Ready when you are.')
- end
- function actions.discard()
-  A.editor=nil; if A.Map then A.Map.SetEditor(nil) end; U.Refresh()
- end
- function actions.record()
-  if A.recording then
-   local r,reason=A.recording:Finish(U.name:GetText()); A.recording=nil; A.recordedDraft=r
-   say(r and 'Recording finished. Save or discard your trail.' or reason); return
-  end
-  if guard() then return end
-  local p=position(); if not p then return end
-  A.follower=nil; A.recording=A.Recorder.New(p.mapID); A.recording:Sample(p,A.Client.Now())
-  U.name:SetText('My '..U.ZoneName(p.mapID)..' recording'); U.SetTab('routes'); say('Recording your travelled path.')
- end
- function actions.resumeRecording()
-  if A.recording and not A.recording:Resume(A.Client.Position()) then say('Return within 5 yards of the last recorded point to resume.') else U.Refresh() end
- end
- function actions.saveRecording()
-  if not A.recordedDraft then return end
-  local copy=A.Store.Copy(A.recordedDraft); copy.name=U.name:GetText()
-  local id,reason=A.Store.SaveRoute(A.db,copy)
-  if id then A.selectedRoute=id; A.recordedDraft=nil; say('Recorded path saved.') else say(reason) end
- end
- function actions.discardRecording() A.recordedDraft=nil; U.Refresh() end
- function actions.pointPrev() A.editIndex=math.max(1,(A.editIndex or 1)-1); U.Refresh() end
- function actions.pointNext()
-  local r=A.editor and A.editor.draft or A.recordedDraft or A.recording
-  A.editIndex=math.max(1,math.min(r and #r.points or 1,(A.editIndex or 1)+1)); U.Refresh()
- end
- function actions.pointUp()
-  local i=A.editIndex or 1; if A.editor and A.editor:Reorder(i,i-1) then A.editIndex=i-1 end; U.Refresh()
- end
- function actions.pointDown()
-  local i=A.editIndex or 1; if A.editor and A.editor:Reorder(i,i+1) then A.editIndex=i+1 end; U.Refresh()
- end
- function actions.deletePoint()
-  if A.editor then A.editor:Delete(A.editIndex or 1); A.editIndex=math.max(1,math.min(A.editIndex or 1,#A.editor.draft.points)) end; U.Refresh()
- end
- function actions.loop() if A.editor then A.editor:SetLoop(not A.editor.draft.loop); U.Refresh() end end
- function actions.reverse()
-  if A.editor then A.editor:Reverse(); A.editIndex=math.max(1,#A.editor.draft.points-(A.editIndex or 1)+1)
-  elseif A.follower then A.follower:Reverse() end; U.Refresh()
- end
+ function actions.reverse() if A.follower then A.follower:Reverse() end;U.Refresh() end
  function actions.start()
-  if guard() then return end
-  local r=A.selectedRoute and A.db.routes[A.selectedRoute]; local p=position()
-  if not r or not p or r.mapID~=p.mapID or not A.Client.Distance(p,r.points[1]) then say('Select a route in your current zone with readable position and distance data.'); return end
+  local r=A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute];local p=position()
+  if not r or not p or r.mapID~=p.mapID or not A.Client.Distance(p,r.points[1]) then say('Generate a route in your current zone with readable position and distance data.');return end
+  local nearest
+  for _,point in ipairs(r.points) do local d=A.Client.Distance(p,point);if d and (not nearest or d<nearest) then nearest=d end end
+  if r.maxLink and (not nearest or nearest>r.maxLink) then say('Move nearer the reviewed area, or generate again from your current position.');return end
   A.follower=A.Follower.New(r,p,A.Client.Distance,{arrival=A.db.settings.arrival})
-  A.mapPreviewRoute=nil
-  if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil) end
-  U.frame:Hide()
-  say(r.generated and 'Following direct connections. Use edited detours where needed.' or 'Following your route.')
+  if A.plan then A.plan.review=false end
+  A.mapPreviewRoute=nil;refreshMap();U.frame:Hide()
+  say('Following a local farming corridor. Terrain may require a detour.')
  end
  function actions.pause()
   local f=A.follower; if f then if f.status=='paused' then f:Resume() else f:Pause() end end; U.Refresh()
@@ -123,6 +67,7 @@ function A.UIActions.Bind(U)
  function actions.skip() if A.follower then A.follower:Skip() end; U.Refresh() end
  function actions.stop()
   if A.follower then A.follower:Stop(); A.follower=nil end
+  if A.plan then A.plan.review=false end
   if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end
   if A.Map then A.Map.Refresh(A.db,U.DisplayRoute(),nil) end
   U.Refresh()

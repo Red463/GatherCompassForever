@@ -14,8 +14,8 @@ function V.New(parent,U)
  view.summary=label(f,'',120,73,760,22,11,S.muted)
  local steps={
   {'1. Add node locations','Gather herbs or ore to remember successful discoveries, or import known locations from installed GatherMate2 data. Import covers all zones, wherever you are.'},
-  {'2. Choose what to farm','Tick your node sources, Herbs or Ore, and the materials you want. These selections filter both maps and generated routes. Skill-ups selects eligible materials once.'},
-  {'3. Follow your route','Generate a loop, draw a path or record a trail. Save it and start guidance. Follow the gold arrow; click it to return to Routes.'},
+  {'2. Choose what to farm','Tick your node sources, Herbs or Ore, and the materials you want. These selections filter both maps and generated routes. Gatherable includes grey resources; Skill-ups selects skill-up materials once.'},
+  {'3. Follow your route','Use Generate & start for quick guidance, or Generate & review to inspect the map and remove nodes. Choose lines or a heatmap corridor. Click the gold arrow to return.'},
  }
  for i,step in ipairs(steps) do
   local card=place(S.Panel(f),f,(i-1)*304,118,288,192);view.cards[i]=card

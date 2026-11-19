@@ -40,10 +40,10 @@ end)
 test('atlas plans only the selected resource without changing saved routes or sidebar choices',function()
  local A=viewSetup();local V=seed(A);pick(V,'Silverleaf')
  local saved=A.Store.SaveRoute(A.db,{name='Existing',mapID=1,points={point(.6)}});A.selectedRoute=saved
- V.Plan();assert(A.editor);eq(A.UI.tab,'routes');eq(A.editor.draft.mapID,1);eq(#A.editor.draft.points,2)
- for _,p in ipairs(A.editor.draft.points) do eq(p.name,'Silverleaf') end
+ V.Plan();assert(A.plan);eq(A.UI.tab,'routes');eq(A.plan.route.mapID,1);assert(#A.plan.route.points>0)
+ for _,p in ipairs(A.plan.route.points) do eq(p.name,'Silverleaf') end
  eq(A.db.routes[saved].name,'Existing');eq(A.selectedRoute,saved);eq(A.db.settings.materials,nil)
- local draft=A.editor;V.Plan();eq(A.editor,draft)
+ local first=A.plan;V.Plan();assert(A.plan~=first);eq(A.editor,nil)
 end)
 
 test('atlas nearest guidance is a temporary one-point route and respects active work',function()

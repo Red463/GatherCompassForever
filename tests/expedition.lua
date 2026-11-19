@@ -32,14 +32,6 @@ test('changing Gathering immediately refreshes both maps and clears an older res
  assert(A.Map.byKey['m:node:'..ore.key]);eq(A.Map.byKey['m:node:'..herb.key],nil)
  LibStub=nil
 end)
-test('expedition empty state is useful and edit controls stay contextual',function()
- local A=setup(); local U=A.UI
- eq(U.empty:IsShown(),true); eq(U.workPanel:IsShown(),false); eq(U.controls.save:IsVisible(),false)
- eq(U.controls.prevRoute:IsVisible(),false)
- U.controls.new.scripts.OnClick(); assert(A.editor); eq(U.workPanel:IsShown(),true); eq(U.controls.save:IsVisible(),true); eq(U.library:IsShown(),false)
- U.name:SetText('A long draft name'); U.Refresh(); eq(U.name:GetText(),'A long draft name')
- U.controls.discard.scripts.OnClick(); eq(A.editor,nil); eq(U.empty:IsShown(),true)
-end)
 test('completed route does not label or colour a newly selected route',function()
  local A=setup(); local U=A.UI
  local a=A.Store.SaveRoute(A.db,{mapID=1,name='A',points={point(.2),point(.3)}})
@@ -47,49 +39,19 @@ test('completed route does not label or colour a newly selected route',function(
  U.SelectRoute(a); U.controls.start.scripts.OnClick(); U.OpenRoutes(); A.follower:Skip(); A.follower:Skip(); U.SelectRoute(b)
  eq(U.footerName:GetText(),'B'); eq(A.follower,nil)
 end)
-test('map actions use atlas or recording zone and recorded point navigation works',function()
- local A=setup(); local U=A.UI; local map
- WorldMapFrame.SetMapID=function(_,id) map=id end
- A.selectedRoute=A.Store.SaveRoute(A.db,{mapID=2,name='Other zone',points={{mapID=2,x=.1,y=.2}}})
- U.SetTab('atlas'); U.controls.atlasMap.scripts.OnClick(); eq(map,1)
- U.SetTab('routes'); U.controls.record.scripts.OnClick()
- for i=1,4 do A.recording:Sample(point(.1+i*.02,.5+(i%2)*.02),i) end
- U.controls.pointNext.scripts.OnClick(); eq(A.editIndex,2); U.controls.workMap.scripts.OnClick(); eq(map,1)
-end)
 test('hidden and compact refresh avoid full surface population',function()
  local A=setup(); local calls=0; local original=A.Store.Select
  A.Store.Select=function(...) calls=calls+1; return original(...) end
  A.UI.frame:Hide(); A.UI.Refresh(); eq(calls,0)
  A.UI.frame:Show(); A.UI.SetCompact(true); calls=0; A.UI.Refresh(); assert(calls<=1,'Compact refresh scanned nodes '..calls..' times')
 end)
-test('arrow uses the expedition skin and editor offers world map access',function()
+test('arrow matches the skin and route review offers world map access',function()
  local A=setup(); module('Arrow',A); A.Arrow.Build()
  near(A.Arrow.frame.label.textColor[1],A.Skin.gold[1]); assert(A.Arrow.frame:GetWidth()<=160)
- assert(A.UI.controls.workMap); A.UI.controls.workMap.scripts.OnClick()
+ assert(A.UI.controls.map); A.UI.controls.map.scripts.OnClick()
 end)
-test('route cards preview selected route independently of active navigation',function()
- local A=setup(); local U=A.UI
- local one=A.Store.SaveRoute(A.db,{mapID=1,name='First route',loop=true,points={point(.2),point(.4)}})
- local two=A.Store.SaveRoute(A.db,{mapID=1,name='Second route',points={point(.6),point(.7)}})
- U.SelectRoute(one); U.controls.start.scripts.OnClick(); U.OpenRoutes(); U.SelectRoute(two)
- eq(U.PreviewRoute().name,'Second route'); eq(U.DisplayRoute().name,'First route')
- eq(U.previewName:GetText(),'Second route'); eq(U.footerName:GetText(),'First route')
- U.SetCompact(true); eq(U.body:IsShown(),false); eq(U.controls.pause:IsVisible(),true); eq(U.controls.expand:IsVisible(),true)
- U.controls.pause.scripts.OnClick(); eq(A.follower.status,'paused')
- U.controls.expand.scripts.OnClick(); eq(U.body:IsShown(),true)
-end)
-test('recording and pending save survive tabs and compact view',function()
- local A=setup(); local U=A.UI; U.controls.record.scripts.OnClick(); assert(A.recording)
- U.SetTab('settings'); eq(U.controls.workReturn:IsVisible(),true)
- U.SetCompact(true); assert(U.footerMeta:GetText():find('Recording'))
- U.SetCompact(false); U.SetTab('routes'); U.controls.record.scripts.OnClick(); assert(A.recordedDraft); eq(A.recording,nil)
- U.SetTab('atlas'); eq(U.controls.workReturn:IsVisible(),true)
- U.SetTab('routes'); U.name:SetText('Saved recording'); U.controls.saveRecording.scripts.OnClick(); eq(A.recordedDraft,nil); eq(A.db.routes[A.selectedRoute].name,'Saved recording')
-end)
-test('point pagination keeps selected long-route point accessible and preferences persist',function()
- local A=setup(); local U=A.UI; local points={}; for i=1,120 do points[i]=point(i/150) end
- U.Edit({mapID=1,name=string.rep('Long ',16),points=points}); A.editIndex=117; U.Refresh()
- local found=false; for _,row in ipairs(U.pointRows) do if row.index==117 and row:IsShown() then found=true end end; eq(found,true)
+test('preferences persist independently of route review',function()
+ local A=setup();local U=A.UI
  U.controls.arrival.scripts.OnValueChanged(U.controls.arrival,20); eq(A.db.settings.arrival,20)
  U.controls.arrowScale.scripts.OnValueChanged(U.controls.arrowScale,1.2); assert(A.db.settings.arrowScale>1)
  U.controls.resetArrow.scripts.OnClick(); eq(A.db.settings.arrowAnchor,nil); eq(A.db.settings.arrowScale,1)
@@ -184,12 +146,6 @@ test('Classic window has native chrome compact header bottom tabs and standard o
  U.controls.arrowScale.scripts.OnValueChanged(U.controls.arrowScale,.8);near(A.db.settings.arrowScale,.8)
  U.controls.arrowProgress.scripts.OnClick();eq(A.db.settings.arrowProgress,false)
  U.SetCompact(true);eq(U.chrome:IsShown(),false);U.SetCompact(false);eq(U.chrome:IsShown(),true)
-end)
-test('dense route list paginates six rows and keeps selection while browsing pages',function()
- local A=setup();local U=A.UI
- for i=1,7 do A.Store.SaveRoute(A.db,{mapID=1,name='Route '..i,points={point(.2),point(.4)}}) end
- U.Refresh();eq(#U.cards,6);assert(U.cards[6].routeID)
- local selected=A.selectedRoute;U.controls.nextRoute.scripts.OnClick();eq(U.cards[1]:GetText(),'Route 7');eq(A.selectedRoute,selected)
 end)
 
 test('native close button stays above the overlapping drag header',function()

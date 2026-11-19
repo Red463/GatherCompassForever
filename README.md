@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.16.3 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.16.4 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -47,7 +47,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.16.3.zip` from
+1. Download `Gatherly-0.16.4.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -191,7 +191,8 @@ Items without location data remain in the default full catalogue.
 Select **Heatmap corridor** above the route sketch to replace the lines with a darker,
 soft burgundy band through the generated farming areas. It is a route view, rather than a
 live resource scanner. The arrow follows the same points; switching views does not
-regenerate the route. Heat also appears on the minimap, replacing its route lines,
+regenerate the route. Heat also appears on the minimap in brighter amber/gold to stand
+out over dark terrain, replacing its route lines,
 while resource markers and the destination marker remain. Its bounded transparent
 field keeps small feathered clearance around the player and current destination.
 It no longer cuts holes around every possible spawn. Thin route lines retain their
@@ -203,7 +204,7 @@ destination aligned with the heat without modifying the shared pin library.
 
 ![Soft density corridor over an illustrative map](docs/images/route-heatmap.png)
 
-![Minimap heat with simulated native tracking dots and player clearance](docs/images/minimap-heat.png)
+![Amber minimap heat on illustrative dark terrain, with simulated tracking dots and player clearance](docs/images/minimap-heat.png)
 
 ### Guide arrow
 

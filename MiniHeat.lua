@@ -43,8 +43,10 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
  for row=0,rows-1 do for col=0,cols-1 do
   local d=density[row*cols+col+1];local x,y=-w/2+col*cw,h/2-row*ch
   if d and d>.005 and H.InShape(x,y,w,h,shape) and H.InShape(x+cw,y,w,h,shape) and H.InShape(x,y-ch,w,h,shape) and H.InShape(x+cw,y-ch,w,h,shape) then
-   local intensity=1-math.exp(-d*.8)
-   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=intensity*.72*math.min(1,opacity)*(fade[row*cols+col+1] or 1),green=.24-.15*intensity}
+   -- A bright amber core stays readable over dark terrain; the density field
+   -- and feathering still fade its edges and keep tracking clearance soft.
+   local intensity=1-math.exp(-d*1.5)
+   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=intensity*.72*math.min(1,opacity)*(fade[row*cols+col+1] or 1),green=.48+.18*intensity}
   end
  end end
  return field
@@ -60,6 +62,6 @@ function H.Draw(pool,parent,field,shape)
  for i,c in ipairs(field) do
   local t=pool[i]
   if not t then t=parent:CreateTexture(nil,'BACKGROUND',nil,1);pool[i]=t;if pool.mask and t.AddMaskTexture then t:AddMaskTexture(pool.mask) end end
-  t:SetColorTexture(.68,c.green,.02,c.alpha);t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
+  t:SetColorTexture(1,c.green,.06,c.alpha);t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
  end
 end

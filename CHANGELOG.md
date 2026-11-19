@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.4
+
+- Brighten minimap heat to amber/gold and strengthen sparse corridor centres so guidance stands out over dark forest, cave and swamp terrain. Preserve soft edges, player/destination clearance and the existing overlay opacity control.
+- Keep world-map heat unchanged. Add rendered-colour contrast checks at the default minimap opacity and refresh the dark-terrain preview.
+
 ## 0.16.3
 
 - Make the world-map heat corridor clearer by accounting for the actual faded heat texture when balancing overlapping patches. Keep soft edges and readable terrain at crossings; apply the same correction to the Routes preview.

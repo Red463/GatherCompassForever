@@ -21,3 +21,4 @@ if toc.exists():
     print(f'TOC: {len(names)} files compile under Lua 5.1')
 
 runpy.run_path(str(root / 'tests/heatmap_visibility.py'), run_name='__main__')
+runpy.run_path(str(root / 'tests/minimap_heat_visibility.py'), run_name='__main__')

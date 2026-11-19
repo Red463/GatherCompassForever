@@ -35,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={version='0.16.3'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
+A={version='0.16.4'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -89,7 +89,7 @@ def render(scene):
     if scene in ('marker_filters','marker_override'):
         if scene=='marker_override':lua.execute("A.UI.actions.generateStart();A.db.settings.routeMarkerOverride=true;A.UI.OpenRoutes()")
         lua.execute("A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('filters')")
-    if scene=='mini_heat':
+    if scene in ('mini_heat','mini_heat_dark'):
         lua.execute("A.UI.actions.generateStart();A.db.settings.routeStyle='heatmap';A.Resources.Settings(A.db.settings).mini=false;Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(240,240);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',520,-240);local terrain=Minimap:CreateTexture(nil,'BACKGROUND');terrain:SetAllPoints();terrain:SetTexture(9001);C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;GetMinimapShape=function() return 'SQUARE' end;A.Map.Refresh(A.db,A.follower.route,A.follower);local player=Minimap:CreateTexture(nil,'OVERLAY');player:SetPoint('CENTER',Minimap,'CENTER');player:SetSize(11,16);player:SetTexture('Interface\\\\AddOns\\\\Gatherly\\\\Media\\\\GuideArrow');for _,n in ipairs(A.db.nodes[1]) do local x,y=A.Map.MiniProject(n,A.Client.Position(),1000,600,200,240,240,0);if x then local dot=Minimap:CreateTexture(nil,'OVERLAY');dot:SetColorTexture(1,.9,.1,1);dot:SetSize(4,4);dot:SetPoint('CENTER',Minimap,'CENTER',x,y) end end;local text=A.Skin.Label(UIParent,'Minimap heat with simulated native tracking dots',15,A.Skin.gold);text:SetPoint('TOPLEFT',UIParent,'TOPLEFT',400,-190);text:SetSize(500,30)")
     if scene=='minimap_button':
         lua.execute("A.UI.frame:Hide();Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(180,180);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',900,-100);Minimap:SetBackdropColor(.12,.16,.09,1);A.MinimapButton.Build()")
@@ -156,7 +156,7 @@ def render(scene):
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHERLY 0.16.3 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHERLY 0.16.4 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
@@ -236,6 +236,7 @@ def render(scene):
         texture=o['texture']
         if texture==9001 and w>0 and h>0:
             art=map_art.copy()
+            if scene=='mini_heat_dark':art=ImageChops.multiply(art,Image.new('RGBA',art.size,(75,85,50,255)))
             if o['crop'] is not None:
                 u=vals(o['crop']);art=art.crop((u[0]*art.width,u[2]*art.height,u[1]*art.width,u[3]*art.height))
             art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS)
@@ -307,4 +308,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['routes_small','routes_standard','routes_large','preferences_small','preferences_standard','preferences_large','marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['routes_small','routes_standard','routes_large','preferences_small','preferences_standard','preferences_large','marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','mini_heat_dark','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

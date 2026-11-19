@@ -35,7 +35,7 @@ end)
 
 test('import time budget yields before the work cap and a failing source can be retried safely',function()
  local A=setup();local produced=0;local failed=true;local stamps=0;local oldProfile=debugprofilestop
- debugprofilestop=function() stamps=stamps+2;return stamps end
+ debugprofilestop=function() stamps=stamps+4;return stamps end
  A.Imports.Provider=function() return function() local i=0;return function()
   i=i+1;produced=produced+1
   if failed and i==100 then error('source interrupted') end

@@ -41,6 +41,7 @@ function fakeUI()
  function methods:Disable() self:SetEnabled(false) end
  function methods:SetEnabled(v) local changed=self.enabled~=v; self.enabled=v; local f=self.scripts[v and 'OnEnable' or 'OnDisable']; if changed and f then f(self) end end
  function methods:SetTexCoord(...) self.coords={...} end
+ function methods:SetNormalTexture(v) self.normalTexture=v end
  function methods:SetTexture(v) self.texture=v end
  function methods:SetVertexColor(...) self.vertexColor={...} end
  function methods:EnableMouse(v) self.mouse=v;self.mouseClicks=v;self.mouseMotion=v end

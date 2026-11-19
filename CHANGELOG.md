@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0
+
+- Add a draggable bottom-right panel resize grip with saved width, height and screen-relative position. Keep normal text, controls and guide-arrow size unchanged.
+- Grow the Routes map and material viewport with the panel; wrap generation actions at narrow widths.
+- Reflow Node Codex filters and adjust resource/zone page capacity to available space.
+- Keep Welcome, Node display and full-width Preferences accessible through interior scrolling when needed.
+- Add the current dimensions and Reset panel size in Preferences. Default size is 960 x 624, minimum layout 860 x 600 UI units, with screen fitting below that minimum.
+- Preserve preferred size through resolution changes and minimise/expand, close stale popups on resize, and keep route state and map zoom/pan intact.
+
 ## 0.11.0
 
 - Group overlapping world-map, minimap and review icons into shared count badges with coloured resource breakdowns. Keep minimap outlines at their exact spawn coordinates.

@@ -123,7 +123,7 @@ def render(scene):
         if scene.startswith('codex'):lua.execute("codexPopulate();A.UI.SetTab('codex')")
         if scene.startswith('nodes'):lua.execute("A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('mini')")
         if scene.startswith('welcome'):lua.execute("A.UI.SetTab('welcome')")
-        if scene.startswith('preferences'):lua.execute("A.UI.SetTab('settings')")
+        if scene.startswith('preferences'):lua.execute("A.UI.SetTab('settings');A.UI.preferencesScroll:SetOffset(10000)")
     objects=vals(lua.globals().captured);byid={int(o['captureID']):o for o in objects}; boxes={0:(0,0,screen_w,screen_h)};resolving=set()
     def ident(o):return int(o['captureID']) if o and o['captureID'] is not None else 0
     def box(o):
@@ -150,7 +150,7 @@ def render(scene):
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHER COMPASS FOREVER 0.11.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHER COMPASS FOREVER 0.12.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
@@ -185,6 +185,8 @@ def render(scene):
         if clipping and (rect[2]<=clipping[0] or rect[0]>=clipping[2] or rect[3]<=clipping[1] or rect[1]>=clipping[3]):continue
         before=im.copy() if clipping and (rect[0]<clipping[0] or rect[1]<clipping[1] or rect[2]>clipping[2] or rect[3]>clipping[3]) else None
         template=o['template'] or ''
+        if o['normalTexture'] and 'SizeGrabber' in str(o['normalTexture']):
+            for offset in (5,10,15):d.line([(x+w-offset,y+h-3),(x+w-3,y+h-offset)],fill='#b8a474',width=2)
         if template=='PortraitFrameTemplate':
             d.rectangle(rect,fill='#34322f',outline='#514d42',width=5)
             d.rectangle((x+5,y+5,x+w-5,y+h-5),outline='#a49a7d',width=2)

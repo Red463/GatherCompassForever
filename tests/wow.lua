@@ -1,0 +1,67 @@
+-- Minimal native frame double. Real geometry and domain logic remain production code.
+function fakeUI()
+ local methods={}
+ function methods:SetScript(k,v) self.scripts[k]=v end
+ function methods:HookScript(k,v) local old=self.scripts[k]; self.scripts[k]=function(...) if old then old(...) end; v(...) end end
+ function methods:SetText(t) self.text=t; if rawget(self,'fontString') then self.fontString:SetText(t) end end
+ function methods:SetTitle(text) self.title=text end
+ function methods:SetFontString(t) self.fontString=t end
+ function methods:GetFontString() return self.fontString end
+ function methods:SetColorTexture(r,g,b,a) self.color={r,g,b,a or 1} end
+ function methods:SetTextColor(r,g,b,a) self.textColor={r,g,b,a or 1} end
+ function methods:SetScale(v) self.scale=v end
+ function methods:IsEnabled() return self.enabled~=false end
+ function methods:GetText() return self.text or '' end
+ function methods:SetSize(w,h) self.width=w; self.height=h end
+ function methods:SetWidth(w) self.width=w end
+ function methods:SetChecked(v) self.checked=not not v end
+ function methods:GetChecked() return self.checked end
+ function methods:SetValue(v) local changed=self.value~=v;self.value=v;if changed and self.scripts.OnValueChanged then self.scripts.OnValueChanged(self,v) end end
+ function methods:SetHeight(h) self.height=h end
+ function methods:SetParent(p) self.parent=p end
+ function methods:GetParent() return self.parent end
+ function methods:GetWidth() return rawget(self,'width') or 500 end
+ function methods:GetHeight() return rawget(self,'height') or 500 end
+ function methods:Show() local changed=self.shown==false;self.shown=true;if changed and self.scripts.OnShow then self.scripts.OnShow(self) end end
+ function methods:Hide() local changed=self.shown~=false;self.shown=false;if changed and self.scripts.OnHide then self.scripts.OnHide(self) end end
+ function methods:IsShown() return self.shown~=false end
+ function methods:IsVisible() return self:IsShown() and (not self.parent or self.parent:IsVisible()) end
+ function methods:Enable() self:SetEnabled(true) end
+ function methods:Disable() self:SetEnabled(false) end
+ function methods:SetEnabled(v) local changed=self.enabled~=v; self.enabled=v; local f=self.scripts[v and 'OnEnable' or 'OnDisable']; if changed and f then f(self) end end
+ function methods:SetTexture(v) self.texture=v end
+ function methods:SetVertexColor(...) self.vertexColor={...} end
+ function methods:EnableMouse(v) self.mouse=v;self.mouseClicks=v;self.mouseMotion=v end
+ function methods:EnableMouseMotion(v) self.mouseMotion=v end
+ function methods:SetBackdrop(v) self.backdrop=v end
+ function methods:SetStartPoint(anchor,parent,x,y) self.lineStart={anchor,parent,x,y} end
+ function methods:SetEndPoint(anchor,parent,x,y) self.lineEnd={anchor,parent,x,y} end
+ function methods:SetThickness(v) self.thickness=v end
+ function methods:SetRotation(v) self.rotation=v end
+ function methods:GetPoint() return 'CENTER',nil,'CENTER',0,0 end
+ function methods:GetEffectiveScale() return 1 end
+ function methods:GetFrameLevel() return self.frameLevel or 1 end
+ function methods:SetFrameLevel(value) self.frameLevel=value end
+ function methods:CreateFontString() return CreateFrame('FontString',nil,self) end
+ function methods:CreateTexture() return CreateFrame('Texture',nil,self) end
+ function methods:CreateLine() return CreateFrame('Line',nil,self) end
+ CreateFrame=function(kind,name,parent,template)
+  if template=='CharacterFrameTabButtonTemplate' then error("CreateFrame(): Couldn't find inherited node CharacterFrameTabButtonTemplate") end
+  local o={kind=kind,name=name,parent=parent,template=template,scripts={},shown=true,enabled=true,frameLevel=parent and parent:GetFrameLevel()+1 or 1}
+  local frame=setmetatable(o,{__index=function(_,k) if methods[k] then return methods[k] end; if k:match('^%u') then return function() end end end})
+  if template=='PanelTabButtonTemplate' or template=='PanelTopTabButtonTemplate' then
+   for _,key in ipairs({'Left','Middle','Right','LeftActive','MiddleActive','RightActive'}) do frame[key]=CreateFrame('Texture',nil,frame) end
+   frame.Text=CreateFrame('FontString',nil,frame);frame.fontString=frame.Text
+  end
+  return frame
+ end
+ PanelTemplates_TabResize=function(tab,_,width) assert(type(tab.Text)=='table' and type(tab.Left)=='table');tab:SetWidth(width or 100) end
+ PanelTemplates_SelectTab=function(tab) assert(type(tab.LeftActive)=='table');tab:Disable() end
+ PanelTemplates_DeselectTab=function(tab) assert(type(tab.Left)=='table');tab:Enable() end
+ UIParent=CreateFrame('Frame'); Minimap=CreateFrame('Frame'); Minimap:SetSize(200,200)
+ WorldMapFrame=CreateFrame('Frame'); WorldMapFrame.ScrollContainer=CreateFrame('Frame'); WorldMapFrame.canvas=CreateFrame('Frame')
+ WorldMapFrame.GetCanvas=function(self) return self.canvas end
+ WorldMapFrame.GetMapID=function() return 1 end
+ WorldMapFrame.ScrollContainer.GetNormalizedCursorPosition=function() return .25,.4 end
+ GameTooltip=CreateFrame('Frame'); SlashCmdList={}; UISpecialFrames={}
+end

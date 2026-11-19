@@ -1,0 +1,242 @@
+"""Non-client previews driven by the real Lua UI frame tree; substitutes fonts."""
+from pathlib import Path
+import json, math, os, sys
+root=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(root/'.test-deps'))
+from lupa.lua51 import LuaRuntime
+from PIL import Image, ImageDraw, ImageFont, ImageChops
+os.chdir(root)
+out=root/'docs'/'previews';out.mkdir(parents=True,exist_ok=True)
+CAPTURE=r'''
+dofile('tests/wow.lua'); fakeUI(); UIParent:SetSize(1280,800); UIParent.captureID=0
+captured={}; local original=CreateFrame
+CreateFrame=function(...)
+ local f=original(...); f.captureID=#captured+1; captured[#captured+1]=f; f.anchors={}
+ f.SetPoint=function(self,...) local a={...}; if type(a[2])~='table' then a={a[1],self.parent,a[1],a[2] or 0,a[3] or 0} elseif type(a[3])~='string' then a={a[1],a[2],a[1],a[3] or 0,a[4] or 0} end; self.anchors[#self.anchors+1]=a end
+ f.ClearAllPoints=function(self) self.anchors={};self.all=nil end
+ f.SetAllPoints=function(self,target) self.all=target or self.parent end
+ f.SetBackdrop=function(self,v) self.backdrop=v end
+ f.SetBackdropColor=function(self,...) self.backColor={...} end
+ f.SetBackdropBorderColor=function(self,...) self.borderColor={...} end
+ f.SetFont=function(self,path,size,flags) self.fontPath=path;self.fontSize=size;self.fontFlags=flags end
+ f.SetJustifyH=function(self,v) self.justify=v end
+ f.SetJustifyV=function(self,v) self.justifyV=v end
+ f.SetWordWrap=function(self,v) self.wrap=v end
+ f.SetTexture=function(self,v) self.texture=v end
+ f.SetTexCoord=function(self,...) self.crop={...} end
+ f.SetStartPoint=function(self,...) self.lineStart={...} end
+ f.SetEndPoint=function(self,...) self.lineEnd={...} end
+ return f
+end
+A={};for _,m in ipairs({'Store','Client','Resources','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
+A.Client.Size=function() return 1000,600 end
+A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
+A.Client.Probe=function() return {loot=true,position=true,distance=true,facing=true,minimap=true} end
+A.Store.distance=A.Client.Distance; C_Map={GetMapInfo=function(id) return {name=({[1]='Ashenvale',[2]='Darkshore',[3]='Elwynn Forest'})[id] or 'Zone '..tostring(id)} end}; A.UI.Build();A.UI.OpenRoutes()
+function populate()
+ local nodes={}
+ for i=1,18 do local n=A.Store.Observe(A.db,{mapID=1,x=.18+(i%6)*.08,y=.18+math.floor(i/6)*.14,kind=i%3==0 and 'ore' or 'herb',name=i%3==0 and 'Copper vein' or i%2==0 and 'Silverleaf' or 'Peacebloom',materialID='m'..(i%3),source=i%2==0 and 'confirmed' or 'imported'});nodes[#nodes+1]=n end
+ for i,name in ipairs({'Northern ridge circuit','Silverleaf along the river','Astranaar supply trail'}) do
+  local points={};for j=1,10 do local n=nodes[(j+i)%#nodes+1];points[#points+1]={mapID=1,x=n.x,y=n.y,kind='gather',nodeKey=n.key} end
+  local id=A.Store.SaveRoute(A.db,{name=name,mapID=1,loop=i~=3,points=points,recorded=i==3});if i==1 then A.selectedRoute=id end
+ end
+ A.UI.Refresh()
+end
+function atlasPopulate()
+ A.Resources.Skills=function() return {herb=109,ore=70},{herb={maxRank=150,bonus=0},ore={maxRank=150,bonus=0}} end
+ time=function() return 100000 end
+ for i=1,8 do A.Store.Observe(A.db,{mapID=1,x=.22+i*.022,y=.4+i*.014,kind='herb',name='Earthroot',materialID='gm:herb:403',source=i%2==0 and 'confirmed' or 'imported',time=100000-i*180}) end
+ for map=2,3 do for i=1,6 do A.Store.Observe(A.db,{mapID=map,x=.1+i*.07,y=.2+i*.02,kind='herb',name='Earthroot',materialID='gm:herb:403',source='imported'}) end end
+ for i,name in ipairs({'Briarthorn','Mageroyal','Wild Steelbloom'}) do A.Store.Observe(A.db,{mapID=1,x=.4+i*.04,y=.5,kind='herb',name=name,materialID='node:herb:'..name,source='imported'}) end
+ A.UI.SetTab('atlas');A.UI.atlasView.Select('herb:403')
+end
+'''
+fractions={'TOPLEFT':(0,0),'TOP':(.5,0),'TOPRIGHT':(1,0),'LEFT':(0,.5),'CENTER':(.5,.5),'RIGHT':(1,.5),'BOTTOMLEFT':(0,1),'BOTTOM':(.5,1),'BOTTOMRIGHT':(1,1)}
+def vals(t): return list(t.values()) if t is not None else []
+def rgba(t,default=(0,0,0,0)):
+    if t is None:return default
+    a=vals(t);return tuple(round(max(0,min(1,v))*255) for v in (a+[1])[:4])
+def render(scene):
+    lua=LuaRuntime(unpack_returned_tuples=True);lua.execute(CAPTURE)
+    if scene not in ('empty','atlas_empty'):lua.execute('populate()')
+    if scene in ('map_editor','map_editor_drag','map_following'):
+        lua.execute("""
+WorldMapFrame=A.Skin.Panel(UIParent);WorldMapFrame:SetSize(940,590);WorldMapFrame:SetPoint('TOPLEFT',UIParent,'TOPLEFT',170,-85)
+WorldMapFrame.canvas=CreateFrame('Frame',nil,WorldMapFrame);WorldMapFrame.canvas:SetSize(900,520);WorldMapFrame.canvas:SetPoint('TOPLEFT',WorldMapFrame,'TOPLEFT',20,-50);WorldMapFrame.canvas:SetBackdropColor(.23,.25,.16,1)
+WorldMapFrame.ScrollContainer=WorldMapFrame.canvas
+WorldMapFrame.GetCanvas=function(self) return self.canvas end;WorldMapFrame.GetMapID=function() return 1 end;WorldMapFrame.SetMapID=function() end;WorldMapFrame.GetCanvasScale=function() return 1 end
+mapHeading=A.Skin.Label(WorldMapFrame,'World map route editor / illustrative canvas',16,A.Skin.gold);mapHeading:SetPoint('TOPLEFT',WorldMapFrame,'TOPLEFT',20,-12);mapHeading:SetSize(880,24)
+A.UI.actions.edit();A.editIndex=4;A.Map.Refresh(A.db,A.editor.draft,nil)
+local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContainer.GetNormalizedCursorPosition=function() return dragX,dragY end
+""")
+        if scene=='map_editor_drag':lua.execute("local handle=A.Map.byKey['w:point:4'];handle.scripts.OnDragStart(handle);dragX,dragY=.58,.46;handle.scripts.OnUpdate(handle,.016)")
+        if scene=='map_following':lua.execute("A.UI.actions.discard();A.UI.OpenRoutes();A.UI.actions.start();A.Map.Refresh(A.db,A.follower.route,A.follower);mapHeading:SetText('World map route guidance / illustrative canvas')")
+    if scene.startswith('resources'):
+        lua.execute("atlasPopulate();A.UI.SetTab('resources')")
+        if scene=='resources_herb':lua.execute("A.UI.resourceLibraryView.SetSearch('Earthroot');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
+        if scene=='resources_ore':lua.execute("A.Store.Observe(A.db,{mapID=1,x=.5,y=.5,kind='ore',name='Small Thorium Vein',materialID='gm:ore:214',source='imported'});A.Store.Observe(A.db,{mapID=2,x=.6,y=.5,kind='ore',name='Rich Thorium Vein',materialID='gm:ore:215',source='imported'});A.UI.resourceLibraryView.SetSearch('Thorium');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
+        if scene=='resources_zero':lua.execute("A.UI.resourceLibraryView.SetSearch('Black Lotus');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
+        if scene=='resources_search_empty':lua.execute("A.UI.resourceLibraryView.SetSearch('No matching resource')")
+        if scene=='resources_page2':lua.execute("A.UI.controls.resourceNext.scripts.OnClick()")
+        if scene=='resources_restored_preferences':lua.execute("A.UI.SetTab('settings')")
+    if scene=='minimap_button':
+        lua.execute("A.UI.frame:Hide();Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(180,180);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',900,-100);Minimap:SetBackdropColor(.12,.16,.09,1);A.MinimapButton.Build()")
+    if scene=='material_skills':
+        lua.execute("A.Resources.Skills=function() return {herb=109},{herb={maxRank=150,bonus=0}} end;A.Store.Observe(A.db,{mapID=1,x=.5,y=.5,kind='herb',name='Earthroot',materialID='gm:herb:403',source='imported'});A.UI.SetKind('herb')")
+    if scene=='editing':lua.execute('WorldMapFrame:Hide();A.UI.Edit(A.db.routes[A.selectedRoute]);A.editIndex=4;A.UI.Refresh()')
+    if scene=='recording':lua.execute("A.UI.controls.record.scripts.OnClick(); for i=1,6 do A.recording:Sample({mapID=1,x=.2+i*.02,y=.4+i*.01},i) end;A.UI.Refresh()")
+    if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
+    if scene=='preferences':lua.execute("A.UI.SetTab('settings')")
+    if scene in ('nodes','dropdown'):lua.execute("A.UI.SetTab('nodes')")
+    if scene=='dropdown':lua.execute("A.UI.controls.nodeDistance.scripts.OnClick(A.UI.controls.nodeDistance)")
+    if scene in ('arrow_hidden_progress','arrow_paused','arrow_no_direction'):
+        lua.execute("A.UI.controls.start.scripts.OnClick()")
+        if scene=='arrow_hidden_progress':lua.execute('A.db.settings.arrowProgress=false')
+        if scene=='arrow_paused':lua.execute('A.follower:Pause()')
+        lua.execute("A.Arrow.Update("+('A.Client.Position(),0' if scene=='arrow_hidden_progress' else 'nil,nil')+",A.follower:Target(),A.Client.Distance,A.follower:Snapshot())")
+    if scene in ('arrow_name','arrow_name_no_progress'):lua.execute('A.db.settings.arrowNodeName=true')
+    if scene=='arrow_name_no_progress':lua.execute('A.db.settings.arrowProgress=false')
+    if scene in ('arrow','arrow_name','arrow_name_no_progress'):lua.execute("A.UI.controls.start.scripts.OnClick();A.Arrow.Update(A.Client.Position(),0,A.follower:Target(),A.Client.Distance,A.follower:Snapshot())")
+    if scene.startswith('atlas'):
+        if scene=='atlas_empty':lua.execute("A.UI.SetTab('atlas')")
+        else:lua.execute('atlasPopulate()')
+        if scene=='atlas_zones':lua.execute("A.UI.controls.atlasDetail:SelectValue('zones')")
+        if scene=='atlas_all_zones':lua.execute("A.UI.controls.atlasScope:SelectValue('all');A.UI.controls.atlasSort:SelectValue('difficulty')")
+        if scene=='atlas_locations_page2':lua.execute('A.UI.controls.atlasDetailNext.scripts.OnClick()')
+    objects=vals(lua.globals().captured);byid={int(o['captureID']):o for o in objects}; boxes={0:(0,0,1280,800)};resolving=set()
+    def ident(o):return int(o['captureID']) if o and o['captureID'] is not None else 0
+    def box(o):
+        k=ident(o)
+        if k in boxes:return boxes[k]
+        if k in resolving:raise ValueError('Anchor cycle')
+        resolving.add(k)
+        if o['all'] is not None:r=box(o['all'])
+        else:
+            w,h=o['width'],o['height']; anchors=vals(o['anchors']);constraints=[]
+            for a in anchors:
+                own,target,rel,dx,dy=a[1],a[2],a[3],a[4] or 0,a[5] or 0
+                tx,ty,tw,th=box(target);fx,fy=fractions.get(rel,(0,0));ox,oy=fractions.get(own,(0,0))
+                constraints.append((ox,oy,tx+tw*fx+dx,ty+th*fy-dy))
+            for a in constraints:
+                for b in constraints:
+                    if w is None and a[0]!=b[0]:w=(b[2]-a[2])/(b[0]-a[0])
+                    if h is None and a[1]!=b[1]:h=(b[3]-a[3])/(b[1]-a[1])
+            w=w if w is not None else 0;h=h if h is not None else (o['fontSize'] or 12)+4
+            if constraints:a=constraints[0];x,y=a[2]-w*a[0],a[3]-h*a[1]
+            else:x,y,_,_=box(o['parent'])
+            r=(x,y,w,h)
+        resolving.remove(k);boxes[k]=r;return r
+    def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
+    im=Image.new('RGBA',(1280,800),'#0c1711');d=ImageDraw.Draw(im)
+    d.text((160,27),'GATHER COMPASS FOREVER 0.8.3 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    fonts={}; text_report=[]
+    def font(o):
+        size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
+        if key not in fonts:fonts[key]=ImageFont.truetype('C:/Windows/Fonts/'+family,size)
+        return fonts[key]
+    for o in objects:
+        if not visible(o):continue
+        x,y,w,h=box(o);rect=(round(x),round(y),round(x+w),round(y+h))
+        if w<0 or h<0:raise AssertionError('Negative geometry')
+        if o['parent'] is not None and ident(o['parent']['opaqueBase'])==ident(o):continue
+        template=o['template'] or ''
+        if template=='PortraitFrameTemplate':
+            d.rectangle(rect,fill='#34322f',outline='#514d42',width=5)
+            d.rectangle((x+5,y+5,x+w-5,y+h-5),outline='#a49a7d',width=2)
+            d.rectangle((x+8,y+8,x+w-8,y+31),fill='#34291a',outline='#756248',width=2)
+            d.ellipse((x-7,y-7,x+63,y+63),fill='#25251e',outline='#aaa18b',width=5)
+            if o['title']:
+                titlefont=ImageFont.truetype('C:/Windows/Fonts/georgia.ttf',16);tw=d.textlength(o['title'],font=titlefont)
+                d.text((x+w/2-tw/2,y+6),o['title'],font=titlefont,fill='#ffd472')
+        if template=='UIPanelButtonTemplate':
+            disabled=o['enabled'] is False
+            d.rectangle(rect,fill='#3b3831' if disabled else '#711b10',outline='#978362',width=2)
+            d.line([(x+3,y+2),(x+w-3,y+2)],fill='#ad9673')
+            d.line([(x+2,y+h-2),(x+w-2,y+h-2)],fill='#2c100b',width=2)
+        if template in ('PanelTabButtonTemplate','PanelTopTabButtonTemplate'):
+            d.polygon([(x+7,y+2),(x+w-7,y+2),(x+w-1,y+8),(x+w-3,y+h-2),(x+3,y+h-2),(x+1,y+8)],fill='#51422a' if o['selected'] else '#29241a',outline='#968366')
+            # Native template children precede their parent in the capture; draw
+            # the stock label here so its parent's approximation cannot cover it.
+            tabfont=ImageFont.truetype('C:/Windows/Fonts/georgia.ttf',12)
+            tabtext=str(o['text'] or '');tw=d.textlength(tabtext,font=tabfont)
+            d.text((x+(w-tw)/2,y+8),tabtext,font=tabfont,fill='#f4dfb3' if o['selected'] else '#ffd472')
+        if template=='UIPanelCloseButton':
+            d.rectangle((x+5,y+5,x+w-5,y+h-5),fill='#7e1c14',outline='#a18b66',width=2)
+            d.line([(x+11,y+10),(x+w-11,y+h-10)],fill='#ead3a0',width=2)
+            d.line([(x+w-11,y+10),(x+11,y+h-10)],fill='#ead3a0',width=2)
+        if o['kind']=='CheckButton':
+            d.rectangle((x+3,y+3,x+w-3,y+h-3),fill='#17120d',outline='#aa8a4a',width=2)
+            if o['checked']:d.line([(x+5,y+h*.5),(x+w*.42,y+h-5),(x+w-4,y+5)],fill='#f6db87',width=2)
+        if o['kind']=='Slider':
+            d.rectangle((x,y+5,x+w,y+h-5),fill='#0e0d0a',outline='#827456',width=2)
+            minimum,maximum=(5,40) if 'Slider1' in (o['name'] or '') else (.6,2)
+            value=o['value'] or minimum;fraction=max(0,min(1,(value-minimum)/(maximum-minimum)))
+            tx=x+8+(w-16)*fraction
+            d.rectangle((tx-6,y-3,tx+6,y+h+3),fill='#958a70',outline='#d0bd91',width=2)
+        if o['backColor'] is not None:
+            if o['backdrop'] is not None and 'UI-DialogBox-Background' in (o['backdrop']['bgFile'] or ''):
+                d.rectangle(rect,fill='#171410',outline='#675b49',width=2)
+            else:d.rectangle(rect,fill=rgba(o['backColor']),outline=rgba(o['borderColor']))
+        if o['color'] is not None and rgba(o['color'])[3]:d.rectangle(rect,fill=rgba(o['color']))
+        texture=o['texture']
+        if isinstance(texture,str) and '\\Media\\' in texture and w>0 and h>0:
+            file=root/'Media'/(texture.split('\\')[-1]+'.tga'); art=Image.open(file).convert('RGBA')
+            if o['crop'] is not None:
+                u=vals(o['crop']);art=art.crop((u[0]*art.width,u[2]*art.height,u[1]*art.width,u[3]*art.height))
+            if o['vertexColor'] is not None:art=ImageChops.multiply(art,Image.new('RGBA',art.size,rgba(o['vertexColor'])))
+            if o['rotation'] is not None:art=art.rotate(math.degrees(o['rotation']),resample=Image.Resampling.BICUBIC)
+            art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS);im.alpha_composite(art,(round(x),round(y)))
+        if isinstance(texture,str) and w>0 and h>0 and '\\Media\\' not in texture:
+            if 'UI-DialogBox-Background' in texture:d.rectangle(rect,fill='#211b15',outline='#65533a')
+            elif 'UI-Panel-Button-' in texture:
+                disabled='Disabled' in texture
+                d.rectangle(rect,fill='#37322d' if disabled else '#611b13',outline='#8d7650',width=2)
+                d.line([(x+2,y+2),(x+w-3,y+2)],fill='#776555' if disabled else '#c48a52')
+            elif 'UI-ScrollBar-ScrollDownButton-Up' in texture:
+                d.polygon([(x+w*.25,y+h*.35),(x+w*.75,y+h*.35),(x+w*.5,y+h*.65)],fill='#e8d4a0')
+            elif 'UI-CheckBox-Up' in texture:d.rectangle((x+3,y+3,x+w-3,y+h-3),fill='#17120d',outline='#aa8a4a',width=2)
+            elif 'UI-CheckBox-Check' in texture:d.line([(x+4,y+h*.5),(x+w*.42,y+h-5),(x+w-3,y+4)],fill='#f8d66a',width=2)
+            elif 'UI-QuestTitleHighlight' in texture:pass
+            elif 'MiniMap-TrackingBorder' in texture:
+                d.ellipse((x+3,y+3,x+31,y+31),outline='#be9e5c',width=2)
+            elif 'UI-Minimap-Background' in texture:
+                d.ellipse(rect,fill='#171410')
+            elif 'MinimapArrow' in texture:
+                d.polygon([(x+w/2,y+2),(x+w-3,y+h-3),(x+w/2,y+h*.7),(x+3,y+h-3)],fill=rgba(o['vertexColor'],(243,206,104,255)))
+            else:
+                # Resource art is resolved from installed GatherMate2 when present;
+                # otherwise a neutral preview tile stands for the native client icon.
+                d.rectangle(rect,fill='#364325',outline='#9c8856'); d.ellipse((x+w*.28,y+h*.2,x+w*.72,y+h*.8),fill='#abc06b')
+        if o['lineStart'] is not None:
+            def linept(a):
+                tx,ty,tw,th=box(a[2]);fx,fy=fractions[a[1]];return (tx+tw*fx+(a[3] or 0),ty+th*fy-(a[4] or 0))
+            d.line([linept(o['lineStart']),linept(o['lineEnd'])],fill=rgba(o['color'],(190,175,115,255)),width=max(1,round(o['thickness'] or 2)))
+        if o['kind'] in ('FontString','EditBox') and o['text'] and w>0:
+            if o['kind']=='EditBox':x+=10;w-=20
+            f=font(o); text=str(o['text']).replace('||','|');lines=[]
+            for paragraph in text.split('\n'):
+                if o['wrap']:
+                    current=''
+                    for word in paragraph.split():
+                        new=(current+' '+word).strip()
+                        if d.textlength(new,font=f)>w and current:lines.append(current);current=word
+                        else:current=new
+                    lines.append(current)
+                else:
+                    s=paragraph
+                    if d.textlength(s,font=f)>w:
+                        while s and d.textlength(s+'…',font=f)>w:s=s[:-1]
+                        s+='…'
+                    lines.append(s)
+            step=(o['fontSize'] or 12)+2; maxlines=max(1,int(h//step)); lines=lines[:maxlines]
+            ty=y+max(0,(h-len(lines)*step)/2)-1
+            for s in lines:
+                length=d.textlength(s,font=f);tx=x+(w-length)/2 if o['justify']=='CENTER' else x+w-length if o['justify']=='RIGHT' else x
+                d.text((tx,ty),s,font=f,fill=rgba(o['textColor'],(220,225,210,255)),stroke_width=1 if 'OUTLINE' in (o['fontFlags'] or '') else 0,stroke_fill='#15120e');ty+=step
+            text_report.append({'text':text,'box':[x,y,w,h]})
+    d.text((160,768),'Rendered from native Lua definitions. Native Blizzard textures and fonts are approximated; live Forever rendering still needs checking.',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#839785')
+    path=out/(scene+'.png');im.convert('RGB').save(path)
+    (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
+    print(path)
+for scene in ['library','map_editor','map_editor_drag','map_following','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','editing','recording','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

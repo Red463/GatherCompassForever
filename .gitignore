@@ -1,0 +1,32 @@
+# Local build output, dependencies and Python caches
+/dist/
+/.test-deps/
+/.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.log
+
+# Local tooling and development-session records
+/.superpowers/
+/.agents/
+/.codex/
+/docs/superpowers/
+/docs/classic-ui-progress.md
+/docs/classic-ui-design.md
+/docs/classic-ui-mockup.html
+/docs/difficulty-colour-research.md
+
+# Reproducible preview output; curated examples live in docs/images
+/docs/previews/
+
+# Editor/OS files and local account state
+/.vscode/
+/.idea/
+.DS_Store
+Thumbs.db
+*.local
+.env
+.env.*
+WTF/
+SavedVariables/

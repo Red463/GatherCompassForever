@@ -1,0 +1,37 @@
+## Interface: 16001
+## Title: Gather Compass Forever
+## Notes: Gathering spawn memory, custom farming trails and route guidance. /gcf
+## Author: Tom
+## X-License: MIT
+## Version: 0.8.3
+## IconTexture: Interface\AddOns\GatherCompassForever\Media\Icon
+## SavedVariables: GatherCompassForeverDB
+## OptionalDeps: GatherMate2
+
+Libs/LibStub.lua
+Libs/CallbackHandler-1.0.lua
+Libs/HereBeDragons-2.0.lua
+Libs/HereBeDragons-Pins-2.0.lua
+Store.lua
+Client.lua
+Resources.lua
+Atlas.lua
+ResourceLibrary.lua
+DifficultyProbe.lua
+Gathering.lua
+Imports.lua
+Editor.lua
+Recorder.lua
+Planner.lua
+Follower.lua
+Map.lua
+Skin.lua
+Dropdown.lua
+Arrow.lua
+RouteSketch.lua
+AtlasView.lua
+ResourceLibraryView.lua
+UIActions.lua
+UI.lua
+MinimapButton.lua
+Core.lua

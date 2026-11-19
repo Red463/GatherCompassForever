@@ -1,0 +1,30 @@
+test('custom skin has native text and explicit hover pressed selected disabled states',function()
+ dofile('tests/wow.lua'); fakeUI(); local A={}; module('Skin',A)
+ local b=A.Skin.Button(UIParent,'Begin',function() end,'quiet')
+ eq(b.template,nil); eq(b:GetText(),'Begin'); b:SetText('Continue'); eq(b.label:GetText(),'Continue')
+ local normal=b.background.color[1]; b.scripts.OnEnter(b); assert(b.background.color[1]~=normal)
+ b.scripts.OnMouseDown(b,'LeftButton'); eq(b.pressed,true)
+ b.scripts.OnMouseUp(b); eq(b.pressed,false)
+ b.scripts.OnLeave(b); A.Skin.Selected(b,true); eq(b.selected,true)
+ b:Disable(); b.scripts.OnDisable(b); eq(b.paintState,'disabled'); b:Enable(); b.scripts.OnEnable(b); eq(b.paintState,'selected')
+end)
+test('window fitting never enlarges and bounds the actual viewport',function()
+ dofile('tests/wow.lua'); fakeUI(); local A={}; module('Skin',A)
+ local f=CreateFrame('Frame'); UIParent:SetSize(1920,1080); A.Skin.FitWindow(f,960,650); eq(f.scale,1)
+ UIParent:SetSize(800,600); A.Skin.FitWindow(f,960,650); assert(f.scale<1); assert(960*f.scale<=776); assert(650*f.scale<=576)
+end)
+
+test('Classic panels stay opaque and action buttons use the native template without painted overlays',function()
+ dofile('tests/wow.lua');fakeUI();local A={};module('Skin',A)
+ local p=A.Skin.Panel(UIParent);assert(p.opaqueBase);eq(p.opaqueBase.color[4],1)
+ local create=CreateFrame
+ CreateFrame=function(kind,name,parent,template)
+  local f=create(kind,name,parent,template)
+  if template=='UIPanelButtonTemplate' then f:SetScript('OnDisable',function(self) self.nativeDisabled=true end) end
+  return f
+ end
+ local b=A.Skin.Button(p,'Save route',function() end,'primary')
+ eq(b.template,'UIPanelButtonTemplate');eq(b.background,nil);eq(b.chrome,nil)
+ b:Disable();eq(b.paintState,'disabled');eq(b.nativeDisabled,true);b:Enable();eq(b.paintState,'normal')
+ local tab=A.Skin.Tab(p,'Routes',100,function() end);eq(tab.template,'PanelTabButtonTemplate')
+end)

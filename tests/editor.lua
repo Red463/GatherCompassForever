@@ -1,0 +1,8 @@
+test('editor preserves saved route while adding moving reordering deleting and reversing draft',function()
+ local A={}; module('Store',A); module('Editor',A)
+ local saved={mapID=1,name='Trail',points={point(.1),point(.2)},loop=false}; local e=A.Editor.New(saved)
+ e:Add(point(.3)); e:Move(1,point(.15)); e:Reorder(3,1); e:Delete(2); e:Reverse(); e:SetLoop(true)
+ eq(#saved.points,2); near(saved.points[1].x,.1); eq(saved.loop,false)
+ eq(#e:Route().points,2); near(e:Route().points[1].x,.2); eq(e:Route().loop,true)
+ local other=point(.4); other.mapID=2; eq(e:Add(other),false)
+end)

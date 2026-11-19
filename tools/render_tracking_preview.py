@@ -1,6 +1,6 @@
 """Geometry QA: real before/after Map.lua output, simulated native tracking dots."""
 from pathlib import Path
-import sys, os, zipfile
+import sys, os, zipfile, argparse
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'.test-deps'))
 from lupa.lua51 import LuaRuntime
@@ -22,8 +22,13 @@ nativeNodes={{mapID=1,x=.57,y=.51},{mapID=1,x=.5,y=.54},points[2],points[3]}
 for _,p in ipairs(nativeNodes) do p.kind='herb';p.materialID='gm:herb:401';p.name='Peacebloom';p.source='imported';A.Store.Observe(A.db,p) end
 A.Map.Refresh(A.db,{mapID=1,points=points,loop=true},{Snapshot=function() return {status='running',index=2,target=points[2],visited={}} end})
 """
-with zipfile.ZipFile(root/'dist/Gatherly-0.5.0.zip') as archive:
-    before=archive.read('Gatherly/Map.lua').decode()
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--baseline',type=Path,required=True,help='Trusted local addon ZIP used for the before comparison')
+args=parser.parse_args()
+with zipfile.ZipFile(args.baseline) as archive:
+    matches=[name for name in archive.namelist() if name.endswith('/Map.lua')]
+    if len(matches)!=1:raise ValueError('Baseline must contain exactly one addon Map.lua')
+    before=archive.read(matches[0]).decode()
 after=(root/'Map.lua').read_text()
 image=Image.new('RGBA',(1000,520),'#141410');d=ImageDraw.Draw(image)
 font=lambda size:ImageFont.truetype('C:/Windows/Fonts/arial.ttf',size)

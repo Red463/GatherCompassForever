@@ -25,6 +25,10 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
       - name: Run behavior tests and Lua 5.1 compilation
         run: python tests/run_tests.py
+      - name: Check branding and saved-data transfer
+        run: |
+          python tests/branding.py
+          python tests/transfer_saved_data.py
       - name: Build the installable addon ZIP
         run: python tools/package.py
       - name: Verify the package and public documentation

@@ -44,6 +44,9 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
+Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
+**GatherlyDB** global. The only slash command is **/gatherly**.
+
 1. Download `Gatherly-0.16.0.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
@@ -57,9 +60,34 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Manual route creation, recording and the saved-route list are no longer exposed.
 Existing saved routes remain in your SavedVariables.
 
-When updating, replace the complete addon folder. **Keep SavedVariables** to retain
-routes, known locations and preferences. The addon is built for Forever's interface
-16001; other WoW clients are not currently supported.
+When updating Gatherly, replace the complete addon folder. **Keep SavedVariables**
+to retain routes, known locations and preferences. The addon is built for Forever's
+interface 16001; other WoW clients are not currently supported.
+
+### Transfer existing saved data once
+
+The renamed addon reads `GatherlyDB` from `Gatherly.lua`. It does not register
+aliases for previous addon identities. To retain existing nodes, routes and settings:
+
+1. Close WoW and back up your account's `WTF` folder.
+2. Copy your existing addon's saved-variable `.lua` file to a working directory.
+   Choose the file containing its nodes, routes and settings.
+3. Download [transfer_saved_data.py](https://github.com/Red463/Gatherly/releases/latest/download/transfer_saved_data.py)
+   from the same release and run it with Python 3:
+
+   ```text
+   python transfer_saved_data.py "path/to/saved-data.lua" "path/to/Gatherly.lua"
+   ```
+
+4. Put the new `Gatherly.lua` in the same account's `SavedVariables` directory,
+   before launching Gatherly for the first time. If a Gatherly save already exists,
+   back it up before choosing which save to use; the tool refuses to overwrite files.
+5. Remove the superseded addon folder from `Interface/AddOns`, install the `Gatherly`
+   folder, restart WoW and verify your nodes and preferences.
+
+The tool changes only the root variable name. It never executes Lua or changes the
+input file; stored data and its formatting are preserved. Transfers are optional:
+Gatherly can also start with an empty database and import node locations normally.
 
 ### Optional node data
 

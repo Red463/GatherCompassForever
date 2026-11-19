@@ -45,6 +45,8 @@ with zipfile.ZipFile(path) as z:
     for name in names:
         if name.endswith(('.lua','.md','.txt','.toc')):
             assert b'estimat' not in z.read(name).lower(), f'Prohibited wording in shipped file: {name}'
+            previous = [b'Gather' + b'Compass' + b'Forever', b'Gather ' + b'Compass', b'/' + b'gc' + b'f']
+            assert not any(value.lower() in z.read(name).lower() for value in previous), f'Former branding in package: {name}'
     assert z.testzip() is None
     for name in names:
         relative = name.removeprefix('Gatherly/')

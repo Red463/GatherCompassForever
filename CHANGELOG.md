@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.0
+
+- Group overlapping world-map, minimap and review icons into shared count badges with coloured resource breakdowns. Keep minimap outlines at their exact spawn coordinates.
+- Add an individual member chooser for grouped review nodes, preserving single-node removal and undo.
+- Combine Atlas and Resources into Node Codex: full skill-coloured catalogue, type/skill/source/zone browsing, ranked zones, history and guarded local route/nearest actions; remove coordinate lists and the redundant Welcome button.
+- Simplify Node display into full-width World map and Minimap pages, with previews and migrated appearance values.
+- Make Welcome step 2 open Routes with Choose materials.
+- Add structured skill-coloured panel tooltips for materials, resources and grouped nodes.
+- Show active heat corridors on the minimap with bounded opacity, known-node/player clearance, standard-shape masks and effective rotation support. Stop/completion clears the overlay.
+- Reveal supported Routes map artwork using pinned attributed MIT metadata from OpenMap; load textures from the installed client and fall back to native explored art for unsupported map-art IDs.
+- Keep existing storage, routing/session ownership, shared filters, arrow behaviour and MIT licensing. No new addon dependency or copied client artwork.
+
 ## 0.10.0
 
 - Add one-time Gatherable material selection, including eligible grey resources and capped professions.

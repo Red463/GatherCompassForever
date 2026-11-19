@@ -1,7 +1,7 @@
 from pathlib import Path
 import zipfile
 root = Path(__file__).resolve().parents[1]
-path = root / 'dist/GatherCompassForever-0.10.0.zip'
+path = root / 'dist/GatherCompassForever-0.11.0.zip'
 assert path.is_file(), 'Installable ZIP missing'
 with zipfile.ZipFile(path) as z:
     names = z.namelist()
@@ -11,7 +11,7 @@ with zipfile.ZipFile(path) as z:
     metadata = dict(line[3:].split(': ', 1) for line in toc.splitlines() if line.startswith('## '))
     assert metadata['Title'] == 'Gather Compass Forever'
     assert metadata['SavedVariables'] == 'GatherCompassForeverDB'
-    assert metadata['Version'] == '0.10.0'
+    assert metadata['Version'] == '0.11.0'
     assert metadata['X-License'] == 'MIT'
     assert metadata['IconTexture'] == r'Interface\AddOns\GatherCompassForever\Media\Icon'
     for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow', 'HeatBlob', 'MinimapMasks']:
@@ -22,6 +22,11 @@ with zipfile.ZipFile(path) as z:
     for file in ['LICENSE','CHANGELOG.md','CONTRIBUTING.md','NOTICE.md','README.md','Libs/LICENSE.txt','Libs/HereBeDragons-LICENSE.txt','Libs/OpenMap-Reveal-LICENSE.txt','Media/Icon.tga','Media/Header.tga']:
         assert 'GatherCompassForever/' + file in names
     assert z.read('GatherCompassForever/LICENSE').startswith(b'MIT License')
+    assert b'Copyright (c) 2026 OpenMap contributors' in z.read('GatherCompassForever/Libs/OpenMap-Reveal-LICENSE.txt')
+    assert 'GatherCompassForever/Data/MapReveal.lua' in names
+    assert 'GatherCompassForever/AtlasView.lua' not in names
+    mask=z.read('GatherCompassForever/Media/MinimapMasks.tga')
+    assert mask[2]==2 and mask[16]==32 and int.from_bytes(mask[12:14],'little')==256
     for path in (root / 'docs/images').glob('*.png'):
         assert 'GatherCompassForever/' + path.relative_to(root).as_posix() in names
     for marker in ['NodeRing', 'NodeSquare']:

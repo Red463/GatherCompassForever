@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.10.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.11.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -28,17 +28,19 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 - **Generate a local corridor.** Start immediately, or review a large zone map and
   remove individual nodes with undo. No save step is needed.
 - **Follow the path.** Choose thin lines or a soft heatmap corridor on the world map
-  and route sketch. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
-- **Explore resources.** Browse a square item grid and view zones ranked by known
-  node count, source-specific skill requirements and personal gather history.
-- **Tune map markers.** Use icons on the world map and icons, rings or squares on
-  the minimap. Hide nearby minimap icons while retaining hollow outlines.
+  and route sketch, plus minimap heat. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
+- **Explore Node Codex.** Browse skill-coloured item tiles, compare zones and skill
+  requirements, and review a resource route or guide to a nearby known location.
+- **Read crowded maps.** Shared count badges group overlapping icons; hover for a
+  resource breakdown. Minimap outlines retain their original spawn positions.
+- **Tune map markers.** Separate World map/Minimap pages control sizes, opacity,
+  grouping and nearby-icon hiding without losing hollow outlines.
 - **Review without losing history.** Removals affect the current plan only. Existing
   saved routes and node history are preserved. A minimap badge opens the panel.
 
 ## Install
 
-1. Download `GatherCompassForever-0.10.0.zip` from
+1. Download `GatherCompassForever-0.11.0.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -75,7 +77,8 @@ in-game screenshots; actual Forever textures and rendering can differ.
 ### Welcome and shared filters
 
 Welcome introduces the workflow, imports all available zones and shows import status.
-It appears on first use; guide-arrow clicks still open Routes directly.
+It appears on first use; **Choose materials** in step 2 opens the Routes checkboxes.
+Guide-arrow clicks still open Routes directly.
 
 ![Welcome tab with introduction, all-zone import and quick navigation](docs/images/welcome.png)
 
@@ -89,29 +92,52 @@ scrolling and a scrollbar, with icons and skill-coloured names.
 Choose materials, then use **Generate & start** or **Generate & review**. Click a node
 to select it, then **Remove node** to update the corridor. **Undo removal** restores
 it. Scroll to zoom and right-drag empty map space to pan. Dim icons are outside the
-current local circuit; counts show the included and omitted locations.
+current local circuit; counts show the included and omitted locations. Revealed
+map overlays are loaded from the client using attributed MIT metadata. If an art ID
+is not covered, the sketch falls back to native explored artwork. No OpenMap addon
+is required.
 
 ![Large map-backed route review with node selection, removal and undo](docs/images/routes.png)
 
-### Resource catalogue and details
+### Overlapping nodes
 
-Filter the full supported item catalogue by type or name. Click an item to compare
-its known zones and read gathering requirements. Items without known locations
-remain visible so you can plan what to seek next.
+Badges show the number of known locations, including different resources. Hover
+for per-resource counts and skill colours. Zoom in to separate nearby locations.
+In the Routes sketch, click a badge and choose one member before using **Remove node**;
+the other members and stored history stay intact. Grouping can be disabled per map.
 
-![Resources tab with square item buttons and type/name filters](docs/images/resources.png)
+![Grouped review markers with an individual-location chooser](docs/images/grouped-nodes.png)
 
-![Resource details with skill guidance, personal history and ranked zones](docs/images/resource-details.png)
+### Node Codex
+
+Node Codex combines the previous Atlas and Resources pages. Browse the full supported
+catalogue with type, skill, source and zone filters plus name search. Tiles show the
+best skill-up state among currently gatherable sources; details show every source's
+own requirement and colour. Unknown data stays neutral.
+
+Codex browsing does not rewrite Routes checkboxes. Current-zone route/nearest actions
+use the selected resource intersected with those checkboxes, and preserve active
+guidance until it is stopped. Coordinate tables and the redundant Welcome button
+have been removed. Items without location data remain in the default full catalogue.
+
+![Node Codex with skill-coloured tiles and browsing filters](docs/images/node-codex.png)
+
+![Codex skill guidance, history, ranked zones and current-zone actions](docs/images/codex-details.png)
 
 ### Heatmap corridor
 
 Select **Heatmap corridor** above the route sketch to replace the lines with a soft,
 warm band through the generated farming areas. It is a route view, rather than a
 live resource scanner. The arrow follows the same points; switching views does not
-regenerate the route. Minimap route lines are hidden in this view, while resource
-markers and the destination marker remain.
+regenerate the route. Heat also appears on the minimap, replacing its route lines,
+while resource markers and the destination marker remain. Its bounded transparent
+field leaves clearance around the player and known resources. Native unknown live
+blips are not enumerable, so check tracking contrast in your client. Unsupported
+custom minimap shapes hide heat rather than spilling outside the map.
 
 ![Soft density corridor over an illustrative map](docs/images/route-heatmap.png)
+
+![Minimap heat with simulated native tracking dots and player clearance](docs/images/minimap-heat.png)
 
 ### Guide arrow
 
@@ -140,11 +166,10 @@ plan. Stopping or completing guidance clears them. Generation starts at the near
 selected local node and builds connected farming areas, rather than forcing a whole
 zone into one circuit. The displayed counts show when other areas are omitted.
 
-The **Node Atlas** provides per-resource location browsing, zone comparisons,
-resource-specific route review and nearest-location guidance. The separate
-**Resources** tab provides the full item catalogue, independent of your route filters.
-Clicking a ranked zone temporarily focuses that resource on the world map, subject
-to your shared checkbox filters. Closing the map restores its usual display.
+**Node Codex** offers ranked zones, personal history, skill-coloured sources and
+current-zone resource guidance in one page. Clicking a ranked zone focuses that
+resource on the world map, subject to shared checkbox filters. Closing the map
+restores its usual display.
 
 ## Settings and commands
 
@@ -173,11 +198,16 @@ known orange, yellow and green materials across matching known zones once. It ex
 grey, too-difficult and unknown resources, and you can edit the result afterward.
 The selected materials do not change automatically when your profession skill rises.
 
-**Node display** controls marker appearance, difficulty colours, icon-hide distance
-and minimap route visibility. Its three opacity sliders independently adjust
-world-map icons, minimap icons and minimap outlines from 0% to 100%. Changes apply
-immediately and are remembered. Navigation markers keep their own appearance.
-![Node appearance, difficulty colours and independent opacity controls](docs/images/node-display.png)
+**Node display** has separate **World map** and **Minimap** pages. Configure icon
+sizes/opacities and grouping on each map; minimap outlines have their own size and
+opacity. The nearby-hide distance affects icons/counts, while hollow outlines stay
+at their real known positions. **Show route overlay** and its strength slider apply
+to both Lines and Heatmap, independently of node-marker visibility. Heat uses a
+bounded strength to keep it transparent. Existing appearance values are preserved.
+
+![World-map marker controls and preview](docs/images/node-display.png)
+
+![Minimap markers, tracking clearance and route-overlay controls](docs/images/node-display-mini.png)
 
 **Preferences** controls arrival distance, arrow scale,
 optional labels and minimap-button visibility. Use `/gcf` to restore the minimap
@@ -232,7 +262,8 @@ requests and needs no external service.
 ## License
 
 Gather Compass Forever's original code, documentation and project artwork are
-licensed under the [MIT License](LICENSE). Bundled third-party libraries retain
+licensed under the [MIT License](LICENSE). The pinned OpenMap reveal metadata is
+also MIT and retains its own notice. Bundled third-party libraries retain
 their original licenses; see [Third-party notices](NOTICE.md).
 
 World of Warcraft and referenced native UI artwork belong to Blizzard Entertainment.

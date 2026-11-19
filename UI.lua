@@ -68,7 +68,7 @@ function U.PreviewRoute() return A.editor and A.editor.draft or A.recordedDraft 
 function U.DisplayRoute()
  if A.editor then return A.editor.draft end
  if A.follower and A.follower.status~='complete' and A.follower.status~='stopped' then return A.follower.route end
- return A.selectedRoute and A.db.routes[A.selectedRoute]
+ return nil
 end
 function U.SetTab(tab) if tab=='routes' or tab=='atlas' or tab=='resources' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
 function U.SetCompact(on) S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end

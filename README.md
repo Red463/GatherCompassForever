@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.8.4 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.8.5 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -37,7 +37,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.8.4.zip` from
+1. Download `GatherCompassForever-0.8.5.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -107,6 +107,10 @@ dragging it moves the guide instead. Starting a route closes the panel automatic
 4. Review the route and add detours around terrain on **Edit on map**. Save it.
 5. Click **Start route**. Use the arrow, world map and minimap to follow the route.
    Pause, skip or stop through the route panel.
+
+World-map paths use thin gold lines and appear only while following a route
+(including when paused) or editing its path. Selecting a saved route keeps its
+sketch in the panel; stopping or completing guidance clears its map lines.
 
 The **Node Atlas** provides per-resource location browsing, zone comparisons,
 resource-specific route drafts and nearest-location guidance. The separate

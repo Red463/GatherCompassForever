@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.5
+
+- Show world-map route lines only during active navigation or path editing.
+- Clear routes after stopping, completing or leaving the editor; opening a saved route's map does not start guidance.
+- Use fine gold world-map strokes, a brighter current leg and a subtle contrast edge.
+- Keep world-map line widths consistent while zooming and preserve minimap tracking clearance.
+
 ## 0.8.4
 
 - Place world-map routes above Blizzard's exploration and highlight pin artwork.

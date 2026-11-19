@@ -178,7 +178,7 @@ function A.UIActions.Bind(U)
  function actions.map(keepPanel)
   if not WorldMapFrame then say('World map unavailable.'); return end
   local r=A.recording or U.PreviewRoute(); local p=A.Client.Position(); local id=U.tab=='atlas' and p and p.mapID or r and r.mapID or p and p.mapID
-  A.mapPreviewRoute=U.tab~='atlas' and not A.recording and r or nil
+  A.mapPreviewRoute=nil
   if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil) end
   WorldMapFrame:Show(); if id and WorldMapFrame.SetMapID then WorldMapFrame:SetMapID(id) end
   if A.editor then

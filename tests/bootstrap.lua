@@ -238,7 +238,9 @@ for _,mode in ipairs({'button','command'}) do
   assert(A.Map.byKey['m:node:'..node.key],'Known resource markers must remain')
   assert(A.selectedRoute and A.db.routes[A.selectedRoute],'Stop must preserve the saved selection')
   for i=1,3 do A.Tick(.5);for _,line in ipairs(A.Map.miniLines) do eq(line:IsShown(),false) end end
-  assert(A.Map.worldLines[1]:IsShown(),'Selected world-map preview remains available')
+  for _,pool in ipairs({A.Map.worldLines,A.Map.worldShadows}) do for _,line in ipairs(pool) do eq(line:IsShown(),false) end end
+  A.UI.actions.map();A.Tick(.5)
+  for _,line in ipairs(A.Map.worldLines) do eq(line:IsShown(),false) end
   LibStub=nil
  end)
 end
@@ -248,6 +250,7 @@ test('completed navigation retires minimap route without removing the saved rout
  A.UI.controls.start.scripts.OnClick();A.Tick(.5);assert(A.Map.miniLines[1]:IsShown())
  A.follower:Skip();A.follower:Skip();eq(A.follower.status,'complete');A.Tick(.5)
  for _,line in ipairs(A.Map.miniLines) do eq(line:IsShown(),false) end
+ for _,line in ipairs(A.Map.worldLines) do eq(line:IsShown(),false) end
  eq(A.Map.targetIndex,nil);assert(A.db.routes[A.selectedRoute]);eq(A.Arrow.frame:IsShown(),false)
 end)
 

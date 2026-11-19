@@ -149,6 +149,7 @@ function M.RaiseEditor()
 end
 function M.SetEditor(e)
  M.CancelDrag();M.nodeFocus=nil
+ for _,pool in ipairs({M.worldLines,M.worldShadows}) do for _,stroke in ipairs(pool) do stroke:Hide() end end
  for _,p in ipairs(M.pins) do if p.editorHandle and p.key then M.byKey[p.key]=nil;p.key=nil;p.signature=nil;p.editorHandle=nil;p:Hide();p:SetParent(UIParent) end end
  M.editor=e
  if not CreateFrame or not WorldMapFrame then return end
@@ -386,13 +387,12 @@ function M.Refresh(db,route,follower)
  local active=snapshot and (snapshot.status=='running' or snapshot.status=='paused' or snapshot.status=='suspended')
  M.targetIndex=active and snapshot.index or nil
  local points=route.points; local w,h=A.Client.Size(route.mapID)
- local preview=not M.editor and A.mapPreviewRoute or nil
- local differentPreview=preview and preview~=route
- local world=canvas and map:IsShown() and map:GetMapID()==route.mapID and not differentPreview and not focus
+ local editing=M.editor and route==M.editor.draft
+ local world=(active or editing) and canvas and map:IsShown() and map:GetMapID()==route.mapID and not focus
  local radius=C_Minimap and C_Minimap.GetViewRadius and A.Client.Read(C_Minimap.GetViewRadius())
  local facing=0
  if GetCVar and GetCVar('rotateMinimap')=='1' then facing=A.Client.Facing() end
- -- Library/editor previews belong to the world map; minimap paths require navigation.
+ -- Editing draws only on the world map; minimap paths require navigation.
  local mini=active and player and player.mapID==route.mapID and w and A.Store.Number(radius) and radius>0 and facing~=nil and Minimap and Minimap:IsShown()
  local holes={}
  if mini and settings.routeLines then
@@ -407,11 +407,15 @@ function M.Refresh(db,route,follower)
   if snapshot and snapshot.target then protect(snapshot.target) end
  end
  local wi,mi=0,0
+ local zoom=map and map.GetCanvasScale and map:GetCanvasScale() or 1
+ if not A.Store.Number(zoom) or zoom<=0 then zoom=1 end
  local function drawWorld(index,a,b,color)
   local x1,y1=M.Project(a,canvas:GetWidth(),canvas:GetHeight());local x2,y2=M.Project(b,canvas:GetWidth(),canvas:GetHeight())
-  local width=math.max(3,color[5] or 2)
-  line(M.worldShadows,index,worldLayer,x1,y1,x2,y2,{.04,.035,.02,.7,width+2},false,'BACKGROUND')
-  line(M.worldLines,index,worldLayer,x1,y1,x2,y2,{color[1],color[2],color[3],color==done and .75 or 1,width})
+  local current=color==gold;local visited=color==done
+  local width=(current and 2 or 1.5)/zoom
+  local tint=current and {1,.82,.35,.95,width} or visited and {.56,.52,.42,.5,width} or {.92,.72,.30,.85,width}
+  line(M.worldShadows,index,worldLayer,x1,y1,x2,y2,{.10,.07,.025,current and .35 or .25,width+1/zoom},false,'BACKGROUND')
+  line(M.worldLines,index,worldLayer,x1,y1,x2,y2,tint)
   local stroke=M.worldLines[index];stroke.fromPoint=a;stroke.toPoint=b;stroke.shadow=M.worldShadows[index]
  end
  local function segment(a,b,color)
@@ -444,15 +448,6 @@ function M.Refresh(db,route,follower)
   if points[A.editIndex or 1] then add(points[A.editIndex or 1],A.editIndex or 1,nil,false) end
  end
  if active and snapshot.target then add(snapshot.target,snapshot.index,nil,true) end
- -- A selected-route world-map preview must not redirect the active minimap leg.
- if differentPreview and not focus and canvas and map:IsShown() and map:GetMapID()==preview.mapID then
-  local pp=preview.points; local count=0; local step=math.max(1,math.ceil(#pp/550))
-  local function previewLine(a,b)
-   count=count+1;drawWorld(count,a,b,teal)
-  end
-  for i=1,#pp-1,step do previewLine(pp[i],pp[math.min(i+step,#pp)]) end
-  if preview.loop and #pp>1 then previewLine(pp[#pp],pp[1]) end
- end
  retire()
  M.CollectDragLinks()
 end

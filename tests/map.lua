@@ -7,13 +7,13 @@ test('map projection respects non square geometry rotation and minimap clipping'
  near(A.Arrow.Angle(point(.5,.4),point(.5,.5),1000,500,0),0)
  near(A.Arrow.Angle(point(.6,.5),point(.5,.5),1000,500,0),-math.pi/2)
 end)
-test('browsed world route can differ from active minimap route',function()
+test('browsing another saved route cannot draw an inactive world route',function()
  dofile('tests/wow.lua'); fakeUI(); local A={}; module('Store',A); module('Client',A); module('Map',A)
  A.Client.Position=function() return point(.1) end; A.Client.Size=function() return 1000,500 end
  WorldMapFrame.GetMapID=function() return 2 end
  A.mapPreviewRoute={mapID=2,points={{mapID=2,x=.1,y=.2},{mapID=2,x=.3,y=.4}}}
  A.Map.Refresh(A.Store.Open(),{mapID=1,points={point(.1),point(.2)}})
- assert(A.Map.worldLines[1] and A.Map.worldLines[1]:IsShown())
+ for _,line in ipairs(A.Map.worldLines) do eq(line:IsShown(),false) end
 end)
 test('world map shows the viewed zone while minimap retains the player zone',function()
  dofile('tests/wow.lua'); fakeUI(); local A={}; module('Store',A); module('Client',A); module('Map',A)
@@ -70,6 +70,32 @@ local function markerSetup()
  return A
 end
 
+test('idle route selection never draws lines and known resource markers remain visible',function()
+ local A=markerSetup();local node=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'})
+ local route={mapID=1,points={point(.3),point(.6)}}
+ A.Map.Refresh(A.db,route,nil)
+ for _,pool in ipairs({A.Map.worldLines,A.Map.worldShadows,A.Map.miniLines}) do for _,line in ipairs(pool) do eq(line:IsShown(),false) end end
+ assert(A.Map.byKey['w:node:'..node.key],'Idle world-map resources disappeared')
+ LibStub=nil
+end)
+
+test('world route uses fine gold strokes with subtle edges and stable width while zooming',function()
+ local A=markerSetup();module('Follower',A);A.Client.Size=function() return 1000,500 end
+ local route={mapID=1,points={point(.3),point(.6),point(.8)}}
+ local follower=A.Follower.New(route,point(.1),distance)
+ for _,zoom in ipairs({1,2,4}) do
+  WorldMapFrame.GetCanvasScale=function() return zoom end
+  A.Map.Refresh(A.db,route,follower)
+  local leg,path=A.Map.worldLines[1],A.Map.worldLines[2]
+  assert(path.color[1]>.75 and path.color[2]>.5 and path.color[3]<.5,'World route is not warm gold')
+  near(path.thickness*zoom,1.5);near(leg.thickness*zoom,2)
+  assert(path.color[4]>=.7 and path.color[4]<=.9,'Route opacity overwhelms the map')
+  assert(path.shadow.color[4]<=.4,'Route has a heavy dark outline')
+  assert(path.shadow.thickness*zoom<=3,'Route outline overwhelms the map')
+ end
+ LibStub=nil
+end)
+
 test('world route strokes render above map artwork but below resource pins for following and editing',function()
  local A=markerSetup();module('Follower',A);module('Editor',A);A.Client.Size=function() return 1000,500 end
  local canvas=WorldMapFrame:GetCanvas();local artwork=CreateFrame('Frame',nil,canvas);artwork:SetFrameLevel(canvas:GetFrameLevel()+5)
@@ -93,7 +119,7 @@ test('world route contrast and its outline stay aligned while editing and clear 
  local A=markerSetup();module('Editor',A);A.Client.Size=function() return 1000,500 end
  local e=A.Editor.New({mapID=1,name='Contrast',points={point(.25,.4),point(.6,.5)},loop=true});A.Map.SetEditor(e);A.editIndex=1
  A.Map.Refresh(A.db,e.draft);local stroke=A.Map.worldLines[1]
- assert(stroke.color[4]>=.95,'World route is too transparent');assert(stroke.shadow and stroke.shadow:IsShown(),'No contrast edge against map terrain')
+ assert(stroke.color[4]>=.7,'World route is too transparent');assert(stroke.shadow and stroke.shadow:IsShown(),'No contrast edge against map terrain')
  local x,y=.25,.4;WorldMapFrame.ScrollContainer.GetNormalizedCursorPosition=function() return x,y end
  local handle=A.Map.byKey['w:point:1'];handle.scripts.OnDragStart(handle);x,y=.35,.5;handle.scripts.OnUpdate(handle,.016)
  for _,line in ipairs(A.Map.dragLinks) do near(line.lineStart[3],line.shadow.lineStart[3]);near(line.lineEnd[4],line.shadow.lineEnd[4]) end
@@ -124,8 +150,9 @@ test('world route stays above exploration and highlight pins while below native 
 end)
 
 test('world route follows OpenMap terrain priority without raising lines on other maps',function()
- local A=markerSetup();A.Client.Size=function() return 1000,500 end
+ local A=markerSetup();module('Editor',A);A.Client.Size=function() return 1000,500 end
  local route={mapID=1,points={point(.3),point(.6)}}
+ A.Map.SetEditor({draft=route})
  local stitched=true;local artTop=2300
  OpenMapAPI={major=1,IsStitched=function() return stitched end,ArtTopLevel=function() return artTop end}
  WorldMapFrame.GetPinFrameLevelsManager=function() return {minLevel=2000,GetFrameLevelStart=function(_,kind) return kind=='PIN_FRAME_LEVEL_MAP_HIGHLIGHT' and 2200 or 2000 end,GetFrameLevelRange=function() return 1 end} end
@@ -146,8 +173,9 @@ test('world route fallback keeps editor above it without visible nodes',function
 end)
 
 test('world route respects complete terrain tier ranges and safely handles unavailable optional APIs',function()
- local A=markerSetup();A.Client.Size=function() return 1000,500 end
+ local A=markerSetup();module('Editor',A);A.Client.Size=function() return 1000,500 end
  local route={mapID=1,points={point(.3),point(.6)}}
+ A.Map.SetEditor({draft=route})
  local manager={GetFrameLevelStart=function(_,kind) return kind=='PIN_FRAME_LEVEL_MAP_HIGHLIGHT' and 2200 or 2000 end,GetFrameLevelRange=function() return 8 end}
  WorldMapFrame.GetPinFrameLevelsManager=function() return manager end
  OpenMapAPI={major=1,IsStitched=function() error('not ready') end,ArtTopLevel=function() error('not ready') end}
@@ -277,7 +305,7 @@ test('minimap route leaves tracking clearance even with addon node markers disab
  end end
  assert(visible>0,'Route still needs to be visible')
  local target=A.Map.byKey['m:point:2'];assert(target);eq(target.icon:IsShown(),false);eq(target.outline:IsShown(),true)
- eq(A.Map.worldLines[1].thickness,4);eq(A.Map.worldLines[1].color[4],1)
+ eq(A.Map.worldLines[1].thickness,2);eq(A.Map.worldLines[1].color[4],.95)
  C_Minimap=nil;GetCVar=nil;LibStub=nil
 end)
 test('minimap route visibility toggle retires its lines without changing world guidance',function()
@@ -318,7 +346,7 @@ test('tracking clearance follows rotating non-square minimaps and zoom changes',
 end)
 
 
-test('minimap route follows navigation state while selected and editor previews stay on world map',function()
+test('world and minimap routes follow navigation state with world editing only',function()
  local A=markerSetup();module('Follower',A);A.Client.Position=function() return point(.5) end;A.Client.Size=function() return 1000,500 end
  C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end
  local route={mapID=1,points={point(.35),point(.65)}}
@@ -332,7 +360,9 @@ test('minimap route follows navigation state while selected and editor previews 
   local visible=0;for _,l in ipairs(A.Map.miniLines) do if l:IsShown() then visible=visible+1 end end
   eq(visible>0,active);eq(A.Map.targetIndex,active and follower.index or nil)
   if not active then eq(A.Map.byKey['m:point:'..follower.index],nil) end
-  assert(A.Map.worldLines[1]:IsShown(),'World preview must remain available')
+  for _,pool in ipairs({A.Map.worldLines,A.Map.worldShadows}) do
+   eq(pool[1]:IsShown(),active or status=='editing')
+  end
  end
  A.Map.Refresh(A.db,nil,nil);eq(A.Map.targetIndex,nil)
  C_Minimap=nil;GetCVar=nil;LibStub=nil
@@ -379,20 +409,22 @@ test('world waypoint handles appear only in the route editor and retire when edi
  local A=markerSetup();module('Follower',A);module('Editor',A);A.Client.Size=function() return 1000,500 end
  local node=A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='confirmed'})
  local route={name='World preview',mapID=1,loop=true,points={point(.3),point(.4),point(.5)}}
- local function noWorldHandles()
+ local function noWorldHandles(visible)
   for key in pairs(A.Map.byKey) do assert(not key:find('w:point:',1,true),'Non-editing map shows a numbered waypoint handle') end
-  assert(A.Map.byKey['w:node:'..node.key]);assert(A.Map.worldLines[1]:IsShown())
+  assert(A.Map.byKey['w:node:'..node.key]);for _,line in ipairs(A.Map.worldLines) do eq(line:IsShown(),visible) end
  end
- A.Map.Refresh(A.db,route,nil);noWorldHandles()
+ A.Map.Refresh(A.db,route,nil);noWorldHandles(false)
  local follower=A.Follower.New(route,point(.1),distance)
- A.Map.Refresh(A.db,follower.route,follower);noWorldHandles()
+ A.Map.Refresh(A.db,follower.route,follower);noWorldHandles(true)
  assert(A.Map.byKey['m:point:'..follower.index],'Minimap destination must remain while following')
  local editor=A.Editor.New(route);A.Map.SetEditor(editor);A.editIndex=2
  A.Map.Refresh(A.db,editor.draft,nil)
  local handle=A.Map.byKey['w:point:2'];assert(handle);eq(handle.mouse,true)
  handle.scripts.OnClick(handle);eq(A.editIndex,2)
- A.Map.SetEditor(nil);A.Map.Refresh(A.db,route,nil);noWorldHandles();eq(handle:IsShown(),false)
- for i=1,3 do A.Map.Refresh(A.db,follower.route,follower);noWorldHandles() end
+ A.Map.SetEditor(nil)
+ for _,pool in ipairs({A.Map.worldLines,A.Map.worldShadows}) do for _,line in ipairs(pool) do eq(line:IsShown(),false) end end
+ A.Map.Refresh(A.db,route,nil);noWorldHandles(false);eq(handle:IsShown(),false)
+ for i=1,3 do A.Map.Refresh(A.db,follower.route,follower);noWorldHandles(true) end
  LibStub=nil
 end)
 

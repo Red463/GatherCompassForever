@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.13.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.14.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -29,6 +29,8 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   remove individual nodes with undo. No save step is needed.
 - **Follow the path.** Choose thin lines or a soft heatmap corridor on the world map
   and route sketch, plus minimap heat. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
+- **Remember detour pickups.** Confirmed gathers skip a matching later stop for the
+  current lap, then become eligible again next lap. Passing nearby does not count.
 - **Explore Node Codex.** Browse skill-coloured item tiles, compare zones and skill
   requirements, and review a resource route or guide to a nearby known location.
 - **Read crowded maps.** Shared count badges group overlapping icons; hover for a
@@ -42,7 +44,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.13.0.zip` from
+1. Download `GatherCompassForever-0.14.0.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -105,11 +107,26 @@ is required.
 
 ### Overlapping nodes
 
-Badges show the number of known locations, including different resources. Hover
-for per-resource counts and skill colours. Zoom in to separate nearby locations.
+Badges show the number of known locations and the most common resource's icon.
+Ties use a stable icon choice. Hover for a compact list of skill-coloured resource
+names and counts. Zoom in to separate nearby locations.
 In the Routes sketch, click a badge and choose one member before using **Remove node**;
 the other members and stored history stay intact. Grouping can be disabled per map.
 Exactly coincident review nodes still open the chooser so every member remains selectable.
+
+### Detour pickups
+
+Successful gathers with matching loot mark the nearest compatible planned stop
+within 15 yards of your interaction position as collected for this lap. The guide
+skips that stop later, in either Lines or Heatmap mode. Other resources and nearby
+spawns remain eligible. This is separate from your waypoint arrival distance.
+
+Pickup memory survives pause, rejoin, reverse and node removal/undo in the same
+route. A new lap, fresh start or new generation resets it. The corridor artwork
+keeps its original geometry; the arrow and destination highlight identify the next
+required stop. Explicit travel waypoints remain, and a collected stop may serve as
+a travel waypoint when bypassing it would exceed the route's connection limit.
+Stored node locations and history are preserved.
 
 ![Grouped review markers with an individual-location chooser](docs/images/grouped-nodes.png)
 

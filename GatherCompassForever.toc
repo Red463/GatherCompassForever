@@ -36,6 +36,7 @@ Map.lua
 Skin.lua
 PanelWindow.lua
 ScrollPanel.lua
+VirtualList.lua
 Dropdown.lua
 Arrow.lua
 Data/MapReveal.lua
@@ -48,6 +49,7 @@ ResourceLibraryView.lua
 UIActions.lua
 FilterSidebar.lua
 WelcomeView.lua
+MarkerFiltersView.lua
 NodeDisplayView.lua
 UI.lua
 MinimapButton.lua

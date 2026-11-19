@@ -8,6 +8,18 @@ function M.Filter(settings)
  if kind~='both' and kind~='herb' and kind~='ore' and kind~='none' then kind='both' end
  return {source=source,kind=kind,materials=type(settings.materials)=='table' and settings.materials or nil}
 end
+function M.Snapshot(filter) return A.Store.Copy(M.Filter(filter)) end
+function M.Init(settings)
+ if type(settings.markerFilters)~='table' then settings.markerFilters=M.Snapshot(settings) end
+ if type(settings.routeMarkerOverride)~='boolean' then settings.routeMarkerOverride=false end
+ return settings.markerFilters
+end
+function M.MarkerSettings(settings) return M.Init(settings) end
+function M.EffectiveMarker(settings,follower)
+ local base=M.Init(settings)
+ if settings.routeMarkerOverride and follower and (follower.status=='running' or follower.status=='paused' or follower.status=='suspended') and follower.markerFilter then return M.Filter(follower.markerFilter),true end
+ return M.Filter(base),false
+end
 local function toggle(value,key,first,second,both)
  local a=value==both or value==first;local b=value==both or value==second
  if key==first then a=not a elseif key==second then b=not b else return value end
@@ -41,9 +53,9 @@ function M.Materials(db,mapID,settings)
  table.sort(entries,function(a,b) if a.name==b.name then return a.id<b.id end;return a.name<b.name end)
  cache[signature]=entries;return entries
 end
-function M.ToggleMaterial(db,id)
+function M.ToggleMaterial(db,id,settings)
  if type(id)~='string' then return end
- local s=db.settings
+ local s=settings or db.settings
  if not s.materials then
   s.materials={}
   for _,entry in ipairs(M.Materials(db,nil,{source='combined',kind='both'})) do s.materials[entry.id]=true end
@@ -54,15 +66,17 @@ local function eligible(entry,skills,context,mode)
  local _,_,key=A.Resources.Difficulty(entry.sample,skills,context)
  return key=='orange' or key=='yellow' or key=='green' or mode=='gatherable' and key=='grey'
 end
-function M.Bulk(db,mode,on,skills,context)
+function M.Bulk(db,mode,on,skills,context,settings)
+ settings=settings or db.settings
  if mode~='all' and mode~='skillups' and mode~='gatherable' then return end
- if mode=='all' and on then db.settings.materials=nil;return end
+ if mode=='all' and on then settings.materials=nil;return end
  local selected={}
- if on then for _,entry in ipairs(M.Materials(db,nil,db.settings)) do if eligible(entry,skills,context,mode) then selected[entry.id]=true end end end
- db.settings.materials=selected
+ if on then for _,entry in ipairs(M.Materials(db,nil,settings)) do if eligible(entry,skills,context,mode) then selected[entry.id]=true end end end
+ settings.materials=selected
 end
-function M.BulkState(db,skills,context)
- local entries=M.Materials(db,nil,db.settings);local selected=db.settings.materials
+function M.BulkState(db,skills,context,settings)
+ settings=settings or db.settings
+ local entries=M.Materials(db,nil,settings);local selected=settings.materials
  local result={total=#entries,selected=0,eligible=0,gatherableCount=0,all=selected==nil,skillups=false,gatherable=false};local exact=true;local gatherExact=true
  for _,entry in ipairs(entries) do
   local on=selected==nil or not not selected[entry.id];local can=eligible(entry,skills,context)

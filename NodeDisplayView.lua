@@ -1,13 +1,13 @@
 local _,A=...
 local S=A.Skin;local V={};A.NodeDisplayView=V
 function V.New(parent,U)
- local v={page='world',opacityLabels={}}
+ local v={page='filters',opacityLabels={}}
  local function place(f,p,x,y,w,h) f:SetPoint('TOPLEFT',p,'TOPLEFT',x,-y);f:SetSize(w,h);return f end
  local function label(p,text,x,y,w,h,size,color) return place(S.Label(p,text,size or 12,color or S.text),p,x,y,w,h) end
  local scroller=A.ScrollPanel.New(parent);v.scroller=scroller;v.frame=scroller.frame
  place(v.frame,parent,20,19,896,395);local f=scroller.body;f:SetSize(896,395)
  label(f,'Node display',0,0,500,26,18,S.gold)
- label(f,'Set how known locations and guidance appear on each map.',0,33,896,20,12,S.muted)
+ v.subtitle=label(f,'Set how known locations and guidance appear on each map.',0,33,896,20,12,S.muted)
  local function check(p,key,text,x,y,width)
   local b=place(S.Check(p,text,U.actions[key]),p,x,y,24,24);b.label:SetWidth(width);b:SetHitRectInsets(0,-width,0,0);U.controls[key]=b;return b
  end
@@ -20,10 +20,11 @@ function V.New(parent,U)
   U.controls[key]=place(S.Slider(p,0,100,5,U.actions[key],function(n) return n..'%' end),p,x,y+30,w-12,12)
  end
  function v.SetPage(page) v.page=page;U.Refresh() end
- for i,page in ipairs({'world','mini'}) do
-  local b=place(S.Button(f,page=='world' and 'World map' or 'Minimap',function() v.SetPage(page) end,'quiet'),f,(i-1)*164,66,154,26)
-  U.controls[page=='world' and 'displayWorld' or 'displayMini']=b
+ for i,page in ipairs({'filters','world','mini'}) do
+  local b=place(S.Button(f,page=='filters' and 'Visible nodes' or page=='world' and 'World map' or 'Minimap',function() v.SetPage(page) end,'quiet'),f,(i-1)*164,66,154,26)
+  U.controls[page=='filters' and 'displayFilters' or page=='world' and 'displayWorld' or 'displayMini']=b
  end
+ v.filters=A.MarkerFiltersView.New(f,U);v.filters.frame:SetPoint('TOPLEFT',f,'TOPLEFT',0,-106)
  v.world=place(CreateFrame('Frame',nil,f),f,0,106,896,280)
  v.mini=place(CreateFrame('Frame',nil,f),f,0,106,896,280)
  local world=place(S.Panel(v.world),v.world,0,0,438,280)
@@ -64,7 +65,8 @@ function V.New(parent,U)
  S.Hint(U.controls.nodeRouteLine,'Minimap route overlay','Applies to both Lines and Heatmap. Node-marker visibility is independent of route guidance.')
  function v.Layout(width,height)
   local w,h=width-40,height-19;v.stacked=w-(h<395 and 20 or 0)<896
-  local content=v.stacked and 682 or 395;local available=scroller:Layout(w,h,content)
+  local content=v.page=='filters' and h or v.stacked and 682 or 395;local available=scroller:Layout(w,h,content)
+  v.subtitle:SetWidth(available);v.filters.Layout(available,math.max(250,h-106))
   v.world:SetSize(available,content-106);v.mini:SetSize(available,content-106)
   local left=v.stacked and math.max(0,(available-442)/2) or math.max(0,(available-896)/2)
   for _,e in ipairs({{world,v.world,false},{preview,v.world,true},{mini,v.mini,false},{guidance,v.mini,true}}) do
@@ -73,8 +75,8 @@ function V.New(parent,U)
  end
  function v.Refresh()
   local s=A.Resources.Settings(A.db.settings);local worldPage=v.page=='world'
-  if worldPage then v.world:Show();v.mini:Hide() else v.world:Hide();v.mini:Show() end
-  S.Selected(U.controls.displayWorld,worldPage);S.Selected(U.controls.displayMini,not worldPage)
+  if v.page=='filters' then v.filters.frame:Show();v.world:Hide();v.mini:Hide();v.filters.Refresh() else v.filters.frame:Hide();if worldPage then v.world:Show();v.mini:Hide() else v.world:Hide();v.mini:Show() end end
+  S.Selected(U.controls.displayFilters,v.page=='filters');S.Selected(U.controls.displayWorld,worldPage);S.Selected(U.controls.displayMini,not worldPage)
   for key,value in pairs({nodeWorld=s.world,nodeMini=s.mini,nodeIcon=s.icon,nodeGroupWorld=s.groupWorld,nodeGroupMini=s.groupMini,nodeRouteLine=s.routeLines}) do U.controls[key]:SetChecked(value) end
   for key,value in pairs({nodeOutline=s.outline,nodeOutlineSize=s.outlineSize,nodeIconSize=s.iconSize,nodeWorldIconSize=s.worldIconSize,nodeDistance=s.hideDistance}) do U.controls[key]:SetValue(value) end
   U.syncingOptions=true
@@ -98,7 +100,7 @@ function V.New(parent,U)
   if s.mini and s.icon and s.groupMini then v.miniCount:Show() else v.miniCount:Hide() end
   if s.mini and s.outline~='none' then v.miniOutline:Show() else v.miniOutline:Hide() end
   v.miniOutline:SetTexture(S.media..(s.outline=='square' and 'NodeSquare' or 'NodeRing'));v.miniOutline:SetVertexColor(.3,.85,.35);v.miniOutline:SetAlpha(s.miniOutlineOpacity)
-  if U.tab=='nodes' then U.zone:SetText('Node display  -  '..(worldPage and 'World map' or 'Minimap')) end
+  if U.tab=='nodes' then U.zone:SetText('Node display  -  '..(v.page=='filters' and 'Visible nodes' or worldPage and 'World map' or 'Minimap')) end
  end
  U.nodeOpacityLabels=v.opacityLabels
  return v

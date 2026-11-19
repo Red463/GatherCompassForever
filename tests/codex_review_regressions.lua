@@ -37,15 +37,15 @@ test('coincident review targets retain a chooser when world-map appearance group
 end)
 test('Codex map actions explain empty shared selections instead of opening an empty map',function()
  local A,U=setup();observe(A,402);U.SetTab('codex');local V=U.codexView;V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1])
- U.SetKind('none');U.SetTab('codex');local opened=false
+ A.Selection.MarkerSettings(A.db.settings).kind='none';U.SetTab('codex');local opened=false
  WorldMapFrame.Show=function() opened=true end;A.Map={SetNodeFocus=function() error('Empty focus must not be installed') end}
- V.ShowZone(1);eq(opened,false);eq(U.frame:IsShown(),true);assert(A.status:find('Routes',1,true));eq(U.controls.codexMap:IsEnabled(),false)
+ V.ShowZone(1);eq(opened,false);eq(U.frame:IsShown(),true);assert(A.status:find('Visible nodes',1,true));eq(U.controls.codexMap:IsEnabled(),false)
 end)
 
 test('Codex map actions require a real intersection between browse and shared provenance',function()
  local A,U=setup();observe(A,402)
  A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='confirmed'})
- U.SetSource('imported');U.SetTab('codex');local V=U.codexView;U.controls.codexSource:SelectValue('confirmed');V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1])
+ A.Selection.MarkerSettings(A.db.settings).source='imported';U.SetTab('codex');local V=U.codexView;U.controls.codexSource:SelectValue('confirmed');V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1])
  A.Map={SetNodeFocus=function() error('Disjoint provenance must not open an empty map') end};V.ShowZone(1)
- assert(A.status:find('Routes',1,true));eq(U.controls.codexMap:IsEnabled(),false)
+ assert(A.status:find('Visible nodes',1,true));eq(U.controls.codexMap:IsEnabled(),false)
 end)

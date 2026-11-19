@@ -33,7 +33,7 @@ function V.New(parent,U)
  function view.Open(id) view.selectedID=id;view.mode='detail';view.zonePage=1;S.CloseDropdown();U.Refresh() end
  function view.Back() view.mode='grid';U.Refresh() end
  local function mapAvailable(item,mapID)
-  local filter=U.Filter();local signature=A.FarmingSession.Signature(filter)..'/'..view.source
+  local filter=U.MarkerFilter();local signature=A.FarmingSession.Signature(filter)..'/'..view.source
   if view.mapNodes~=item.nodes or view.mapSignature~=signature then
    view.mapNodes=item.nodes;view.mapSignature=signature;view.mapZones={}
    local focus={source=view.source,materials=item.materialIDs}
@@ -46,7 +46,7 @@ function V.New(parent,U)
   local item=view.item;local valid=false
   if item then for _,zone in ipairs(item.zones) do if zone.mapID==mapID then valid=true;break end end end
   if not valid or not WorldMapFrame or not A.Map or not A.Map.SetNodeFocus then message('Select a zone with known locations first.');return end
-  if not mapAvailable(item,mapID) then message('Select this resource and its source in Routes to show matching map locations.');return end
+  if not mapAvailable(item,mapID) then message('Select this resource in Node display > Visible nodes to show matching map locations.');return end
   local ok,reason=A.Map.SetNodeFocus(mapID,item.materialIDs,nil,view.source)
   if not ok then message(reason or 'World-map resource focus is unavailable.');return end
   WorldMapFrame:Show();if WorldMapFrame.SetMapID then WorldMapFrame:SetMapID(mapID) end
@@ -146,6 +146,7 @@ function V.New(parent,U)
   local target={mapID=nearest.mapID,x=nearest.x,y=nearest.y,kind='gather',nodeKey=nearest.key,name=nearest.name or view.item.name}
   if A.plan then A.plan.review=false end
   A.follower=A.Follower.New({name='Nearest '..view.item.name,mapID=nearest.mapID,points={target},loop=false},player,A.Client.Distance,{arrival=A.db.settings.arrival})
+  A.follower.markerFilter=A.Selection.Snapshot(U.Filter());local ids={};for id in pairs(view.item.materialIDs) do if not A.follower.markerFilter.materials or A.follower.markerFilter.materials[id] then ids[id]=true end end;A.follower.markerFilter.materials=ids;A.follower.markerFilter.kind=view.item.kind
   A.mapPreviewRoute=nil;if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
   U.frame:Hide();message('Guiding to a known '..view.item.name..' location.')
  end

@@ -119,11 +119,11 @@ test('shared map filters intersect provenance materials type and resource focus 
   for i,kind in ipairs({'herb','ore'}) do nodes[zone][kind]=A.Store.Observe(A.db,{mapID=zone,x=.2+i*.1,y=.5,kind=kind,materialID=kind,source='imported'}) end
  end
  WorldMapFrame.GetMapID=function() return 2 end
- A.db.settings.source='confirmed';A.Map.Refresh(A.db,nil);eq(next(A.Map.byKey),nil)
- A.db.settings.source='combined';A.db.settings.materials={herb=true};A.Map.Refresh(A.db,nil)
+ A.Selection.MarkerSettings(A.db.settings).source='confirmed';A.Map.Refresh(A.db,nil);eq(next(A.Map.byKey),nil)
+ A.Selection.MarkerSettings(A.db.settings).source='combined';A.Selection.MarkerSettings(A.db.settings).materials={herb=true};A.Map.Refresh(A.db,nil)
  assert(A.Map.byKey['w:node:'..nodes[2].herb.key]);assert(A.Map.byKey['m:node:'..nodes[1].herb.key]);eq(A.Map.byKey['w:node:'..nodes[2].ore.key],nil)
  A.Map.SetNodeFocus(2,{ore=true},nodes[2].ore.key);A.Map.Refresh(A.db,nil);eq(A.Map.byKey['w:node:'..nodes[2].ore.key],nil)
- A.Map.SetNodeFocus(nil);A.db.settings.source='none';A.Map.Refresh(A.db,nil);eq(next(A.Map.byKey),nil)
+ A.Map.SetNodeFocus(nil);A.Selection.MarkerSettings(A.db.settings).source='none';A.Map.Refresh(A.db,nil);eq(next(A.Map.byKey),nil)
  LibStub=nil
 end)
 
@@ -131,7 +131,7 @@ test('Gathering kind filters both map marker layers and switching retires the ol
  local A=markerSetup();local nodes={}
  for _,kind in ipairs({'herb','ore'}) do nodes[kind]=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind=kind,materialID=kind,name=kind,source='imported'}) end
  for _,kind in ipairs({'herb','ore','both','herb'}) do
-  A.db.settings.kind=kind;A.Map.Refresh(A.db,nil)
+  A.Selection.MarkerSettings(A.db.settings).kind=kind;A.Map.Refresh(A.db,nil)
   for nodeKind,node in pairs(nodes) do for _,prefix in ipairs({'w:node:','m:node:'}) do
    eq(A.Map.byKey[prefix..node.key]~=nil,kind=='both' or kind==nodeKind)
   end end

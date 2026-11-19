@@ -12,7 +12,7 @@ test('overlapping map icons share one mixed badge while minimap outlines keep th
  eq(world,1);eq(mini,1);eq(badge.number:GetText(),'2');eq(badge.group.mixed,true)
  for _,n in ipairs(nodes) do local f=A.Map.byKey['m:node:'..n.key];assert(f and f.outline:IsShown());eq(f.icon:IsShown(),false);eq(f.signature,n.mapID..':'..n.x..':'..n.y) end
  local text={};GameTooltip.AddLine=function(_,s) text[#text+1]=s end;badge.scripts.OnEnter(badge);assert(table.concat(text):find('Silverleaf',1,true));assert(table.concat(text):find('Peacebloom',1,true))
- A.db.settings.materials={['gm:herb:401']=true};A.Map.Refresh(A.db,nil)
+ A.Selection.MarkerSettings(A.db.settings).materials={['gm:herb:401']=true};A.Map.Refresh(A.db,nil)
  for _,f in ipairs(A.Map.pins) do if f.key and f.group then error('Old mixed badge survived filtering') end end
  LibStub=nil;C_Minimap=nil
 end)

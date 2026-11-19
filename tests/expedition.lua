@@ -27,7 +27,7 @@ test('changing Gathering immediately refreshes both maps and clears an older res
  LibStub=function() return {AddWorldMapIconMap=function() end,AddMinimapIconMap=function() end,RemoveWorldMapIcon=function() end,RemoveMinimapIcon=function() end} end
  local refresh=A.Map.Refresh;A.Map.Refresh=function(...) count=count+1;return refresh(...) end
  A.Map.SetNodeFocus(1,{herb=true},herb.key)
- U.SetKind('ore');eq(count,1);eq(A.Map.nodeFocus,nil)
+ U.controls.markerHerb.scripts.OnClick();eq(count,1);eq(A.Map.nodeFocus,nil)
  assert(A.Map.byKey['w:node:'..ore.key]);eq(A.Map.byKey['w:node:'..herb.key],nil)
  assert(A.Map.byKey['m:node:'..ore.key]);eq(A.Map.byKey['m:node:'..herb.key],nil)
  LibStub=nil

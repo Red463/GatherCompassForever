@@ -122,12 +122,36 @@ function R.Skills()
    record(kind,info.rank,info.maxRank,bonus)
   end
  end
- local indices={call(GetProfessions)}
- for _,index in pairs(indices) do if S.Number(index) then
-  local name,_,rank,maxRank,_,_,line,bonus=call(GetProfessionInfo,index)
-  name=A.Client.Read(name);line=A.Client.Read(line)
-  for kind,id in pairs(profession) do if line==id or name==labels[kind] then record(kind,rank,maxRank,bonus) end end
- end end
+ local complete=false
+ if type(GetProfessions)=='function' and type(GetProfessionInfo)=='function' then
+  local indices={pcall(GetProfessions)};local valid=indices[1]==true;local found=0
+  for slot,index in pairs(indices) do if slot>1 and index~=nil then
+   if not S.Number(index) then valid=false else
+    local ok,name,_,rank,maxRank,_,_,line,bonus=pcall(GetProfessionInfo,index)
+    name=A.Client.Read(name);line=A.Client.Read(line)
+    if not ok or type(name)~='string' or not S.Number(line) then valid=false else
+     found=found+1;for kind,id in pairs(profession) do if line==id or name==labels[kind] then record(kind,rank,maxRank,bonus) end end
+    end
+   end
+  end end
+  complete=valid and (found>0 or call(IsLoggedIn)==true)
+ end
+ local nativeCount=call(C_SkillInfo and C_SkillInfo.GetNumSkillLines)
+ if S.Number(nativeCount) and nativeCount>0 and nativeCount<=200 then
+  local valid=true
+  for i=1,nativeCount do
+   local row=call(C_SkillInfo and C_SkillInfo.GetSkillLineInfo,i)
+   if type(row)~='table' or A.Client.Read(row.isHeader)==nil or A.Client.Read(row.isCollapsed)==nil then valid=false
+   elseif row.isHeader then if row.isCollapsed then valid=false end
+   else
+    for kind,id in pairs(profession) do if A.Client.Read(row.skillID)==id then
+     local bonus=S.Number(row.modifier) and S.Number(row.tempPoints) and row.modifier+row.tempPoints or nil
+     record(kind,row.rank,row.maxRank,bonus)
+    end end
+   end
+  end
+  complete=complete or valid
+ end
  local count=call(GetNumSkillLines)
  if S.Number(count) then for i=1,math.min(count,200) do
   local name,header,_,rank,temporary,modifier,maxRank=call(GetSkillLineInfo,i)
@@ -137,19 +161,21 @@ function R.Skills()
    for kind,label in pairs(labels) do if name==label then record(kind,rank,maxRank,bonus) end end
   end
  end end
+ for kind in pairs(profession) do if ranks[kind] then context[kind].known=true elseif complete then context[kind]={known=false} end end
  return ranks,context
 end
 R.colors={orange={1,.5,.15},yellow={1,.85,.20},green={.30,.85,.35},grey={.50,.50,.50},red={.90,.25,.25},unknown={.9,.9,.85}}
 function R.Difficulty(node,skills,context)
  local info=R.Info(node);local rank=skills and skills[node.kind];local key='unknown'
  local ctx=context and context[node.kind]
- if info and S.Number(rank) then
+ if ctx and ctx.known==false then key='red'
+ elseif info and S.Number(rank) then
   local bonus=ctx and ctx.bonus;local effective=rank+(S.Number(bonus) and bonus or 0)
   local capped=ctx and S.Number(ctx.maxRank) and rank>=ctx.maxRank
   key=effective<info.required and 'red' or capped and 'grey' or rank>=info.grey and 'grey' or rank>=info.green and 'green' or rank>=info.yellow and 'yellow' or 'orange'
  end
- local source=key=='unknown' and 'unknown' or 'reference'
- local label=key=='unknown' and 'Unknown: node thresholds or profession rank unavailable.' or
+ local source=ctx and ctx.known==false and 'profession' or key=='unknown' and 'unknown' or 'reference'
+ local label=source=='profession' and ((node.kind=='ore' and 'Mining' or 'Herbalism')..' not learned.') or key=='unknown' and 'Unknown: node thresholds or profession rank unavailable.' or
   ('Reference data (Classic): '..key..' (base skill '..rank..'; requires '..info.required..').')
  return R.colors[key],label,key,source
 end
@@ -163,6 +189,7 @@ function R.SkillDetails(node,skills,context)
  local maximum=S.Number(ctx.maxRank) and ctx.maxRank>0 and ctx.maxRank or nil
  local effective=rank and bonus and rank+bonus or nil
  local result={key=key,source=source,color=color,required=info and info.required,rank=rank,effectiveSkill=effective}
+ if source=='profession' then local name=node.kind=='ore' and 'Mining' or 'Herbalism';result.requirement='Requires '..name;result.summary='Learn '..name..' to gather';return result end
  if info then result.requirement=string.format('Requires %d (%s)',info.required,rank and ('you have '..(effective or rank)) or 'skill unavailable')
  else result.requirement='Required skill unknown'..(rank and (' (you have '..rank..')') or '') end
  local descriptions={red="Can't gather yet",orange='High skill-up chance',yellow='Usually a skill-up',green='Sometimes a skill-up',grey='No more skill-ups here',unknown='Skill-up chance unknown'}

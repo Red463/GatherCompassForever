@@ -31,10 +31,11 @@ function U.ZoneName(id)
  return info and info.name or (id and 'Zone '..id or 'Position unavailable')
 end
 function U.Filter() return A.Selection.Filter(A.db.settings) end
+function U.MarkerFilter() return A.Selection.EffectiveMarker(A.db.settings,A.follower) end
 function U.SelectedNodes() local p=A.Client.Position(); return A.Store.Select(A.db,p and p.mapID,U.Filter()) end
 function U.FiltersChanged()
  U.Refresh()
- if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.editor and nil or A.follower) end
+ if A.Map then A.Map.Refresh(A.db,U.DisplayRoute(),A.editor and nil or A.follower) end
 end
 function U.SetSource(v)
  if v~='combined' and v~='confirmed' and v~='imported' and v~='none' then return end
@@ -134,6 +135,7 @@ local function buildFooter()
  S.Hint(U.statusHover,'Gather Compass status',function() return U.status:GetText() end)
 end
 local function buildWindow()
+ A.Selection.Init(A.db.settings)
  U.actions=A.UIActions.Bind(U)
  U.tab=A.db.settings.welcomeSeen==true and 'routes' or 'welcome'
  U.frame=CreateFrame('Frame','GatherCompassForeverWindow',UIParent);U.frame:Hide()
@@ -173,7 +175,7 @@ function U.RefreshMode()
  end
  place(U.body,U.frame,12,100,width-24,math.max(1,height-210))
  local full=U.tab~='routes';place(U.content,U.body,full and 0 or 194,0,width-24-(full and 0 or 194),math.max(1,height-210))
- local layoutKey=width..':'..height..':'..U.codexView.mode
+ local layoutKey=width..':'..height..':'..U.codexView.mode..':'..U.nodeDisplayView.page
  if not compact and U.layoutsKey~=layoutKey then
   U.filterSidebar:Layout(194,height-210)
   U.routeView.Layout(width-218,height-210)

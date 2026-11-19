@@ -307,7 +307,7 @@ function M.Refresh(db,route,follower)
  M.UpdateEditorHelp()
  local zone=route and route.mapID or player and player.mapID
  local settings=A.Resources.Settings(db.settings);local skills,skillContext=A.Resources.Skills()
- local filter=A.Selection.Filter(db.settings)
+ local filter=A.Selection.EffectiveMarker(db.settings,follower)
  local worldZone=map and map:IsShown() and map:GetMapID() or zone
  local focus=map and map:IsShown() and M.nodeFocus and M.nodeFocus.mapID==worldZone and M.nodeFocus or nil
  local nodes=(settings.world or focus) and A.Store.Select(db,worldZone,filter) or {}

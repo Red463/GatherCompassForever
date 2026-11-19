@@ -125,6 +125,8 @@ function A.OnEvent(_,event,...)
   local evidence,reason=A.Client.LootEvidence()
   if reason and next(A.detector.pending) then A.detector.reason=reason end
   for _,e in ipairs(evidence) do A.detector:Loot(e,A.Client.Now()) end
+ elseif event=='SKILL_LINES_CHANGED' then
+  A.UI.Refresh();A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.follower)
  elseif event=='PLAYER_LOGOUT' then
   -- Explicitly stopped recordings are saved only through their Save control.
   -- A crash or disconnect cannot overwrite a route with a partial recording.
@@ -135,6 +137,6 @@ end
 if SlashCmdList then SLASH_GATHERCOMPASSFOREVER1='/gcf';SlashCmdList.GATHERCOMPASSFOREVER=A.Command end
 if CreateFrame then
  A.frame=CreateFrame('Frame')
- for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_LOGOUT','UNIT_SPELLCAST_SENT','UNIT_SPELLCAST_SUCCEEDED','UNIT_SPELLCAST_FAILED','UNIT_SPELLCAST_INTERRUPTED','LOOT_READY','LOOT_OPENED'}) do A.frame:RegisterEvent(event) end
+ for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_LOGOUT','UNIT_SPELLCAST_SENT','UNIT_SPELLCAST_SUCCEEDED','UNIT_SPELLCAST_FAILED','UNIT_SPELLCAST_INTERRUPTED','LOOT_READY','LOOT_OPENED','SKILL_LINES_CHANGED'}) do A.frame:RegisterEvent(event) end
  A.frame:SetScript('OnEvent',A.OnEvent); A.frame:SetScript('OnUpdate',function(_,elapsed) A.Tick(elapsed) end)
 end

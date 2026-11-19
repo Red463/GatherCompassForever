@@ -9,7 +9,7 @@ function V.New(parent,U)
  local function check(key,text,x,y,width,click)
   local b=place(S.Check(f,text,click),f,x,y,24,24);b.label:SetWidth(width);b:SetHitRectInsets(0,-width-4,0,0);U.controls[key]=b;return b
  end
- label(f,'Node source',14,10,164,20,13,S.gold)
+ label(f,'Route targets',14,10,164,20,13,S.gold)
  check('sourceConfirmed','My discoveries',12,34,136,function() U.ToggleSource('confirmed') end)
  check('sourceImported','Imported locations',12,60,144,function() U.ToggleSource('imported') end)
  view.count=label(f,'',16,88,164,18,11,S.muted)
@@ -23,6 +23,8 @@ function V.New(parent,U)
  S.Hint(U.controls.allMaterials,'All materials','Tick to select every material, including newly discovered resources. Untick to clear the selection.')
  S.Hint(U.controls.skillMaterials,'Select skill-up materials','Select known orange, yellow and green materials across all zones matching the chosen source and gathering type. This selects once; individual materials remain editable.')
  S.Hint(U.controls.gatherableMaterials,'All gatherable materials','Select resources you can gather, including grey resources that no longer grant skill-ups. Unknown requirements and too-difficult resources stay unselected. Individual choices remain editable.')
+ view.markerLink=S.Button(f,'Map-marker filters >',function() U.SetTab('nodes');U.nodeDisplayView.SetPage('filters') end,'quiet')
+ S.Hint(f,'Route targets','These choices affect new routes and the Routes sketch. General map markers have separate choices in Node display > Visible nodes.')
  local scroll=place(CreateFrame('ScrollFrame',nil,f),f,12,258,150,142);view.scroll=scroll
  local child=CreateFrame('Frame',nil,scroll);child:SetSize(150,142);scroll:SetScrollChild(child);view.child=child
  local bar=place(S.Slider(f,0,0,1,function(_,value) if not view.syncing then view:SetOffset(value) end end),f,168,258,14,142)
@@ -47,8 +49,9 @@ function V.New(parent,U)
   view.rows[index]=b;return b
  end
  function view:Layout(width,height)
-  self.frame:SetSize(width,height);local listHeight=math.max(48,height-272)
+  self.frame:SetSize(width,height);local listHeight=math.max(48,height-302)
   self.scroll:SetSize(150,listHeight);self.scrollbar:SetSize(14,listHeight);self.empty:SetHeight(listHeight-8)
+  self.markerLink:ClearAllPoints();place(self.markerLink,self.frame,12,height-28,width-24,24)
  end
  function view.Refresh(player)
   local filter=U.Filter();local scope=U.tab=='atlas' and U.atlasView and U.atlasView.scope or 'current'

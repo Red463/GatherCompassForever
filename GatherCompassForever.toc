@@ -3,7 +3,7 @@
 ## Notes: Gathering spawn memory, custom farming trails and route guidance. /gcf
 ## Author: Tom
 ## X-License: MIT
-## Version: 0.8.6
+## Version: 0.8.7
 ## IconTexture: Interface\AddOns\GatherCompassForever\Media\Icon
 ## SavedVariables: GatherCompassForeverDB
 ## OptionalDeps: GatherMate2

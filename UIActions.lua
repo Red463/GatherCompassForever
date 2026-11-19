@@ -173,6 +173,13 @@ function A.UIActions.Bind(U)
  function actions.nodeOutlineSize(value) if A.Store.Number(value) then markerChange('outlineSize',value) end end
  function actions.nodeIconSize(value) if A.Store.Number(value) then markerChange('iconSize',value) end end
  function actions.nodeDistance(value) if A.Store.Number(value) then markerChange('hideDistance',value) end end
+ local function opacity(key,value)
+  if U.syncingOptions or not A.Store.Number(value) then return end
+  markerChange(key,math.floor(math.max(0,math.min(100,value))/5+.5)*.05)
+ end
+ function actions.nodeWorldOpacity(_,value) opacity('worldIconOpacity',value) end
+ function actions.nodeMiniIconOpacity(_,value) opacity('miniIconOpacity',value) end
+ function actions.nodeOutlineOpacity(_,value) opacity('miniOutlineOpacity',value) end
  function actions.import() if A.Import then A.Import() end end
  function actions.allMaterials() A.db.settings.materials=nil; U.Refresh() end
  function actions.prevMaterials() U.materialPage=math.max(1,U.materialPage-1); U.Refresh() end

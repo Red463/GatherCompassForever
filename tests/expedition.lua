@@ -4,6 +4,21 @@ local function setup()
  moduleUI(A); A.db=A.Store.Open(); A.Client.Position=function() return point(.1) end; A.Client.Distance=distance; A.Client.Size=function() return 1000,500 end; A.Store.distance=distance
  A.UI.Build(); A.UI.OpenRoutes(); return A
 end
+
+test('node opacity sliders update markers live without changing unrelated opacity settings',function()
+ local A=setup();module('Map',A);local U=A.UI;U.SetTab('nodes')
+ local count=0;local refresh=A.Map.Refresh;A.Map.Refresh=function(...) count=count+1;return refresh(...) end
+ for _,entry in ipairs({{'nodeWorldOpacity','worldIconOpacity',25},{'nodeMiniIconOpacity','miniIconOpacity',50},{'nodeOutlineOpacity','miniOutlineOpacity',75}}) do
+  local slider=U.controls[entry[1]];assert(slider and slider.kind=='Slider')
+  local lo,hi=slider:GetMinMaxValues();eq(lo,0);eq(hi,100)
+  slider.scripts.OnValueChanged(slider,entry[3]);eq(A.Resources.Settings(A.db.settings)[entry[2]],entry[3]/100)
+ end
+ eq(count,3);U.Refresh();eq(count,3)
+ U.syncingOptions=true;U.controls.nodeWorldOpacity.scripts.OnValueChanged(U.controls.nodeWorldOpacity,0);U.syncingOptions=false
+ eq(A.Resources.Settings(A.db.settings).worldIconOpacity,.25);eq(count,3)
+ U.controls.nodeWorldOpacity.scripts.OnValueChanged(U.controls.nodeWorldOpacity,0/0);eq(count,3)
+ eq(U.nodeOpacityLabels.nodeWorldOpacity:GetText(),'World-map icons: 25%')
+end)
 test('expedition empty state is useful and edit controls stay contextual',function()
  local A=setup(); local U=A.UI
  eq(U.empty:IsShown(),true); eq(U.workPanel:IsShown(),false); eq(U.controls.save:IsVisible(),false)

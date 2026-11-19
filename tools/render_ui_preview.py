@@ -129,7 +129,7 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(1280,800),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHER COMPASS FOREVER 0.8.6 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHER COMPASS FOREVER 0.8.7 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
@@ -170,7 +170,7 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
             if o['checked']:d.line([(x+5,y+h*.5),(x+w*.42,y+h-5),(x+w-4,y+5)],fill='#f6db87',width=2)
         if o['kind']=='Slider':
             d.rectangle((x,y+5,x+w,y+h-5),fill='#0e0d0a',outline='#827456',width=2)
-            minimum,maximum=(5,40) if 'Slider1' in (o['name'] or '') else (.6,2)
+            minimum,maximum=o['minimum'] or 0,o['maximum'] or 1
             value=o['value'] or minimum;fraction=max(0,min(1,(value-minimum)/(maximum-minimum)))
             tx=x+8+(w-16)*fraction
             d.rectangle((tx-6,y-3,tx+6,y+h+3),fill='#958a70',outline='#d0bd91',width=2)

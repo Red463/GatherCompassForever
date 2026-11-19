@@ -79,6 +79,35 @@ test('idle route selection never draws lines and known resource markers remain v
  LibStub=nil
 end)
 
+test('node texture opacity is independent per map and layer without tinting difficulty colours',function()
+ local A=markerSetup();local s=A.Resources.Settings(A.db.settings)
+ A.Client.Position=function() return point(.35) end
+ s.worldIconOpacity=.25;s.miniIconOpacity=.5;s.miniOutlineOpacity=.75;s.hideDistance=0
+ local n=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'})
+ A.Map.Refresh(A.db,nil)
+ local world=A.Map.byKey['w:node:'..n.key];local mini=A.Map.byKey['m:node:'..n.key]
+ eq(world.icon:GetAlpha(),.25);eq(mini.icon:GetAlpha(),.5);eq(mini.outline:GetAlpha(),.75)
+ local color=A.Resources.colors.yellow;for i=1,3 do eq(mini.outline.vertexColor[i],color[i]) end
+ s.hideDistance=1000;A.Map.Refresh(A.db,nil);eq(mini.icon:IsShown(),false);eq(mini.outline:GetAlpha(),.75)
+ LibStub=nil
+end)
+
+test('zero-opacity nodes do not catch hover and reused navigation markers reset their opacity',function()
+ local A=markerSetup();module('Editor',A);module('Follower',A);A.Client.Size=function() return 1000,500 end
+ local s=A.Resources.Settings(A.db.settings);s.worldIconOpacity=0;s.miniIconOpacity=0;s.miniOutlineOpacity=0
+ local n=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'})
+ A.Map.Refresh(A.db,nil)
+ local world=A.Map.byKey['w:node:'..n.key];local mini=A.Map.byKey['m:node:'..n.key]
+ eq(world.mouse,false);eq(mini.mouseMotion,false)
+ s.world=false;s.mini=false;A.Map.Refresh(A.db,nil)
+ local route={mapID=1,points={point(.3),point(.6)}}
+ local editor=A.Editor.New(route);A.Map.SetEditor(editor);A.Map.Refresh(A.db,editor.draft)
+ eq(A.Map.byKey['w:point:1'].icon:GetAlpha(),1)
+ A.Map.SetEditor(nil);local f=A.Follower.New(route,point(.1),distance);A.Map.Refresh(A.db,f.route,f)
+ eq(A.Map.byKey['m:point:'..f.index].outline:GetAlpha(),1)
+ LibStub=nil
+end)
+
 test('world route uses fine gold strokes with subtle edges and stable width while zooming',function()
  local A=markerSetup();module('Follower',A);A.Client.Size=function() return 1000,500 end
  local route={mapID=1,points={point(.3),point(.6),point(.8)}}

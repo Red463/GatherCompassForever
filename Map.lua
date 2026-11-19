@@ -322,15 +322,20 @@ function M.Refresh(db,route,follower)
   local f=M.byKey[key] or pin(); M.byKey[key]=f; f.key=key; f.wanted=true; f.mini=mini
   f.index=index; f.node=node; f.label=index and ('Waypoint '..index) or node and node.name
   f.icon:ClearAllPoints(); f.icon:SetPoint('CENTER',f,'CENTER',0,0)
+  -- Pooled node textures may become an editor handle or navigation target.
+  f.icon:SetAlpha(1);f.outline:SetAlpha(1)
   f.editorHandle=not not editing
   if editing then
    f:SetParent(M.editLayer);f.icon:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\NodeRing');f.outline:Hide();f.icon:Show();f:EnableMouse(true)
    positionHandle(f);f:Show();return
   end
   f.background:Hide();f.number:Hide()
+  local interactive=true
   if node then
    local style=A.Resources.Presentation(node,db.settings,mini,mini and distances[node.key],skills,skillContext)
    f.difficultyLabel=style.label
+   f.icon:SetAlpha(style.iconOpacity);f.outline:SetAlpha(style.outlineOpacity)
+   interactive=style.icon and style.iconOpacity>0 or style.outline~='none' and style.outlineOpacity>0
    local iconSize=style.iconSize+(not mini and focus and focus.nodeKey==node.key and 6 or 0)
    local size=style.outline=='none' and iconSize or math.max(style.outlineSize,iconSize)
    f:SetSize(size,size);f.icon:SetSize(iconSize,iconSize)
@@ -349,8 +354,8 @@ function M.Refresh(db,route,follower)
    f.difficultyLabel=nil; f.outline:Hide(); f.icon:SetTexture('Interface\\TargetingFrame\\UI-RaidTargetingIcon_4')
    f.icon:SetVertexColor(1,.8,.2); f.icon:SetSize(15,15); f.icon:Show(); f:SetSize(15,15)
   end
-  f:EnableMouse(not mini)
-  if mini and node then
+  f:EnableMouse(not mini and interactive)
+  if mini and node and interactive then
    -- Motion-only input shows node details without intercepting minimap clicks.
    if f.EnableMouseMotion then f:EnableMouseMotion(true) else f:EnableMouse(true) end
   end

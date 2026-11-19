@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.7
+
+- Add independent 0-100% opacity sliders for world-map icons, minimap icons and minimap outlines in Node display.
+- Apply opacity changes immediately and remember them across sessions.
+- Preserve skill colours, nearby-icon hiding and fully visible navigation/editing markers.
+- Prevent fully transparent node markers from catching hover.
+
 ## 0.8.6
 
 - Apply arrival-distance changes immediately to the current route.

@@ -10,6 +10,8 @@ function fakeUI()
  function methods:SetColorTexture(r,g,b,a) self.color={r,g,b,a or 1} end
  function methods:SetTextColor(r,g,b,a) self.textColor={r,g,b,a or 1} end
  function methods:SetScale(v) self.scale=v end
+ function methods:SetAlpha(v) self.alpha=v end
+ function methods:GetAlpha() return self.alpha or 1 end
  function methods:IsEnabled() return self.enabled~=false end
  function methods:GetText() return self.text or '' end
  function methods:SetSize(w,h) self.width=w; self.height=h end
@@ -17,6 +19,8 @@ function fakeUI()
  function methods:SetChecked(v) self.checked=not not v end
  function methods:GetChecked() return self.checked end
  function methods:SetValue(v) local changed=self.value~=v;self.value=v;if changed and self.scripts.OnValueChanged then self.scripts.OnValueChanged(self,v) end end
+ function methods:SetMinMaxValues(lo,hi) self.minimum=lo;self.maximum=hi end
+ function methods:GetMinMaxValues() return self.minimum,self.maximum end
  function methods:SetHeight(h) self.height=h end
  function methods:SetParent(p) self.parent=p end
  function methods:GetParent() return self.parent end

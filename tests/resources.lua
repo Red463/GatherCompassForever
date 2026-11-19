@@ -2,6 +2,18 @@ local function resources()
  local A={}; module('Store',A); module('Client',A); module('Resources',A); return A
 end
 local herb={kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+test('node opacity defaults validate independently and survive saved-data reload',function()
+ local A=resources();local settings={};local s=A.Resources.Settings(settings)
+ eq(s.worldIconOpacity,1);eq(s.miniIconOpacity,1);eq(s.miniOutlineOpacity,1)
+ s.worldIconOpacity=.25;s.miniIconOpacity=.5;s.miniOutlineOpacity=.75
+ local world=A.Resources.Presentation(herb,settings,false,100,{herb=10})
+ local mini=A.Resources.Presentation(herb,settings,true,100,{herb=10})
+ eq(world.iconOpacity,.25);eq(mini.iconOpacity,.5);eq(mini.outlineOpacity,.75)
+ local saved=A.Store.Open();saved.settings=settings;s=A.Resources.Settings(A.Store.Open(A.Store.Copy(saved)).settings)
+ eq(s.worldIconOpacity,.25);eq(s.miniIconOpacity,.5);eq(s.miniOutlineOpacity,.75)
+ s.worldIconOpacity=-1;s.miniIconOpacity=2;s.miniOutlineOpacity=0/0;s=A.Resources.Settings({nodeDisplay=s})
+ eq(s.worldIconOpacity,0);eq(s.miniIconOpacity,1);eq(s.miniOutlineOpacity,1)
+end)
 test('Classic difficulty colours use boundaries and never guess unknown resources',function()
  local A=resources(); local R=A.Resources
  for _,case in ipairs({{1,'orange'},{24,'orange'},{25,'yellow'},{49,'yellow'},{50,'green'},{99,'green'},{100,'grey'}}) do

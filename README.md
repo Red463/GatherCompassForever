@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.8.6 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.8.7 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -37,7 +37,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.8.6.zip` from
+1. Download `GatherCompassForever-0.8.7.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -136,7 +136,10 @@ the map restores its usual display.
 | `/gcf inspect off` | Cancel a pending capture |
 
 **Node display** controls marker appearance, difficulty colours, icon-hide distance
-and minimap route visibility. **Preferences** controls arrival distance, arrow scale,
+and minimap route visibility. Its three opacity sliders independently adjust
+world-map icons, minimap icons and minimap outlines from 0% to 100%. Changes apply
+immediately and are remembered. Navigation markers keep their own appearance.
+**Preferences** controls arrival distance, arrow scale,
 optional labels and minimap-button visibility. Use `/gcf` to restore the minimap
 button if it is hidden.
 

@@ -204,7 +204,7 @@ local function buildPreferences()
  local hint=label(U.preferences,'Drag the guide arrow to move it. Click it to reopen this window.',20,350,670,20,12,S.muted);hint:SetWordWrap(true)
 end
 local function buildNodeOptions()
- U.nodeOptions=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,377)
+ U.nodeOptions=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,395)
  label(U.nodeOptions,'Known node locations',0,0,710,26,18,S.gold,true)
  label(U.nodeOptions,'Map markers are independent of your route material filters.',0,33,710,20,12,S.muted)
  local display=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,0,66,344,260)
@@ -232,8 +232,16 @@ local function buildNodeOptions()
  S.Hint(U.controls.inspectNode,'Inspect a native node','Capture the next herb or vein tooltip in the game world. Then use /gcf inspect report. Captures stay local and do not change difficulty colours.')
  for i,entry in ipairs({{'orange','Orange'},{'yellow','Yellow'},{'green','Green'},{'grey','Grey'},{'red','Too difficult'},{'unknown','Unknown'}}) do
   local x=(i-1)*118
-  local swatch=S.Fill(U.nodeOptions,A.Resources.colors[entry[1]],'ARTWORK');place(swatch,U.nodeOptions,x,346,10,10)
-  label(U.nodeOptions,entry[2],x+16,340,102,23,11,S.muted)
+  local swatch=S.Fill(U.nodeOptions,A.Resources.colors[entry[1]],'ARTWORK');place(swatch,U.nodeOptions,x,58,10,10)
+  label(U.nodeOptions,entry[2],x+16,52,102,23,11,S.muted)
+ end
+ label(U.nodeOptions,'Marker opacity',16,310,310,20,13,S.gold)
+ U.nodeOpacityLabels={}
+ for i,entry in ipairs({{'nodeWorldOpacity','World-map icons'},{'nodeMiniIconOpacity','Minimap icons'},{'nodeOutlineOpacity','Minimap outlines'}}) do
+  local key,title=entry[1],entry[2];local x=16+(i-1)*236
+  U.nodeOpacityLabels[key]=label(U.nodeOptions,title,x,337,220,20,12,S.text)
+  U.controls[key]=place(S.Slider(U.nodeOptions,0,100,5,U.actions[key],function(v) return v..'%' end),U.nodeOptions,x,365,188,12)
+  S.Hint(U.controls[key],title..' opacity','Adjust Gather Compass node markers from 0% (transparent) to 100% (solid). Navigation markers and native tracking dots keep their own appearance.')
  end
 end
 local function buildFooter()
@@ -412,6 +420,12 @@ function U.Refresh()
  U.controls.nodeIcon:SetEnabled(marker.outline~='none');U.controls.nodeIcon:SetChecked(marker.icon)
  U.controls.nodeOutlineSize:SetValue(marker.outlineSize);U.controls.nodeIconSize:SetValue(marker.iconSize)
  U.controls.nodeDistance:SetValue(marker.hideDistance)
+ U.syncingOptions=true
+ for _,entry in ipairs({{'nodeWorldOpacity','worldIconOpacity','World-map icons'},{'nodeMiniIconOpacity','miniIconOpacity','Minimap icons'},{'nodeOutlineOpacity','miniOutlineOpacity','Minimap outlines'}}) do
+  local value=math.floor(marker[entry[2]]*100+.5)
+  U.controls[entry[1]]:SetValue(value);U.nodeOpacityLabels[entry[1]]:SetText(entry[3]..': '..value..'%')
+ end
+ U.syncingOptions=false
  if U.tab=='nodes' then
   local ranks=A.Resources.Skills()
   U.professionRanks:SetText('Base Herbalism: '..(ranks.herb or 'unavailable')..'\nBase Mining: '..(ranks.ore or 'unavailable'))

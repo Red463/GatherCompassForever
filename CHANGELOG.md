@@ -9,6 +9,8 @@
 - Group Preferences into Navigation, Guide arrow and Panel & minimap, with a live explanation of the waypoint arrival radius.
 - Include the runtime version in the title bar; show map artwork behind the marker appearance example.
 - Centre the portrait slot/mask and minimap icon/ring, using a tighter crop of the original high-resolution emblem without changing source artwork.
+- Preserve resource-only override snapshots through Codex review/start/rebuild and all route-eligible vein variants. Keep independent selections through imported material-ID promotion.
+- Explain invisible/overridden Codex map actions, prefer installed version metadata, and avoid unused line-clearance scans in heat mode.
 - Preserve panel resizing, routes, node history, navigation behaviour and MIT licensing.
 
 ## 0.12.0

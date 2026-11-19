@@ -32,20 +32,22 @@ function V.New(parent,U)
  function view.Open(id) view.selectedID=id;view.mode='detail';S.CloseDropdown();U.Refresh() end
  function view.Back() view.mode='grid';U.Refresh() end
  local function mapAvailable(item,mapID)
-  local filter=U.MarkerFilter();local signature=A.FarmingSession.Signature(filter)..'/'..view.source
+  if A.Resources.Settings(A.db.settings).worldIconOpacity<=0 then return false,'World-map icon opacity is 0%. Increase World-map icons in Node display > World map to show these locations.' end
+  local filter,override=U.MarkerFilter();local signature=A.FarmingSession.Signature(filter)..'/'..view.source
   if view.mapNodes~=item.nodes or view.mapSignature~=signature then
    view.mapNodes=item.nodes;view.mapSignature=signature;view.mapZones={}
    local focus={source=view.source,materials=item.materialIDs}
    for _,n in ipairs(item.nodes) do if A.Selection.Matches(n,filter) and A.Selection.Matches(n,focus) then view.mapZones[n.mapID]=true end end
   end
-  return view.mapZones[mapID]==true
+  if view.mapZones[mapID] then return true end
+  return false,override and 'Active route override controls these markers. Stop guidance or turn off Use route selections while following to use everyday choices.' or 'Select this resource in Node display > Visible nodes to show matching map locations.'
  end
  function view.ShowZone(mapID)
   if work() then message('Save or discard the current draft or recording before opening a resource map.');return end
   local item=view.item;local valid=false
   if item then for _,zone in ipairs(item.zones) do if zone.mapID==mapID then valid=true;break end end end
   if not valid or not WorldMapFrame or not A.Map or not A.Map.SetNodeFocus then message('Select a zone with known locations first.');return end
-  if not mapAvailable(item,mapID) then message('Select this resource in Node display > Visible nodes to show matching map locations.');return end
+  local available,reason=mapAvailable(item,mapID);if not available then message(reason);return end
   local ok,reason=A.Map.SetNodeFocus(mapID,item.materialIDs,nil,view.source)
   if not ok then message(reason or 'World-map resource focus is unavailable.');return end
   WorldMapFrame:Show();if WorldMapFrame.SetMapID then WorldMapFrame:SetMapID(mapID) end
@@ -118,7 +120,7 @@ function V.New(parent,U)
   row.counts=label(row,'',348,0,174,24,11,S.muted);row.counts:SetJustifyH('RIGHT')
   S.Hint(row,'Show resource locations',function()
    if not row.zone then return '' end
-   return safe(U.ZoneName(row.zone.mapID))..' / '..row.zone.count..' known locations. '..(row:IsEnabled() and 'Click to show this resource on the world map.' or 'Hidden by current map-marker filters, or unfinished work. Choose visible nodes in Node display.')
+   return safe(U.ZoneName(row.zone.mapID))..' / '..row.zone.count..' known locations. '..(row:IsEnabled() and 'Click to show this resource on the world map.' or select(2,mapAvailable(view.item,row.zone.mapID)) or 'Finish the current work before opening the map.')
   end)
   view.zoneRows[#view.zoneRows+1]=row;return row
  end,bind=function(row,zone,index,width)
@@ -139,7 +141,7 @@ function V.New(parent,U)
  function view.Plan()
   if blocked() then return end
   local nodes,player=current();if #nodes==0 then message('Select this resource in Routes and enter a zone with matching known locations.');return end
-  U.ReviewNodes(nodes,player)
+  U.ReviewNodes(nodes,player,false,A.ResourceLibrary.ActionFilter(A.db,view.item,U.Filter()))
  end
  function view.Guide()
   if blocked() then return end
@@ -149,7 +151,7 @@ function V.New(parent,U)
   local target={mapID=nearest.mapID,x=nearest.x,y=nearest.y,kind='gather',nodeKey=nearest.key,name=nearest.name or view.item.name}
   if A.plan then A.plan.review=false end
   A.follower=A.Follower.New({name='Nearest '..view.item.name,mapID=nearest.mapID,points={target},loop=false},player,A.Client.Distance,{arrival=A.db.settings.arrival})
-  A.follower.markerFilter=A.Selection.Snapshot(U.Filter());local ids={};for id in pairs(view.item.materialIDs) do if not A.follower.markerFilter.materials or A.follower.markerFilter.materials[id] then ids[id]=true end end;A.follower.markerFilter.materials=ids;A.follower.markerFilter.kind=view.item.kind
+  A.follower.markerFilter=A.ResourceLibrary.ActionFilter(A.db,view.item,U.Filter())
   A.mapPreviewRoute=nil;if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
   U.frame:Hide();message('Guiding to a known '..view.item.name..' location.')
  end
@@ -157,7 +159,7 @@ function V.New(parent,U)
  button(detail,'codexGuide','Guide nearest',216,369,150,26,view.Guide)
  button(detail,'codexMap','Show current zone',376,369,206,26,function() local p=A.Client.Position();if p then view.ShowZone(p.mapID) end end)
  S.Hint(U.controls.codexPlan,'Resource route','Uses this resource and your Routes checkboxes. Stop current guidance first.')
- S.Hint(U.controls.codexMap,'Show resource markers','Uses your current map-marker selections. Choose visible nodes in Node display; an active route override may temporarily apply route selections.')
+ S.Hint(U.controls.codexMap,'Show resource markers',function() local player=A.Client.Position();if view.item and player then local _,reason=mapAvailable(view.item,player.mapID);if reason then return reason end end;return 'Uses your effective map-marker selections. Choose visible nodes in Node display.' end)
  S.Hint(U.controls.codexGuide,'Nearest known location','Uses your Routes checkboxes. Known locations are possible spawns, not live nodes.')
  function view.LayoutSources(count)
   local iw=view.sourceScroll:Layout(314,information:GetHeight()-16,112+math.min(2,count)*88)

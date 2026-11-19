@@ -10,6 +10,20 @@ function S.Copy(v)
  if type(v)~='table' then return v end
  local r={}; for k,x in pairs(v) do r[k]=S.Copy(x) end; return r
 end
+-- Expand canonical aliases once per selection, not once per observed node.
+-- Exact entries (including exclusions) take precedence over inherited aliases.
+function S.ExpandedMaterials(materials,aliases)
+ if type(materials)~='table' then return nil end
+ if type(aliases)~='table' or not next(aliases) then return materials end
+ local function canonical(id)
+  for _=1,16 do local target=aliases[id];if type(target)~='string' or target=='' or target==id then break end;id=target end
+  return id
+ end
+ local result={};for id,on in pairs(materials) do result[id]=on end
+ for id,on in pairs(materials) do if on then local target=canonical(id);if result[target]==nil then result[target]=true end end end
+ for id in pairs(aliases) do if result[id]==nil then result[id]=result[canonical(id)] end end
+ return result
+end
 local function fresh() return {version=1,nodes={},routes={},nextNode=1,nextRoute=1,settings={source='combined',kind='both',arrival=15,arrowScale=1}} end
 function S.Open(saved)
  if saved==nil then return fresh(),true end
@@ -38,7 +52,12 @@ function S.Observe(db,o)
  match.objectID=match.objectID or o.objectID
  if match.materialID~=o.materialID and o.materialID:match('^gm:') then
   local old=match.materialID; match.materialID=o.materialID
-  if db.settings.materials and db.settings.materials[old]~=nil then db.settings.materials[o.materialID]=db.settings.materials[old]; db.settings.materials[old]=nil end
+  local settings=db.settings
+  settings.materialAliases=type(settings.materialAliases)=='table' and settings.materialAliases or {};settings.materialAliases[old]=o.materialID
+  for _,profile in ipairs({settings,type(settings.markerFilters)=='table' and settings.markerFilters or {}}) do
+   local choices=profile.materials
+   if type(choices)=='table' and choices[old]~=nil and choices[o.materialID]==nil then choices[o.materialID]=choices[old] end
+  end
  end
  if o.name then match.name=o.name end
  if o.source=='imported' then match.imported=true else
@@ -51,9 +70,10 @@ function S.Observe(db,o)
 end
 function S.Select(db,mapID,filter)
  local result={}; filter=filter or {}; local source=filter.source or 'combined'
+ local materials=S.ExpandedMaterials(filter.materials,db.settings and db.settings.materialAliases or filter.aliases)
  for _,n in ipairs(db.nodes[mapID] or {}) do
   local provenance=(source=='confirmed' and n.confirmed) or (source=='imported' and n.imported) or (source=='combined' and (n.confirmed or n.imported))
-  if S.Position(n) and provenance and (not filter.kind or filter.kind=='both' or filter.kind==n.kind) and (not filter.materials or filter.materials[n.materialID]) then result[#result+1]=n end
+  if S.Position(n) and provenance and (not filter.kind or filter.kind=='both' or filter.kind==n.kind) and (not materials or materials[n.materialID]) then result[#result+1]=n end
  end
  return result
 end

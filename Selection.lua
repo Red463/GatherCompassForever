@@ -1,12 +1,13 @@
 local _, A = ...
 local M={};A.Selection=M
 local cacheDB,cacheRevision,cache
-function M.Filter(settings)
+function M.Filter(settings,aliases)
  settings=settings or {}
  local source=settings.source;local kind=settings.kind
  if source~='combined' and source~='confirmed' and source~='imported' and source~='none' then source='combined' end
  if kind~='both' and kind~='herb' and kind~='ore' and kind~='none' then kind='both' end
- return {source=source,kind=kind,materials=type(settings.materials)=='table' and settings.materials or nil}
+ aliases=aliases or settings.materialAliases or settings.aliases
+ return {source=source,kind=kind,materials=A.Store.ExpandedMaterials(settings.materials,aliases),aliases=aliases}
 end
 function M.Snapshot(filter) return A.Store.Copy(M.Filter(filter)) end
 function M.Init(settings)
@@ -17,8 +18,8 @@ end
 function M.MarkerSettings(settings) return M.Init(settings) end
 function M.EffectiveMarker(settings,follower)
  local base=M.Init(settings)
- if settings.routeMarkerOverride and follower and (follower.status=='running' or follower.status=='paused' or follower.status=='suspended') and follower.markerFilter then return M.Filter(follower.markerFilter),true end
- return M.Filter(base),false
+ if settings.routeMarkerOverride and follower and (follower.status=='running' or follower.status=='paused' or follower.status=='suspended') and follower.markerFilter then return M.Filter(follower.markerFilter,settings.materialAliases),true end
+ return M.Filter(base,settings.materialAliases),false
 end
 local function toggle(value,key,first,second,both)
  local a=value==both or value==first;local b=value==both or value==second

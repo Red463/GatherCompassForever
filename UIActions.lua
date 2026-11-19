@@ -18,18 +18,18 @@ function A.UIActions.Bind(U)
   if not route or not A.Store.Position(p) or route.mapID~=p.mapID or not A.Client.Distance(p,route.points[1]) then return nil,'Generate a route in your current zone with readable position and distance data.' end
   local f=A.Follower.New(route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
   if f.status~='running' then return nil,f.reason or 'Move nearer the farming area before starting.' end
-  f.markerFilter=A.Selection.Snapshot(A.plan and A.plan.route==route and A.plan.options.filter or U.Filter())
+  f.markerFilter=A.Selection.Snapshot(A.plan and A.plan.route==route and (A.plan.options.markerFilter or A.plan.options.filter) or U.Filter())
   return f
  end
- function U.ReviewNodes(nodes,player,startNow)
+ function U.ReviewNodes(nodes,player,startNow,markerFilter)
   player=player or A.Client.Position()
-  local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter()})
+  local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter(),markerFilter=markerFilter or U.Filter()})
   if not plan then say(reason);return nil end
   local replacement
   if startNow then
    local failure;replacement,failure=prepareFollower(plan.route,A.Client.Position())
    if not replacement then say(failure);return nil end
-   replacement.session=plan;replacement.markerFilter=A.Selection.Snapshot(plan.options.filter);plan.review=false
+   replacement.session=plan;replacement.markerFilter=A.Selection.Snapshot(plan.options.markerFilter or plan.options.filter);plan.review=false
   end
   A.plan=plan;A.follower=replacement;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
   if A.Map and A.Map.SetEditor then A.Map.SetEditor(nil) end
@@ -52,7 +52,7 @@ function A.UIActions.Bind(U)
    A.follower=nil
    if plan.route then
     A.follower=A.Follower.New(plan.route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
-    A.follower.session=plan;A.follower.markerFilter=A.Selection.Snapshot(old.markerFilter or plan.options.filter);A.follower.lap=old.lap;if old.status=='paused' then A.follower:Pause() end
+    A.follower.session=plan;A.follower.markerFilter=A.Selection.Snapshot(old.markerFilter or plan.options.markerFilter or plan.options.filter);A.follower.lap=old.lap;if old.status=='paused' then A.follower:Pause() end
    else clearArrow();plan.review=true end
   elseif not old then plan.review=true end
   refreshMap();say(plan.message)

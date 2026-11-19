@@ -127,7 +127,9 @@ Codex browsing does not rewrite Routes checkboxes. Current-zone route/nearest ac
 use the selected resource intersected with those checkboxes, and preserve active
 guidance until it is stopped. Coordinate tables and the redundant Welcome button
 have been removed. Map buttons are available only when matching locations also pass
-the effective map-marker selections. Items without location data remain in the default full catalogue.
+the effective map-marker selections and world-icon opacity is above zero. Disabled
+actions identify an active route override or the opacity setting when relevant.
+Items without location data remain in the default full catalogue.
 
 ![Node Codex with skill-coloured tiles and browsing filters](docs/images/node-codex.png)
 
@@ -205,7 +207,8 @@ route. Regenerate when you want the new choices applied to guidance.
 across all zones. Marker-only users can configure everything here without generating
 a route. Sources, gathering types and material selections are independent of Routes.
 Existing shared preferences are copied into both sets on upgrade; explicit empty
-selections are retained.
+selections are retained. Importing canonical GatherMate IDs preserves personal-name
+material selections, independent exclusions and active guidance snapshots.
 
 Optionally enable **Use route selections while following**. Both maps then use the
 active guidance's saved filter snapshot, including while paused or suspended.
@@ -245,7 +248,7 @@ overlapping-stop movement safeguards still apply.
 
 ![Preferences with navigation explanation and grouped arrow/panel settings](docs/images/preferences.png)
 
-The title bar includes the addon version. Header and minimap emblems use a centred
+The title bar includes the installed addon version (including prerelease metadata). Header and minimap emblems use a centred
 crop of the original high-resolution badge; the launcher keeps one aligned gold ring.
 Use `/gcf` to reopen the panel when its minimap button is hidden.
 

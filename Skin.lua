@@ -25,11 +25,15 @@ local function object(value) return type(value)=='table' or type(value)=='userda
 function S.BrandBadge(texture)
  texture:SetTexture(S.media..'EmptyEmblem');texture:SetTexCoord(.17,.83,.17,.83);texture:SetVertexColor(1,1,1,1)
 end
+function S.AddonVersion(fallback)
+ local query=C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
+ if type(query)=='function' then local ok,value=pcall(query,addonName,'Version');if ok and type(value)=='string' and value:find('%S') then return value end end
+ return fallback
+end
 function S.Window(parent)
  local f=CreateFrame('Frame','GatherCompassForeverPanelChrome',parent,'PortraitFrameTemplate')
  f.opaqueBase=S.Fill(f,{.045,.038,.03,1},'BACKGROUND',-8)
- local version=A.version
- if type(version)~='string' and C_AddOns and C_AddOns.GetAddOnMetadata then local ok,value=pcall(C_AddOns.GetAddOnMetadata,addonName,'Version');if ok then version=value end end
+ local version=S.AddonVersion(A.version)
  if f.SetTitle then f:SetTitle('Gather Compass Forever'..(type(version)=='string' and (' v'..version) or ' (development)')) end
  -- Tint only the native rock background; inset surfaces keep their own palette.
  if object(f.Bg) and type(f.Bg.SetVertexColor)=='function' then f.Bg:SetVertexColor(.85,.85,.85,1) end

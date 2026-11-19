@@ -97,6 +97,17 @@ function L.Query(db,kind,search,options)
  table.sort(result.items,function(a,b) local an,bn=a.name:lower(),b.name:lower();if an~=bn then return an<bn end;return a.id<b.id end)
  return result
 end
+function L.ActionFilter(db,item,filter)
+ local result=A.Selection.Snapshot(filter);local ids={}
+ for _,base in ipairs(L.Index(db)) do if base.id==item.id then
+  for id in pairs(base.materialIDs) do ids[id]=true end
+  for _,row in ipairs(base.sources) do if row.node.materialID then ids[row.node.materialID]=true end end
+  break
+ end end
+ ids=A.Store.ExpandedMaterials(ids,db.settings.materialAliases)
+ for id in pairs(ids) do ids[id]=not result.materials or not not result.materials[id] end
+ result.materials=ids;result.kind=(result.kind=='both' or result.kind==item.kind) and item.kind or 'none';return result
+end
 function L.LocalCandidates(db,item,player,filter)
  if not item or not S.Position(player) then return {} end
  local keys={};for _,row in ipairs(item.sources) do keys[A.Atlas.Key(row.node)]=true end

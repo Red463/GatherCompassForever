@@ -455,7 +455,7 @@ function M.Refresh(db,route,follower)
  -- Editing draws only on the world map; minimap paths require navigation.
  local mini=active and player and player.mapID==route.mapID and w and A.Store.Number(radius) and radius>0 and facing~=nil and Minimap and Minimap:IsShown()
  local holes={}
- if mini and settings.routeLines and settings.routeOpacity>0 then
+ if mini and not heat and settings.routeLines and settings.routeOpacity>0 then
   holes[1]={x=0,y=0,r=8} -- Native player arrow.
   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
   local function protect(p)

@@ -118,6 +118,8 @@ def render(scene):
     if scene in ('arrow_name','arrow_name_no_progress'):lua.execute('A.db.settings.arrowNodeName=true')
     if scene=='arrow_name_no_progress':lua.execute('A.db.settings.arrowProgress=false')
     if scene in ('arrow','arrow_name','arrow_name_no_progress'):lua.execute("A.UI.controls.start.scripts.OnClick();A.Arrow.Update(A.Client.Position(),0,A.follower:Target(),A.Client.Distance,A.follower:Snapshot())")
+    if scene in ('arrow_zoom','arrow_reduced_range'):
+        lua.execute("A.UI.actions.generateStart();A.db.settings.arrowNodeName=true;"+("Minimap:SetZoom(2);" if scene=='arrow_zoom' else "C_Minimap.GetViewRadius=function() return 170 end;")+"A.Arrow.Update(A.Client.Position(),0,A.follower:Target(),A.Client.Distance,A.follower:Snapshot())")
     if scene.startswith(('routes_','preferences_')) and scene.split('_')[-1] in ('small','standard','large'):
         lua.execute("A.UI.window:SetPreset('"+scene.split('_')[-1]+"')")
         if scene.startswith('preferences_'):lua.execute("A.UI.SetTab('settings');A.UI.preferencesScroll:SetOffset(10000)")
@@ -308,4 +310,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['routes_small','routes_standard','routes_large','preferences_small','preferences_standard','preferences_large','marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','mini_heat_dark','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['routes_small','routes_standard','routes_large','preferences_small','preferences_standard','preferences_large','marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','mini_heat_dark','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_zoom','arrow_reduced_range','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

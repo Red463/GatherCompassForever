@@ -51,3 +51,11 @@ test('long corridor paint keeps a continuous narrow band through every guidance 
   assert(nearest<=117*.35,'Heat paint has a weak or missing corridor section: '..nearest)
  end
 end)
+
+test('unrepresentable heat bins fail within a bounded instruction count',function()
+ local A={};module('Heatmap',A)
+ local route={corridor=true,width=1000,height=500,heatRadius=6.5e-16,points={point(.5)}}
+ local ticks=0;debug.sethook(function() ticks=ticks+1;if ticks>100 then error('Heat loop exceeded instruction budget') end end,'',1000)
+ local ok,samples=pcall(A.Heatmap.Samples,route);debug.sethook()
+ assert(ok,tostring(samples));eq(#samples,0);eq(samples.invalid,true)
+end)

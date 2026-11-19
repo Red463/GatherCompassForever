@@ -40,7 +40,10 @@ function V.New(parent,U)
   if plan and not plan:Matches(U.Filter()) then text='Selections changed. Generate again to use them. '..(text or '') end
   if route and route.corridor then
    local zoom=A.Client.MinimapZoom()
-   text=text..'\n'..(zoom and zoom>0 and 'Zoom minimap fully out. ' or 'Use a fully zoomed-out minimap. ')..string.format('Nodes within %.0f yards of the path count as covered.',route.coverageRadius)
+   local radius=A.Client.MinimapRadius()
+   if (not zoom or zoom==0) and A.Store.Number(radius) and radius<route.coverageRadius then
+    text=text..string.format('\nMinimap range is reduced. Saved coverage stays at %.0f yards.',route.coverageRadius)
+   else text=text..'\n'..(zoom and zoom>0 and 'Zoom minimap fully out. ' or 'Use a fully zoomed-out minimap. ')..string.format('Nodes within %.0f yards of the path count as covered.',route.coverageRadius) end
   elseif not plan then text=text..'\nZoom your minimap fully out before generating a corridor.' end
   v.info:SetText(text or '')
   local selected=plan and plan.byKey and plan.byKey[plan.selected]

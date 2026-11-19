@@ -14,11 +14,16 @@ lua.execute("dofile('tests/wow.lua');fakeUI();A={};assert(loadfile('Heatmap.lua'
 texture = Image.open(root / 'Media/HeatBlob.tga').convert('RGBA')
 
 
-def draw(points, width=6000, height=4000):
+def draw(points, width=6000, height=4000, corridor=False):
     route = lua.table_from({
         'width': width, 'height': height,
         'points': lua.table_from([lua.table_from({'x': x, 'y': y, 'density': d}) for x, y, d in points]),
     })
+    if corridor:
+        route['corridor'] = True
+        route['coverageRadius'] = 180
+        route['heatRadius'] = 117
+        route['heatSpacing'] = 70
     pool = lua.table()
     lua.globals().A.Heatmap.Draw(pool, lua.globals().UIParent, route,
                                lambda p: (p.x * width, -p.y * height), lambda r: (r, r))
@@ -41,18 +46,19 @@ fixtures = {
     'bend': [(.1, .5, 1), (.5, .5, 1), (.5, .2, 1)],
     'dense crossing': [(.3, .3, 20), (.7, .7, 20), (.3, .7, 20), (.7, .3, 20)],
 }
-for name, points in fixtures.items():
-    textures = draw(points)
-    values = []
-    for a, b in zip(points, points[1:]):
-        for i in range(21):
-            f = i / 20
-            values.append(opacity(textures, (a[0] + (b[0] - a[0]) * f) * 6000,
-                                  -(a[1] + (b[1] - a[1]) * f) * 4000))
-    low, high = min(values), max(values)
-    print(f'World heat {name}: corridor opacity {low:.3f}-{high:.3f}')
-    assert low >= .55, f'{name}: heat corridor fades to {low:.3f}; hard to distinguish from terrain'
-    assert high <= .93, f'{name}: heat corridor obscures terrain at {high:.3f}'
+for mode in ('legacy', 'corridor'):
+    for name, points in fixtures.items():
+        textures = draw(points, corridor=mode == 'corridor')
+        values = []
+        for a, b in zip(points, points[1:]):
+            for i in range(21):
+                f = i / 20
+                values.append(opacity(textures, (a[0] + (b[0] - a[0]) * f) * 6000,
+                                      -(a[1] + (b[1] - a[1]) * f) * 4000))
+        low, high = min(values), max(values)
+        print(f'World heat {mode}/{name}: corridor opacity {low:.3f}-{high:.3f}')
+        assert low >= .55, f'{mode}/{name}: heat corridor fades to {low:.3f}; hard to distinguish from terrain'
+        assert high <= .93, f'{mode}/{name}: heat corridor obscures terrain at {high:.3f}'
 
 single = draw([(.5, .5, 1)])
 assert .7 <= opacity(single, 3000, -2000) <= .9

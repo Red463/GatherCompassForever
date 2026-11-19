@@ -152,7 +152,9 @@ path; detour when you find a resource. Lines and Heatmap share the same path and
 coverage. The nearest starting anchor and 450-yard connection limit remain.
 
 Changing minimap zoom later does not change the plan or counts. Routes and the
-arrow remind you to zoom fully out. Removal/undo keeps the captured coverage range;
+arrow remind you to zoom fully out. If the live range becomes smaller than the
+saved coverage, a reduced-range reminder appears; the plan stays unchanged.
+Removal/undo keeps the captured coverage range;
 a new generation measures it again. Existing active routes are preserved until
 you replace them. Direct **Guide nearest** in Node Codex still targets that resource
 location and does not require corridor calibration.

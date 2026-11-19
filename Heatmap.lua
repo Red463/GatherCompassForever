@@ -6,6 +6,7 @@ local function key(p) return string.format('%.8f,%.8f',p.x,p.y) end
 function H.Samples(route)
  if cache[route] then return cache[route] end
  local w,h=route.width or 1000,route.height or 1000
+ if type(w)~='number' or type(h)~='number' or w~=w or h~=h or w<=0 or h<=0 or w==math.huge or h==math.huge then return {radius=120,invalid=true} end
  local edges,seen={},{};local total=0;local points=route.points or {}
  local function edge(a,b)
   local ka,kb=key(a),key(b);local id=ka<kb and ka..'/'..kb or kb..'/'..ka
@@ -20,6 +21,7 @@ function H.Samples(route)
  local spacing=fixed and (route.heatSpacing or math.min(70,route.heatRadius*.6)) or math.max(70,total/math.max(1,budget-#edges*2))
  local radius=fixed and route.heatRadius or math.max(120,spacing*1.15)
  local quantum=fixed and math.min(35,spacing*.45) or 35
+ if radius<=0 or radius==math.huge or quantum<=0 or math.max(w,h)/math.min(radius,quantum)>=2^52 then return {radius=radius,invalid=true} end
  local samples={radius=radius};local occupied={}
  local function add(x,y,density)
   local id=string.format('%d:%d',math.floor(x*w/quantum+.5),math.floor(y*h/quantum+.5))
@@ -41,7 +43,8 @@ function H.Samples(route)
   -- transparent edges used to dilute the world corridor until it disappeared.
   local overlap=0
   local x,y=math.floor(p.x*w/radius),math.floor(p.y*h/radius)
-  for bx=x-1,x+1 do for by=y-1,y+1 do
+  for dx=-1,1 do for dy=-1,1 do
+   local bx,by=x+dx,y+dy
    for _,q in ipairs(bins[bx] and bins[bx][by] or {}) do
     local d=(((p.x-q.x)*w)^2+((p.y-q.y)*h)^2)/(radius*radius)
     if d<1 then overlap=overlap+(math.exp(-4*d)-edgeAlpha)/(1-edgeAlpha) end
@@ -54,7 +57,8 @@ end
 function H.Hide(pool) for _,t in ipairs(pool) do t:Hide() end end
 function H.Draw(pool,parent,route,project,radiusProjection,visible,opacity)
  H.Hide(pool);opacity=opacity==nil and 1 or opacity;if opacity<=0 then return end
- local samples=H.Samples(route);local rx,ry=radiusProjection(samples.radius);local used=0
+ local samples=H.Samples(route);if samples.invalid or #samples==0 then return end
+ local rx,ry=radiusProjection(samples.radius);local used=0
  for _,p in ipairs(samples) do
   local x,y=project(p)
   if not visible or visible(x,y,rx,ry) then

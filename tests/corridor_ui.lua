@@ -42,3 +42,18 @@ test('Routes sketch uses world opacity while covered nodes remain selectable',fu
  for _,t in ipairs(sketch.heat) do eq(t:IsShown(),false) end
  eq(A.plan.route.includedCount,count);assert(sketch.pins[1]:IsShown())
 end)
+
+test('a tiny unusable range cannot replace a working plan with a single-stop corridor',function()
+ local A,U=setup();U.actions.generateStart();local follower,plan=A.follower,A.plan
+ C_Minimap.GetViewRadius=function() return 1e-15 end
+ U.ReviewNodes({plan.candidates[1]},point(.1),true)
+ eq(A.follower,follower);eq(A.plan,plan)
+end)
+
+test('a smaller view at zoom zero warns without rewriting captured coverage',function()
+ local A,U=setup();U.actions.generateStart();local plan,follower=A.plan,A.follower;U.OpenRoutes()
+ C_Minimap.GetViewRadius=function() return 170 end;U.Refresh()
+ assert(U.routeView.info:GetText():find('range is reduced',1,true));eq(A.plan,plan);eq(A.follower,follower);near(plan.route.coverageRadius,180)
+ C_Minimap.GetViewRadius=function() return 190 end;U.Refresh()
+ assert(not U.routeView.info:GetText():find('range is reduced',1,true))
+end)

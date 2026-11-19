@@ -12,7 +12,9 @@ end
 function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
  local field={};if not index[shape] or not A.Store.Number(w) or not A.Store.Number(h) or math.min(w,h)<=0 or not A.Store.Number(opacity) or opacity<=0 then return field end
  local cols,rows=math.min(40,math.max(1,math.ceil(w/5))),math.min(40,math.max(1,math.ceil(h/5)))
- local cw,ch=w/cols,h/rows;local density,fade={},{};local samples=A.Heatmap.Samples(route);local rx,ry=radiusProjection(samples.radius)
+ local cw,ch=w/cols,h/rows;local density,fade={},{};local samples=A.Heatmap.Samples(route)
+ if samples.invalid then return field end
+ local rx,ry=radiusProjection(samples.radius)
  if not A.Store.Number(rx) or not A.Store.Number(ry) or math.min(rx,ry)<=0 then return field end
  local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
  for _,hole in ipairs(holes or {}) do

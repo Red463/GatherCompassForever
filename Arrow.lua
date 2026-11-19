@@ -83,6 +83,7 @@ function R.TooltipText()
  if f and f.coverageRadius then
   lines[#lines+1]=string.format('Known locations within %.0f yards of the route are covered.',f.coverageRadius)
   lines[#lines+1]='Designed for a fully zoomed-out minimap.'
+  if f.rangeReduced then lines[#lines+1]='Current minimap range is smaller than the saved coverage. Regenerate to use the current view.' end
  end
  lines[#lines+1]='';lines[#lines+1]='Left-click to open routes. Drag to move the guide.'
  return table.concat(lines,'\n')
@@ -114,7 +115,11 @@ function R.UpdateZoom(snapshot)
  local f=R.frame;if not f then return end
  f.coverageRadius=snapshot and snapshot.corridor and A.Store.Number(snapshot.coverageRadius) and snapshot.coverageRadius or nil
  local zoom=f.coverageRadius and A.Client.MinimapZoom and A.Client.MinimapZoom()
- if zoom and zoom>0 then f.zoomHint:Show() else f.zoomHint:Hide() end
+ local radius=f.coverageRadius and A.Client.MinimapRadius and A.Client.MinimapRadius()
+ f.rangeReduced=A.Store.Number(radius) and radius>0 and radius<f.coverageRadius or false
+ if zoom and zoom>0 then f.zoomHint:SetText('Zoom minimap fully out');f.zoomHint:Show()
+ elseif f.rangeReduced then f.zoomHint:SetText('Minimap range reduced');f.zoomHint:Show()
+ else f.zoomHint:Hide() end
  layout(f)
 end
 function R.Update(position,facing,target,distance,snapshot)

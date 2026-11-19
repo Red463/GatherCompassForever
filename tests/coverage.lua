@@ -123,3 +123,9 @@ test('excessive repair detail fails before publishing more stops than the maps c
  local r,reason=A.Planner.Generate(nodes,nodes[1],distance,{coverageRadius=.1})
  eq(r,nil);assert(reason:find('guidance stops'))
 end)
+
+test('unrepresentable heat-bin geometry is rejected even for a single covered anchor',function()
+ local A=planner();local node=yards(500,250,'anchor')
+ local route,reason=A.Planner.Generate({node},node,distance,{coverageRadius=1e-15})
+ eq(route,nil);assert(type(reason)=='string')
+end)

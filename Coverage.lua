@@ -117,8 +117,11 @@ local function simplify(walk,radius,maxLink)
 end
 
 function C.Plan(valid,groups,component,trace,width,height,radius,maxLink)
- -- Grid coordinates need distinct adjacent integer indices in Lua doubles.
- if math.max(width,height)/math.max(radius,60)>=2^52 then return nil,'Zone distance data is unavailable.' end
+ -- Both coverage and the finer heat/dedup grids need distinct integer
+ -- indices. A positive native radius can still be unusably small.
+ local heatRadius=.65*radius
+ local smallestCell=math.min(math.max(radius,60),heatRadius,.45*C.HeatSpacing(heatRadius),35)
+ if smallestCell<=0 or math.max(width,height)/smallestCell>=2^52 then return nil,'Zone or minimap distance data cannot represent this corridor.' end
  local positions={}
  for _,entry in ipairs(valid) do
   local n=entry.node

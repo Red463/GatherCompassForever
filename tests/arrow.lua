@@ -89,5 +89,8 @@ test('corridor arrow reminds about zoom without changing coverage or legacy arro
  local height=arrow:GetHeight();zoom=2;draw();eq(arrow.zoomHint:IsShown(),true);assert(arrow:GetHeight()>height)
  assert(A.Arrow.TooltipText():find('180',1,true));near(f.route.coverageRadius,180);eq(f.index,1)
  zoom=0;draw();eq(arrow.zoomHint:IsShown(),false);eq(arrow:GetHeight(),height)
+ A.Client.MinimapRadius=function() return 190 end;draw();eq(arrow.zoomHint:IsShown(),false)
+ A.Client.MinimapRadius=function() return 170 end;draw();eq(arrow.zoomHint:IsShown(),true)
+ assert(arrow.zoomHint:GetText():find('range',1,true));near(f.route.coverageRadius,180)
  f.route.corridor=nil;zoom=2;draw();eq(arrow.zoomHint:IsShown(),false)
 end)

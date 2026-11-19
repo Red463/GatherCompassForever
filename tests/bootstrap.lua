@@ -15,6 +15,20 @@ local function setup(saved,configure)
  return A,function(t) clock=t end
 end
 
+test('real successful gathering events mark a future generated stop without importing pickup progress',function()
+ local A,clock=setup();local nodes={}
+ for i,x in ipairs({.2,.4,.6}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
+ A.UI.actions.generateStart();local follower=A.follower;assert(follower)
+ local future=follower.route.points[2];local initial=follower.index
+ local observation={mapID=1,x=future.x,y=future.y,kind='herb',materialID='gm:herb:401',source='imported'}
+ A.Store.Observe(A.db,observation);eq(next(follower.collected),nil)
+ A.Client.Position=function() return point(future.x,future.y) end
+ A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','detour-1',2366)
+ clock(1);A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','detour-1',2366);A.OnEvent(nil,'LOOT_READY');A.OnEvent(nil,'LOOT_OPENED')
+ eq(follower.collected[2],true);eq(follower.index,initial);follower:Skip();assert(follower.index~=2)
+ A.UI.actions.stop();eq(A.follower,nil)
+end)
+
 
 
 

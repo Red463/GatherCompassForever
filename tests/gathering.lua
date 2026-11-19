@@ -6,7 +6,7 @@ local function attempt(id,t,x) local a=point(x or .2); a.castGUID=id; a.time=t o
 local function loot(id) return {sourceGUID='GameObject-0-0-0-0-1618-'..(id or '001'),objectID=1618,itemID=2447,itemName='Peacebloom',kind='herb',name='Peacebloom'} end
 test('successful correlated cast and object loot confirms exactly once',function()
  local d,out=setup(); d:Sent(attempt('a')); d:Succeeded('a',2); d:Loot(loot(),2.1); d:Loot(loot(),2.2)
- eq(#out,1); eq(out[1].source,'confirmed'); eq(out[1].materialID,'item:2447')
+ eq(#out,1); eq(out[1].source,'confirmed'); eq(out[1].materialID,'item:2447');eq(out[1].sourceGUID,loot().sourceGUID)
 end)
 test('unrelated chest items delayed previous loot and multi source events cannot confirm',function()
  local d,out=setup(); d:Sent(attempt('a')); d:Succeeded('a',1)

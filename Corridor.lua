@@ -80,7 +80,8 @@ function C.Generate(nodes,start,distance,options)
  local points,included,includedNodes={},0,{}
  for _,g in ipairs(queue) do for _,n in ipairs(groups[g].members) do included=included+1;includedNodes[#includedNodes+1]=n end end
  for _,step in ipairs(trace) do local g=groups[step.index];local n=g.point
-  points[#points+1]={mapID=start.mapID,x=n.x,y=n.y,kind=step.travel and 'travel' or 'gather',nodeKey=n.key or nodeKey(n),name=step.travel and nil or n.name,density=#g.members}
+  points[#points+1]={mapID=start.mapID,x=n.x,y=n.y,kind=step.travel and 'travel' or 'gather',nodeKey=n.key or nodeKey(n),name=not step.travel and n.name or nil,density=#g.members,
+   resourceKind=n.kind,materialID=n.materialID,objectID=n.objectID}
  end
  local route={name=options.name or A.Planner.Name(includedNodes,start.mapID,options),mapID=start.mapID,loop=true,generated=true,points=points,
   maxLink=maxLink,includedCount=included,omittedCount=#valid-included,areaCount=#queue,width=width,height=height,includedKeys={}}

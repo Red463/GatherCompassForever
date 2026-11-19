@@ -19,7 +19,7 @@ function G.New(callback)
   if math.abs(a.lootAt-a.succeeded)>1.5 then a.loot=nil; return end
   self.pending[a.castGUID]=nil
   local o=A.Store.Copy(a); o.materialID=a.materialID or ('item:'..a.loot.itemID)
-  o.objectID=a.loot.objectID; o.source='confirmed'; o.time=a.succeeded
+  o.objectID=a.loot.objectID;o.sourceGUID=a.loot.sourceGUID; o.source='confirmed'; o.time=a.succeeded
   self.callback(o)
   self.reason=nil
  end

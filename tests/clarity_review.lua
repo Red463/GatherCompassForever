@@ -6,6 +6,17 @@ end
 local function node(A,id,x,source,map)
  return A.Store.Observe(A.db,{mapID=map or 1,x=x,y=.5,kind=id<400 and 'ore' or 'herb',materialID='gm:'..(id<400 and 'ore' or 'herb')..':'..id,name=id==214 and 'Small Thorium Vein' or id==215 and 'Rich Thorium Vein' or id==201 and 'Copper Vein' or 'Silverleaf',source=source or 'imported'})
 end
+
+test('route removal and undo preserve confirmed pickup memory while new generation resets it',function()
+ local A,U=setup();for _,x in ipairs({.3,.5,.7}) do node(A,402,x) end
+ U.actions.generateStart();local f=A.follower;local p=f.route.points[2]
+ local o={mapID=1,x=p.x,y=p.y,kind='herb',materialID='gm:herb:402',source='confirmed'}
+ assert(f:ConfirmGather(o));local gatheredKey=p.nodeKey
+ A.plan.selected=gatheredKey;U.actions.removeNode();assert(A.follower~=f);eq(#A.follower.gatherRecords,1)
+ U.actions.undoNode();local restored
+ for i,n in ipairs(A.follower.route.points) do if n.nodeKey==gatheredKey and n.kind=='gather' then restored=i end end
+ assert(restored and A.follower.collected[restored]);U.actions.generateStart();eq(next(A.follower.collected),nil)
+end)
 test('resource-only review start and rebuild carry a narrow override without false sidebar changes',function()
  local A,U=setup();local silver=node(A,402,.35);node(A,402,.40);node(A,402,.45);local copper=node(A,201,.36)
  A.db.settings.routeMarkerOverride=true;U.SetTab('codex');local v=U.codexView;v.SetSearch('Silverleaf');v.Open(v.tiles[1].item.id);v.Plan()

@@ -51,7 +51,10 @@ function A.Initialize()
   A.detector=A.Gathering.New(function(o)
    o.time=time and time() or 0
    local n=A.Store.Observe(A.db,o)
-   if n then A.status='Confirmed '..(n.name or n.materialID)..'.'; A.UI.Refresh() end
+   if n then
+    if A.follower then A.follower:ConfirmGather(o) end
+    A.status='Confirmed '..(n.name or n.materialID)..'.'; A.UI.Refresh()
+   end
   end)
   A.dataReady=true
  end

@@ -52,7 +52,9 @@ function A.UIActions.Bind(U)
    A.follower=nil
    if plan.route then
     A.follower=A.Follower.New(plan.route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
-    A.follower.session=plan;A.follower.markerFilter=A.Selection.Snapshot(old.markerFilter or plan.options.markerFilter or plan.options.filter);A.follower.lap=old.lap;if old.status=='paused' then A.follower:Pause() end
+    A.follower.session=plan;A.follower.markerFilter=A.Selection.Snapshot(old.markerFilter or plan.options.markerFilter or plan.options.filter);A.follower.lap=old.lap
+    if old.status=='paused' then A.follower:Pause() end
+    A.follower:RestoreGathers(old)
    else clearArrow();plan.review=true end
   elseif not old then plan.review=true end
   refreshMap();say(plan.message)

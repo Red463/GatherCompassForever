@@ -92,32 +92,7 @@ local function buildSidebar()
  U.materialRows=U.filterSidebar.rows;U.materialEmpty=U.filterSidebar.empty;U.sourceCounts=U.filterSidebar.count
 end
 local function buildPreferences()
- U.preferencesScroll=A.ScrollPanel.New(U.content);U.preferencesViewport=U.preferencesScroll.frame
- place(U.preferencesViewport,U.content,20,19,896,395);U.preferences=U.preferencesScroll.body
- label(U.preferences,'Options',0,0,600,26,18,S.gold,true)
- local function rule(y) local t=S.Fill(U.preferences,{.35,.30,.22,1},'ARTWORK');place(t,U.preferences,0,y,710,1) end
- rule(42);label(U.preferences,'Navigation',12,58,670,22,15,S.gold,true)
- label(U.preferences,'Waypoint arrival distance',20,103,210,24,13,S.text)
- U.controls.arrival=place(S.Slider(U.preferences,5,40,5,U.actions.arrivalValue),U.preferences,248,109,270,18)
- U.arrivalValue=label(U.preferences,'',554,103,140,24,13,S.gold)
- label(U.preferences,'Applies immediately, including during a route.',20,149,670,18,12,S.muted)
- rule(176);label(U.preferences,'Guide arrow',12,192,670,22,15,S.gold,true)
- label(U.preferences,'Arrow scale',20,232,210,24,13,S.text)
- U.controls.arrowScale=place(S.Slider(U.preferences,.6,2,.1,U.actions.arrowScaleValue,function(v) return string.format('%d%%',v*100+.5) end),U.preferences,248,238,270,18)
- U.arrowScaleValue=label(U.preferences,'',554,232,140,24,13,S.gold)
- U.controls.arrowProgress=place(S.Check(U.preferences,'Show route step and lap',U.actions.arrowProgress),U.preferences,18,286,24,24)
- S.Hint(U.controls.arrowProgress,'Arrow progress','Show the waypoint number and current lap. Laps start at 1 when following a loop.')
- U.controls.arrowNodeName=place(S.Check(U.preferences,'Show next node name',U.actions.arrowNodeName),U.preferences,18,314,24,24)
- S.Hint(U.controls.arrowNodeName,'Next node name','Show the next resource below the distance. Unnamed path points show Travel waypoint; gather points without a known name show Gathering stop.')
- button(U.preferences,'resetArrow','Reset position & scale',474,286,220,24,'subtle')
- U.controls.minimapButton=place(S.Check(U.preferences,'Show minimap button',U.actions.minimapButton),U.preferences,472,314,24,24)
- U.controls.minimapButton.label:SetWidth(200)
- S.Hint(U.controls.minimapButton,'Minimap launcher','Show the compass button beside your minimap. Click it to toggle this panel; drag it to reposition. Use /gcf to reopen the panel when the button is hidden.')
- rule(386);label(U.preferences,'Panel size',12,402,200,22,15,S.gold,true)
- U.panelSizeValue=label(U.preferences,'',20,436,300,24,13,S.text)
- button(U.preferences,'resetPanel','Reset panel size',474,436,220,26,'subtle',function() U.window:Reset() end)
- label(U.preferences,'Drag the bottom-right corner to resize. Text and controls keep their normal size.',20,470,710,32,12,S.muted):SetWordWrap(true)
- local hint=label(U.preferences,'Drag the guide arrow to move it. Click it to reopen this window.',20,350,670,20,12,S.muted);hint:SetWordWrap(true)
+ U.preferencesView=A.PreferencesView.New(U.content,U);U.preferencesViewport=U.preferencesView.frame;U.preferencesScroll=U.preferencesView.scroller;U.preferences=U.preferencesScroll.body
 end
 local function buildNodeOptions() U.nodeDisplayView=A.NodeDisplayView.New(U.content,U);U.nodeOptions=U.nodeDisplayView.frame end
 local function buildFooter()
@@ -180,8 +155,8 @@ function U.RefreshMode()
   U.filterSidebar:Layout(194,height-210)
   U.routeView.Layout(width-218,height-210)
   U.codexView.Layout(width-24,height-210);U.nodeDisplayView.Layout(width-24,height-210);U.welcomeView.Layout(width-24,height-210)
-  U.preferencesScroll:Layout(math.min(896,width-64),height-229,508)
-  U.panelSizeValue:SetText(math.floor(width+.5)..' x '..math.floor(height+.5)..' UI units');U.layoutsKey=layoutKey
+  U.preferencesView.Layout(width-24,height-210)
+  U.layoutsKey=layoutKey
  end
  show(U.chrome,not compact);show(U.compactBackground,compact);show(U.header,not compact); show(U.nav,not compact); show(U.body,not compact)
  place(U.footer,U.frame,compact and 1 or 12,compact and 1 or height-104,width-(compact and 2 or 24),64)
@@ -236,13 +211,7 @@ function U.Refresh()
  if U.tab=='routes' then U.routeView.Refresh() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
  refreshFooter(p); refreshStatus(p)
  U.nodeDisplayView.Refresh()
- U.syncingOptions=true
- U.controls.arrival:SetValue(A.db.settings.arrival or 15);U.controls.arrowScale:SetValue(tonumber(A.db.settings.arrowScale) or 1)
- U.syncingOptions=false
- U.arrivalValue:SetText((A.db.settings.arrival or 15)..' yards');U.arrowScaleValue:SetText(math.floor((tonumber(A.db.settings.arrowScale) or 1)*100+.5)..'%')
- U.controls.arrowProgress:SetChecked(A.db.settings.arrowProgress~=false)
- U.controls.arrowNodeName:SetChecked(A.db.settings.arrowNodeName==true)
- U.controls.minimapButton:SetChecked(A.db.settings.minimapButton~=false)
+ U.preferencesView.Refresh()
 end
 function U.Toggle() local ready,reason=U.Build();if not ready then return nil,reason end;if U.frame:IsShown() then U.frame:Hide() else U.frame:Show(); U.Refresh() end end
 

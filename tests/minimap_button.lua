@@ -11,7 +11,7 @@ end
 
 test('minimap launcher opens the panel keeps drag separate and restores the saved position',function()
  local A,toggles=launcherSetup();local b=A.MinimapButton.frame;assert(b and b:IsShown())
- eq(b:GetParent(),Minimap);eq(b.icon.texture,A.Skin.media..'Icon')
+ eq(b:GetParent(),Minimap);eq(b.icon.texture,A.Skin.media..'EmptyEmblem')
  b.scripts.OnMouseDown(b,'LeftButton');b.scripts.OnClick(b,'LeftButton');eq(toggles(),1)
  b.scripts.OnMouseDown(b,'LeftButton');b.scripts.OnDragStart(b);assert(b.scripts.OnUpdate)
  b.scripts.OnUpdate(b);b.scripts.OnDragStop(b);b.scripts.OnClick(b,'LeftButton');eq(toggles(),1)

@@ -51,6 +51,7 @@ FilterSidebar.lua
 WelcomeView.lua
 MarkerFiltersView.lua
 NodeDisplayView.lua
+PreferencesView.lua
 UI.lua
 MinimapButton.lua
 Core.lua

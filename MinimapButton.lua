@@ -36,8 +36,11 @@ function M.Build()
  b:EnableMouse(true);b:RegisterForClicks('LeftButtonUp');b:RegisterForDrag('LeftButton')
  b:SetHighlightTexture('Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight','ADD')
  local background=b:CreateTexture(nil,'BACKGROUND');background:SetTexture('Interface\\Minimap\\UI-Minimap-Background');background:SetSize(24,24);background:SetPoint('CENTER',b,'CENTER',0,0)
- b.icon=b:CreateTexture(nil,'ARTWORK');b.icon:SetTexture(A.Skin.media..'Icon');b.icon:SetSize(24,24);b.icon:SetPoint('CENTER',b,'CENTER',0,0)
- local border=b:CreateTexture(nil,'OVERLAY');border:SetTexture('Interface\\Minimap\\MiniMap-TrackingBorder');border:SetSize(54,54);border:SetPoint('TOPLEFT',b,'TOPLEFT',0,0)
+ b.icon=b:CreateTexture(nil,'ARTWORK');A.Skin.BrandBadge(b.icon);b.icon:SetSize(26,26);b.icon:SetPoint('CENTER',b,'CENTER',0,0)
+ if b.CreateMaskTexture and b.icon.AddMaskTexture then
+  b.mask=b:CreateMaskTexture(nil,'ARTWORK');b.mask:SetTexture('Interface\\CharacterFrame\\TempPortraitAlphaMask');b.mask:SetAllPoints(b.icon);b.icon:AddMaskTexture(b.mask)
+ end
+ local border=b:CreateTexture(nil,'OVERLAY');b.border=border;border:SetTexture(A.Skin.media..'NodeRing');border:SetVertexColor(.92,.73,.34,1);border:SetSize(32,32);border:SetPoint('CENTER',b,'CENTER',0,0)
  b:SetScript('OnMouseDown',function(self,key) if key=='LeftButton' then self.wasDragged=false end end)
  b:SetScript('OnClick',function(self,key) if key=='LeftButton' and not self.wasDragged then A.UI.Toggle() end end)
  b:SetScript('OnDragStart',function(self)

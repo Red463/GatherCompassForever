@@ -35,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={version='0.13.0'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -86,6 +86,9 @@ def render(scene):
         if scene=='resources_search_empty':lua.execute("A.UI.resourceLibraryView.SetSearch('No matching resource')")
         if scene=='resources_page2':lua.execute("A.UI.codexView.gridList:SetOffset(96)")
         if scene=='resources_restored_preferences':lua.execute("A.UI.SetTab('settings')")
+    if scene in ('marker_filters','marker_override'):
+        if scene=='marker_override':lua.execute("A.UI.actions.generateStart();A.db.settings.routeMarkerOverride=true;A.UI.OpenRoutes()")
+        lua.execute("A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('filters')")
     if scene=='mini_heat':
         lua.execute("A.UI.actions.generateStart();A.db.settings.routeStyle='heatmap';A.Resources.Settings(A.db.settings).mini=false;Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(240,240);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',520,-240);local terrain=Minimap:CreateTexture(nil,'BACKGROUND');terrain:SetAllPoints();terrain:SetTexture(9001);C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;GetMinimapShape=function() return 'SQUARE' end;A.Map.Refresh(A.db,A.follower.route,A.follower);local player=Minimap:CreateTexture(nil,'OVERLAY');player:SetPoint('CENTER',Minimap,'CENTER');player:SetSize(11,16);player:SetTexture('Interface\\\\AddOns\\\\GatherCompassForever\\\\Media\\\\GuideArrow');for _,n in ipairs(A.db.nodes[1]) do local x,y=A.Map.MiniProject(n,A.Client.Position(),1000,600,200,240,240,0);if x then local dot=Minimap:CreateTexture(nil,'OVERLAY');dot:SetColorTexture(1,.9,.1,1);dot:SetSize(4,4);dot:SetPoint('CENTER',Minimap,'CENTER',x,y) end end;local text=A.Skin.Label(UIParent,'Minimap heat with simulated native tracking dots',15,A.Skin.gold);text:SetPoint('TOPLEFT',UIParent,'TOPLEFT',400,-190);text:SetSize(500,30)")
     if scene=='minimap_button':
@@ -232,14 +235,20 @@ def render(scene):
             art=map_art.copy()
             if o['crop'] is not None:
                 u=vals(o['crop']);art=art.crop((u[0]*art.width,u[2]*art.height,u[1]*art.width,u[3]*art.height))
-            art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS);im.alpha_composite(art,(round(x),round(y)))
+            art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS)
+            if any('TempPortraitAlphaMask' in str(mask['texture']) for mask in vals(o['masks'])):
+                circle=Image.new('L',art.size);ImageDraw.Draw(circle).ellipse((0,0,art.width-1,art.height-1),fill=255);art.putalpha(ImageChops.multiply(art.getchannel('A'),circle))
+            im.alpha_composite(art,(round(x),round(y)))
         if isinstance(texture,str) and '\\Media\\' in texture and w>0 and h>0:
             file=root/'Media'/(texture.split('\\')[-1]+'.tga'); art=Image.open(file).convert('RGBA')
             if o['crop'] is not None:
                 u=vals(o['crop']);art=art.crop((u[0]*art.width,u[2]*art.height,u[1]*art.width,u[3]*art.height))
             if o['vertexColor'] is not None:art=ImageChops.multiply(art,Image.new('RGBA',art.size,rgba(o['vertexColor'])))
             if o['rotation'] is not None:art=art.rotate(math.degrees(o['rotation']),resample=Image.Resampling.BICUBIC)
-            art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS);im.alpha_composite(art,(round(x),round(y)))
+            art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS)
+            if any('TempPortraitAlphaMask' in str(mask['texture']) for mask in vals(o['masks'])):
+                circle=Image.new('L',art.size);ImageDraw.Draw(circle).ellipse((0,0,art.width-1,art.height-1),fill=255);art.putalpha(ImageChops.multiply(art.getchannel('A'),circle))
+            im.alpha_composite(art,(round(x),round(y)))
         if isinstance(texture,str) and w>0 and h>0 and '\\Media\\' not in texture:
             if 'UI-DialogBox-Background' in texture:d.rectangle(rect,fill='#211b15',outline='#65533a')
             elif 'UI-Panel-Button-' in texture:
@@ -295,4 +304,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

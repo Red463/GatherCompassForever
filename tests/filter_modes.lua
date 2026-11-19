@@ -33,3 +33,15 @@ test('missing profession is red but unreadable profession data stays unknown',fu
  GetProfessionInfo=function() error('unreadable') end;ranks,ctx=A.Resources.Skills();assert(not ctx.ore or ctx.ore.known~=false)
  GetProfessions=nil;GetProfessionInfo=nil
 end)
+
+test('native skill enumeration does not infer absence from collapsed or incomplete headers',function()
+ local A={};module('Store',A);module('Client',A);module('Resources',A);GetProfessions=nil;GetProfessionInfo=nil;GetNumSkillLines=nil;GetSkillLineInfo=nil
+ local collapsed=false;local mining=false
+ C_SkillInfo={GetNumSkillLines=function() return mining and 3 or 2 end,GetSkillLineInfo=function(i)
+  if i==1 then return {isHeader=true,isCollapsed=collapsed} end
+  return {isHeader=false,isCollapsed=false,skillID=i==2 and 182 or 186,rank=1,maxRank=75,modifier=0,tempPoints=0}
+ end}
+ local ranks,ctx=A.Resources.Skills();eq(ctx.ore.known,false);collapsed=true;ranks,ctx=A.Resources.Skills();assert(not ctx.ore or ctx.ore.known~=false)
+ collapsed=false;mining=true;ranks,ctx=A.Resources.Skills();eq(ctx.ore.known,true);eq(ranks.ore,1)
+ mining=false;ranks,ctx=A.Resources.Skills();eq(ctx.ore.known,false);C_SkillInfo=nil
+end)

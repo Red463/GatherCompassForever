@@ -15,11 +15,12 @@ test('heat corridor sample budget holds for dense large routes',function()
  for _,p in ipairs(points) do local near=false;for _,s in ipairs(samples) do if math.abs(p.x-s.x)*10000<36 and math.abs(p.y-s.y)*10000<36 then near=true;break end end;assert(near,'Heat corridor lost a route endpoint') end
 end)
 
-test('heat palette is darker and its summed texture opacity has a fixed bound',function()
+test('heat palette is darker and its composited texture opacity has a fixed bound',function()
  dofile('tests/wow.lua');fakeUI();local A={};module('Heatmap',A)
  local route={width=1000,height=500,points={point(.2),point(.6)},loop=true};local pool={}
  A.Heatmap.Draw(pool,UIParent,route,function(p) return p.x*1000,0 end,function(r) return r,r end)
  for _,t in ipairs(pool) do assert(t.vertexColor[1]<.9 and t.vertexColor[2]<.5) end
+ local strongest=0;for _,t in ipairs(pool) do strongest=math.max(strongest,t.vertexColor[4]) end;assert(strongest>=.25,'World heat is too faint on the sample corridor')
  local samples=A.Heatmap.Samples(route)
- for _,p in ipairs(samples) do local sum=0;for i,q in ipairs(samples) do if ((p.x-q.x)*1000)^2+((p.y-q.y)*500)^2<=samples.radius^2 then sum=sum+pool[i].vertexColor[4] end end;assert(sum<=.92001) end
+ for _,p in ipairs(samples) do local transmission=1;for i,q in ipairs(samples) do if ((p.x-q.x)*1000)^2+((p.y-q.y)*500)^2<=samples.radius^2 then transmission=transmission*(1-pool[i].vertexColor[4]) end end;assert(1-transmission<=.865) end
 end)

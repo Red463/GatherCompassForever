@@ -159,6 +159,11 @@ function V.New(parent,U)
  S.Hint(U.controls.codexPlan,'Resource route','Uses this resource and your Routes checkboxes. Stop current guidance first.')
  S.Hint(U.controls.codexMap,'Show resource markers','Uses your current map-marker selections. Choose visible nodes in Node display; an active route override may temporarily apply route selections.')
  S.Hint(U.controls.codexGuide,'Nearest known location','Uses your Routes checkboxes. Known locations are possible spawns, not live nodes.')
+ function view.LayoutSources(count)
+  local iw=view.sourceScroll:Layout(314,information:GetHeight()-16,112+math.min(2,count)*88)
+  for _,t in ipairs({view.stats,view.last}) do t:SetWidth(iw-28) end
+  for _,row in ipairs(view.sourceRows) do row:SetWidth(iw-28);for _,key in ipairs({'name','requirement','summary','transition'}) do row[key]:SetWidth(iw-28) end end
+ end
  function view.Layout(width,height)
   local w,h=width-40,height-19;root:SetSize(w,h);grid:SetSize(w,h);detail:SetSize(w,h)
   local function move(f,p,x,y,fw,fh) f:ClearAllPoints();place(f,p,x,y,fw,fh) end
@@ -176,9 +181,7 @@ function V.New(parent,U)
   view.gridList:Layout(w,h-top,math.max(1,math.min(16,math.floor((w-20)/96))))
   move(view.name,detail,234,0,w-234,25);move(view.profession,detail,234,29,w-234,18);view.localInfo:SetWidth(w)
   local ph=h-99;information:SetSize(330,ph);zones:SetSize(w-344,ph)
-  local iw=view.sourceScroll:Layout(314,ph-16,288)
-  for _,t in ipairs({view.stats,view.last}) do t:SetWidth(iw-28) end
-  for _,row in ipairs(view.sourceRows) do row:SetWidth(iw-28);for _,key in ipairs({'name','requirement','summary','transition'}) do row[key]:SetWidth(iw-28) end end
+  view.LayoutSources(view.item and #view.item.sources or 1)
   local zw=w-344;view.zoneTitle:SetWidth(zw-28);view.zoneHint:SetWidth(zw-28);view.zoneHeader:SetWidth(zw-218)
   move(totals,zones,zw-192,68,176,18)
   view.zoneList.frame:ClearAllPoints();view.zoneList.frame:SetPoint('TOPLEFT',zones,'TOPLEFT',12,-90);view.zoneList:Layout(zw-24,ph-100,1)
@@ -223,6 +226,7 @@ function V.New(parent,U)
     row.transition:SetText(safe(d.transition or (d.source=='profession' and 'Profession not learned' or d.source=='reference' and 'Source: Reference data (Classic)' or 'Source: Unknown')))
    else row.node=nil;row.details=nil end
   end
+  view.LayoutSources(#item.sources)
   view.zoneList:SetItems(item.zones,view.zoneItem~=item.id);view.zoneItem=item.id
   show(view.zoneEmpty,#item.zones==0)
 

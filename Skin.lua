@@ -1,4 +1,4 @@
-local _, A = ...
+local addonName, A = ...
 local S={media='Interface\\AddOns\\GatherCompassForever\\Media\\',text={.94,.88,.75},muted={.72,.67,.57},dim={.56,.51,.43},gold={1,.82,.35},green={.35,.8,.35}}
 -- Opaque warm greys keep inset panels close to the native marble background.
 S.panelColor={.19,.18,.16,1}
@@ -22,16 +22,26 @@ function S.Panel(parent,color,edge,name)
  return f
 end
 local function object(value) return type(value)=='table' or type(value)=='userdata' end
+function S.BrandBadge(texture)
+ texture:SetTexture(S.media..'EmptyEmblem');texture:SetTexCoord(.17,.83,.17,.83);texture:SetVertexColor(1,1,1,1)
+end
 function S.Window(parent)
  local f=CreateFrame('Frame','GatherCompassForeverPanelChrome',parent,'PortraitFrameTemplate')
  f.opaqueBase=S.Fill(f,{.045,.038,.03,1},'BACKGROUND',-8)
- if f.SetTitle then f:SetTitle('Gather Compass Forever') end
+ local version=A.version
+ if type(version)~='string' and C_AddOns and C_AddOns.GetAddOnMetadata then local ok,value=pcall(C_AddOns.GetAddOnMetadata,addonName,'Version');if ok then version=value end end
+ if f.SetTitle then f:SetTitle('Gather Compass Forever'..(type(version)=='string' and (' v'..version) or ' (development)')) end
  -- Tint only the native rock background; inset surfaces keep their own palette.
  if object(f.Bg) and type(f.Bg.SetVertexColor)=='function' then f.Bg:SetVertexColor(.85,.85,.85,1) end
  local portrait=f.portrait
  if not object(portrait) and object(f.PortraitContainer) then portrait=f.PortraitContainer.portrait end
- if object(portrait) then portrait:SetTexture(S.media..'Icon')
- else portrait=S.Image(f,'Icon',54,54); portrait:SetPoint('TOPLEFT',f,'TOPLEFT',-2,0) end
+ local container=object(f.PortraitContainer) and f.PortraitContainer or f
+ if not object(portrait) then portrait=f:CreateTexture(nil,'ARTWORK') end
+ -- Forever's portrait container is a 1px anchor, not the portrait bounds.
+ portrait:ClearAllPoints();portrait:SetPoint('CENTER',container,'TOPLEFT',26,-24);portrait:SetSize(58,58)
+ S.BrandBadge(portrait)
+ if object(f.PortraitContainer) and object(f.PortraitContainer.CircleMask) then f.PortraitContainer.CircleMask:ClearAllPoints();f.PortraitContainer.CircleMask:SetAllPoints(portrait)
+ elseif f.CreateMaskTexture and portrait.AddMaskTexture then local mask=f:CreateMaskTexture(nil,'ARTWORK');mask:SetTexture('Interface\\CharacterFrame\\TempPortraitAlphaMask');mask:SetAllPoints(portrait);portrait:AddMaskTexture(mask);f.brandMask=mask end
  f.brandPortrait=portrait
  if not object(f.CloseButton) then
   f.CloseButton=CreateFrame('Button',nil,f,'UIPanelCloseButton')

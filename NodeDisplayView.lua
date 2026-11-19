@@ -35,12 +35,15 @@ function V.New(parent,U)
  local help=label(world,'Icons only on the world map. Hover a grouped badge to see its resources; zoom in to separate nearby locations.',18,219,394,48,12,S.muted);help:SetWordWrap(true)
  local preview=place(S.Panel(v.world),v.world,454,0,442,280)
  label(preview,'Marker preview',18,14,400,23,16,S.gold)
- label(preview,'Mixed groups use a neutral badge and a count.',18,242,400,22,11,S.muted)
+ v.previewCaption=label(preview,'Appearance example',18,242,400,22,11,S.muted)
+ v.previewCanvas=place(CreateFrame('Frame',nil,preview),preview,18,48,406,180);v.previewCanvas:SetClipsChildren(true);v.previewCanvas:EnableMouse(false)
+ S.Fill(v.previewCanvas,{.12,.17,.10,1},'BACKGROUND',-8);v.previewArt=A.MapArt.New(v.previewCanvas)
+ v.previewFallback=label(v.previewCanvas,'Map artwork unavailable - marker sample',12,148,380,22,11,S.muted)
  v.worldExamples={}
  for i=1,3 do
-  local icon=preview:CreateTexture(nil,'ARTWORK');place(icon,preview,130+i*26,100+(i%2)*14,24,24);icon:SetTexture(A.Resources.Icon({kind='herb',materialID=i==1 and 'gm:herb:402' or 'gm:herb:403'}));v.worldExamples[i]=icon
+  local icon=v.previewCanvas:CreateTexture(nil,'ARTWORK');place(icon,v.previewCanvas,({174,188,282})[i],({88,94,54})[i],24,24);icon:SetTexture(A.Resources.Icon({kind='herb',materialID=i==1 and 'gm:herb:402' or 'gm:herb:403'}));v.worldExamples[i]=icon
  end
- v.worldCount=label(preview,'3',189,99,30,20,12,S.gold)
+ v.worldCount=label(v.previewCanvas,'2',190,74,30,20,12,S.gold)
  local mini=place(S.Panel(v.mini),v.mini,0,0,438,280)
  check(mini,'nodeMini','Show node markers',12,8,180);check(mini,'nodeIcon','Show icons',236,8,160)
  check(mini,'nodeGroupMini','Group overlapping icons',12,40,382)
@@ -75,8 +78,8 @@ function V.New(parent,U)
  end
  function v.Refresh()
   local s=A.Resources.Settings(A.db.settings);local worldPage=v.page=='world'
-  if v.page=='filters' then v.filters.frame:Show();v.world:Hide();v.mini:Hide();v.filters.Refresh() else v.filters.frame:Hide();if worldPage then v.world:Show();v.mini:Hide() else v.world:Hide();v.mini:Show() end end
-  S.Selected(U.controls.displayFilters,v.page=='filters');S.Selected(U.controls.displayWorld,worldPage);S.Selected(U.controls.displayMini,not worldPage)
+  if v.page=='filters' then v.filters.frame:Show();v.world:Hide();v.mini:Hide();if U.tab=='nodes' then v.filters.Refresh() end else v.filters.frame:Hide();if worldPage then v.world:Show();v.mini:Hide() else v.world:Hide();v.mini:Show() end end
+  S.Selected(U.controls.displayFilters,v.page=='filters');S.Selected(U.controls.displayWorld,worldPage);S.Selected(U.controls.displayMini,v.page=='mini')
   for key,value in pairs({nodeWorld=s.world,nodeMini=s.mini,nodeIcon=s.icon,nodeGroupWorld=s.groupWorld,nodeGroupMini=s.groupMini,nodeRouteLine=s.routeLines}) do U.controls[key]:SetChecked(value) end
   for key,value in pairs({nodeOutline=s.outline,nodeOutlineSize=s.outlineSize,nodeIconSize=s.iconSize,nodeWorldIconSize=s.worldIconSize,nodeDistance=s.hideDistance}) do U.controls[key]:SetValue(value) end
   U.syncingOptions=true
@@ -90,11 +93,16 @@ function V.New(parent,U)
   U.controls.nodeOutlineSize:SetEnabled(s.mini and s.outline~='none');U.controls.nodeOutlineOpacity:SetEnabled(s.mini and s.outline~='none')
   U.controls.nodeRouteOpacity:SetEnabled(s.routeLines)
   for i,icon in ipairs(v.worldExamples) do
-   icon:SetSize(s.worldIconSize+8,s.worldIconSize+8);icon:SetAlpha(s.worldIconOpacity)
-   if s.world and (i==1 or not s.groupWorld) then icon:Show() else icon:Hide() end
+   local size=s.worldIconSize+(s.groupWorld and i==1 and 8 or 0);icon:SetSize(size,size);icon:SetAlpha(s.worldIconOpacity)
+   if s.world and (i==1 or i==3 or not s.groupWorld) then icon:Show() else icon:Hide() end
   end
   v.worldExamples[1]:SetTexture(s.groupWorld and S.media..'Icon' or A.Resources.Icon({kind='herb',materialID='gm:herb:402'}))
   if s.world and s.groupWorld then v.worldCount:Show();v.worldCount:SetAlpha(s.worldIconOpacity) else v.worldCount:Hide() end
+  if U.tab=='nodes' and worldPage then
+   local player=A.Client.Position();local aspect=v.previewArt.aspect or 1.5;local half=.25*180/406*aspect
+   v.previewArt:Draw(player and player.mapID,{left=.25,right=.75,top=.5-half,bottom=.5+half},406,180)
+   if v.previewArt.available then v.previewFallback:Hide() else v.previewFallback:Show() end
+  end
   v.miniIcon:SetAlpha(s.miniIconOpacity);v.miniCount:SetAlpha(s.miniIconOpacity)
   if s.mini and s.icon then v.miniIcon:Show() else v.miniIcon:Hide() end
   if s.mini and s.icon and s.groupMini then v.miniCount:Show() else v.miniCount:Hide() end

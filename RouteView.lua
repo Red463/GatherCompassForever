@@ -3,7 +3,7 @@ local V={};A.RouteView=V
 function V.New(parent,U)
  local S=A.Skin;local v={}
  local function place(f,x,y,w,h) f:SetPoint('TOPLEFT',v.frame,'TOPLEFT',x,-y);f:SetSize(w,h);return f end
- v.frame=CreateFrame('Frame',nil,parent);v.frame:SetPoint('TOPLEFT',parent,'TOPLEFT',16,-12);v.frame:SetSize(710,395)
+ v.frame=CreateFrame('Frame',nil,parent);v.frame:SetPoint('TOPLEFT',parent,'TOPLEFT',16,-4);v.frame:SetSize(710,395)
  local function label(text,x,y,w,h,size,color) return place(S.Label(v.frame,text,size or 12,color or S.text),x,y,w,h) end
  local function button(key,text,x,y,w,fn,style) local b=place(S.Button(v.frame,text,fn or U.actions[key],style),x,y,w,26);U.controls[key]=b;return b end
  label('Your farming corridor',0,0,310,27,18,S.gold)

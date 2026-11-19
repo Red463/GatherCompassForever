@@ -1,5 +1,5 @@
 local _, A = ...
-local M={pins={},byKey={},worldLines={},worldShadows={},miniLines={}}; A.Map=M
+local M={pins={},byKey={},worldLines={},worldShadows={},miniLines={},worldHeat={}}; A.Map=M
 local positionHandle,paintHandle
 function M.SetNodeFocus(mapID,materials,nodeKey,source)
  if mapID==nil then M.nodeFocus=nil;return true end
@@ -283,7 +283,7 @@ local function pin()
 end
 function M.Refresh(db,route,follower)
  if not CreateFrame then return end
- hide(M.worldLines);hide(M.worldShadows); hide(M.miniLines); M.targetIndex=nil
+ hide(M.worldLines);hide(M.worldShadows);hide(M.miniLines);A.Heatmap.Hide(M.worldHeat);M.targetIndex=nil
  local lib=pinsLib()
  for _,p in ipairs(M.pins) do p.wanted=false end
  local function retire()
@@ -395,14 +395,16 @@ function M.Refresh(db,route,follower)
  M.targetIndex=active and snapshot.index or nil
  local points=route.points; local w,h=A.Client.Size(route.mapID)
  local editing=M.editor and route==M.editor.draft
- local world=(active or editing) and canvas and map:IsShown() and map:GetMapID()==route.mapID and not focus
+ local reviewing=A.plan and A.plan.review and route==A.plan.route
+ local heat=db.settings.routeStyle=='heatmap'
+ local world=(active or editing or reviewing) and canvas and map:IsShown() and map:GetMapID()==route.mapID and not focus
  local radius=C_Minimap and C_Minimap.GetViewRadius and A.Client.Read(C_Minimap.GetViewRadius())
  local facing=0
  if GetCVar and GetCVar('rotateMinimap')=='1' then facing=A.Client.Facing() end
  -- Editing draws only on the world map; minimap paths require navigation.
  local mini=active and player and player.mapID==route.mapID and w and A.Store.Number(radius) and radius>0 and facing~=nil and Minimap and Minimap:IsShown()
  local holes={}
- if mini and settings.routeLines then
+ if mini and not heat and settings.routeLines then
   holes[1]={x=0,y=0,r=8} -- Native player arrow.
   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
   local function protect(p)
@@ -415,6 +417,10 @@ function M.Refresh(db,route,follower)
   local clearanceNodes=unfiltered and knownMiniNodes or A.Store.Select(db,player.mapID,{source='combined'})
   for _,node in ipairs(clearanceNodes) do protect(node) end
   if snapshot and snapshot.target then protect(snapshot.target) end
+ end
+ if world and heat then
+  local zw,zh=w or route.width or 1000,h or route.height or 1000
+  A.Heatmap.Draw(M.worldHeat,worldLayer,route,function(p) return M.Project(p,canvas:GetWidth(),canvas:GetHeight()) end,function(radius) return radius/zw*canvas:GetWidth(),radius/zh*canvas:GetHeight() end)
  end
  local wi,mi=0,0
  local zoom=map and map.GetCanvasScale and map:GetCanvasScale() or 1
@@ -429,8 +435,8 @@ function M.Refresh(db,route,follower)
   local stroke=M.worldLines[index];stroke.fromPoint=a;stroke.toPoint=b;stroke.shadow=M.worldShadows[index]
  end
  local function segment(a,b,color)
-  if world and wi<600 then wi=wi+1;drawWorld(wi,a,b,color) end
-  if mini and settings.routeLines and mi<200 then
+  if world and not heat and wi<600 then wi=wi+1;drawWorld(wi,a,b,color) end
+  if mini and not heat and settings.routeLines and mi<200 then
    local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
    local x1,y1=miniRaw(a,player,w,h,radius,mw,mh,facing); local x2,y2=miniRaw(b,player,w,h,radius,mw,mh,facing)
    x1,y1,x2,y2=M.Clip(x1,y1,x2,y2,mw,mh)

@@ -34,3 +34,14 @@ test('filter and display changes preserve the current plan until explicit regene
  U.SetKind('ore');eq(A.follower,f);eq(A.plan.route,route);assert(U.routeView.info:GetText():find('Selections changed',1,true))
  U.controls.routeStyle:SelectValue('heatmap');eq(A.db.settings.routeStyle,'heatmap');eq(A.follower,f);eq(A.plan.route,route)
 end)
+
+test('review nodes can be selected and removed on a clipped map without resetting zoom',function()
+ local A,U=setup();U.actions.generateReview();local sketch=U.routeSketch
+ assert(sketch.art);assert(sketch.viewport);assert(sketch.pins[1]);local pin=sketch.pins[1]
+ pin.scripts.OnClick(pin);eq(A.plan.selected,pin.nodeKey)
+ sketch:Zoom(2);local zoom=sketch.zoom;assert(zoom>1 and zoom<=8)
+ U.actions.removeNode();eq(sketch.zoom,zoom)
+ for _,p in ipairs(sketch.pins) do if p:IsShown() then assert(not A.plan.excluded[p.nodeKey]) end end
+ sketch:Pan(100000,100000);assert(sketch.cx>=0 and sketch.cx<=1 and sketch.cy>=0 and sketch.cy<=1)
+ sketch.frame:Hide();eq(sketch.dragging,nil)
+end)

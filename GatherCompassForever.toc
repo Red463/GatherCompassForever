@@ -27,10 +27,12 @@ Corridor.lua
 Planner.lua
 FarmingSession.lua
 Follower.lua
+Heatmap.lua
 Map.lua
 Skin.lua
 Dropdown.lua
 Arrow.lua
+MapArt.lua
 RouteSketch.lua
 RouteView.lua
 AtlasView.lua

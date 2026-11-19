@@ -22,18 +22,20 @@ CreateFrame=function(...)
  f.SetJustifyH=function(self,v) self.justify=v end
  f.SetJustifyV=function(self,v) self.justifyV=v end
  f.SetWordWrap=function(self,v) self.wrap=v end
+ f.SetClipsChildren=function(self,v) self.clips=v end
  f.SetTexture=function(self,v) self.texture=v end
  f.SetTexCoord=function(self,...) self.crop={...} end
  f.SetStartPoint=function(self,...) self.lineStart={...} end
  f.SetEndPoint=function(self,...) self.lineEnd={...} end
  return f
 end
-A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Map','Skin','Dropdown','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+WorldMapFrame:Hide()
+A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
 A.Client.Probe=function() return {loot=true,position=true,distance=true,facing=true,minimap=true} end
-A.Store.distance=A.Client.Distance; C_Map={GetMapInfo=function(id) return {name=({[1]='Ashenvale',[2]='Darkshore',[3]='Elwynn Forest'})[id] or 'Zone '..tostring(id)} end}; A.UI.Build();A.UI.OpenRoutes()
+A.Store.distance=A.Client.Distance; C_Map={GetMapInfo=function(id) return {name=({[1]='Ashenvale',[2]='Darkshore',[3]='Elwynn Forest'})[id] or 'Zone '..tostring(id)} end}; C_Map.GetMapArtID=function() return 1 end;C_Map.GetMapArtLayers=function() return {{layerWidth=1000,layerHeight=667,tileWidth=1000,tileHeight=667}} end;C_Map.GetMapArtLayerTextures=function() return {9001} end;A.UI.Build();A.UI.OpenRoutes()
 function populate()
  local nodes={}
  for i=1,18 do local n=A.Store.Observe(A.db,{mapID=1,x=.18+(i%6)*.08,y=.18+math.floor(i/6)*.14,kind=i%3==0 and 'ore' or 'herb',name=i%3==0 and 'Copper vein' or i%2==0 and 'Silverleaf' or 'Peacebloom',materialID='m'..(i%3),source=i%2==0 and 'confirmed' or 'imported'});nodes[#nodes+1]=n end
@@ -41,7 +43,7 @@ function populate()
   local points={};for j=1,10 do local n=nodes[(j+i)%#nodes+1];points[#points+1]={mapID=1,x=n.x,y=n.y,kind='gather',nodeKey=n.key} end
   local id=A.Store.SaveRoute(A.db,{name=name,mapID=1,loop=i~=3,points=points,recorded=i==3});if i==1 then A.selectedRoute=id end
  end
- A.UI.Refresh()
+ A.UI.actions.generateReview()
 end
 function atlasPopulate()
  A.Resources.Skills=function() return {herb=109,ore=70},{herb={maxRank=150,bonus=0},ore={maxRank=150,bonus=0}} end
@@ -52,6 +54,15 @@ function atlasPopulate()
  A.UI.SetTab('atlas');A.UI.atlasView.Select('herb:403')
 end
 '''
+map_art=Image.new('RGBA',(1000,667),'#a29460')
+map_draw=ImageDraw.Draw(map_art)
+for i in range(18):
+    line=[(x,160+i*17+24*math.sin(x/90+i*.3)) for x in range(-20,1040,12)]
+    map_draw.line(line,fill=(111+i%3*9,117+i%4*7,66,255),width=18)
+map_draw.line([(560+50*math.sin(y/90),y) for y in range(0,668,5)],fill='#4b7770',width=20)
+map_draw.line([(x,380+50*math.sin(x/230)) for x in range(0,1001,5)],fill='#716447',width=9)
+map_draw.line([(x,380+50*math.sin(x/230)) for x in range(0,1001,5)],fill='#c1ae72',width=4)
+map_draw.text((355,335),'ILLUSTRATIVE ZONE MAP',font=ImageFont.truetype('C:/Windows/Fonts/georgia.ttf',16),fill='#393d23')
 fractions={'TOPLEFT':(0,0),'TOP':(.5,0),'TOPRIGHT':(1,0),'LEFT':(0,.5),'CENTER':(.5,.5),'RIGHT':(1,.5),'BOTTOMLEFT':(0,1),'BOTTOM':(.5,1),'BOTTOMRIGHT':(1,1)}
 def vals(t): return list(t.values()) if t is not None else []
 def rgba(t,default=(0,0,0,0)):
@@ -60,18 +71,6 @@ def rgba(t,default=(0,0,0,0)):
 def render(scene):
     lua=LuaRuntime(unpack_returned_tuples=True);lua.execute(CAPTURE)
     if scene not in ('empty','atlas_empty'):lua.execute('populate()')
-    if scene in ('map_editor','map_editor_drag','map_following'):
-        lua.execute("""
-WorldMapFrame=A.Skin.Panel(UIParent);WorldMapFrame:SetSize(940,590);WorldMapFrame:SetPoint('TOPLEFT',UIParent,'TOPLEFT',170,-85)
-WorldMapFrame.canvas=CreateFrame('Frame',nil,WorldMapFrame);WorldMapFrame.canvas:SetSize(900,520);WorldMapFrame.canvas:SetPoint('TOPLEFT',WorldMapFrame,'TOPLEFT',20,-50);WorldMapFrame.canvas:SetBackdropColor(.23,.25,.16,1)
-WorldMapFrame.ScrollContainer=WorldMapFrame.canvas
-WorldMapFrame.GetCanvas=function(self) return self.canvas end;WorldMapFrame.GetMapID=function() return 1 end;WorldMapFrame.SetMapID=function() end;WorldMapFrame.GetCanvasScale=function() return 1 end
-mapHeading=A.Skin.Label(WorldMapFrame,'World map route editor / illustrative canvas',16,A.Skin.gold);mapHeading:SetPoint('TOPLEFT',WorldMapFrame,'TOPLEFT',20,-12);mapHeading:SetSize(880,24)
-A.UI.actions.edit();A.editIndex=4;A.Map.Refresh(A.db,A.editor.draft,nil)
-local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContainer.GetNormalizedCursorPosition=function() return dragX,dragY end
-""")
-        if scene=='map_editor_drag':lua.execute("local handle=A.Map.byKey['w:point:4'];handle.scripts.OnDragStart(handle);dragX,dragY=.58,.46;handle.scripts.OnUpdate(handle,.016)")
-        if scene=='map_following':lua.execute("A.UI.actions.discard();A.UI.OpenRoutes();A.UI.actions.start();A.Map.Refresh(A.db,A.follower.route,A.follower);mapHeading:SetText('World map route guidance / illustrative canvas')")
     if scene.startswith('resources'):
         lua.execute("atlasPopulate();A.UI.SetTab('resources')")
         if scene=='resources_herb':lua.execute("A.UI.resourceLibraryView.SetSearch('Earthroot');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
@@ -87,8 +86,8 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
     if scene in ('filters_scroll','filters_scroll_end'):
         lua.execute("for i,item in ipairs(A.Resources.Catalog()) do A.Store.Observe(A.db,{mapID=1,x=.1+i*.005,y=.5,kind=item.kind,name=item.name,materialID=item.materialID,source='imported'}) end;A.Resources.Skills=function() return {herb=109,ore=75},{herb={maxRank=150,bonus=0},ore={maxRank=150,bonus=0}} end;A.UI.Refresh()")
         if scene=='filters_scroll_end':lua.execute('A.UI.filterSidebar:SetOffset(A.UI.filterSidebar.maximum)')
-    if scene=='editing':lua.execute('WorldMapFrame:Hide();A.UI.Edit(A.db.routes[A.selectedRoute]);A.editIndex=4;A.UI.Refresh()')
-    if scene=='recording':lua.execute("A.UI.controls.record.scripts.OnClick(); for i=1,6 do A.recording:Sample({mapID=1,x=.2+i*.02,y=.4+i*.01},i) end;A.UI.Refresh()")
+    if scene=='route_heatmap':lua.execute("A.UI.controls.routeStyle:SelectValue('heatmap')")
+    if scene=='route_selected':lua.execute("A.UI.routeSketch.pins[1].scripts.OnClick(A.UI.routeSketch.pins[1])")
     if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
     if scene=='preferences':lua.execute("A.UI.SetTab('settings')")
     if scene in ('welcome','welcome_importing'):
@@ -144,12 +143,17 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
         return fonts[key]
     for o in objects:
         if not visible(o):continue
-        x,y,w,h=box(o);rect=(round(x),round(y),round(x+w),round(y+h))
+        x,y,w,h=box(o)
+        if o['kind']=='Line' and o['lineStart'] is not None:
+            def endpoint(a):
+                tx,ty,tw,th=box(a[2]);fx,fy=fractions[a[1]];return tx+tw*fx+(a[3] or 0),ty+th*fy-(a[4] or 0)
+            a,b=endpoint(o['lineStart']),endpoint(o['lineEnd']);x,y=min(a[0],b[0]),min(a[1],b[1]);w,h=max(1,abs(b[0]-a[0])),max(1,abs(b[1]-a[1]))
+        rect=(round(x),round(y),round(x+w),round(y+h))
         if w<0 or h<0:raise AssertionError('Negative geometry')
         if o['parent'] is not None and ident(o['parent']['opaqueBase'])==ident(o):continue
         clipping=None;ancestor=o['parent']
         while ancestor is not None and ident(ancestor)!=0:
-            if ancestor['kind']=='ScrollFrame':
+            if ancestor['kind']=='ScrollFrame' or ancestor['clips']:
                 ax,ay,aw,ah=box(ancestor);clipping=(round(ax),round(ay),round(ax+aw),round(ay+ah))
                 break
             ancestor=ancestor['parent']
@@ -196,8 +200,13 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
             if o['backdrop'] is not None and 'UI-DialogBox-Background' in (o['backdrop']['bgFile'] or ''):
                 d.rectangle(rect,fill='#171410',outline='#675b49',width=2)
             else:d.rectangle(rect,fill=rgba(o['backColor']),outline=rgba(o['borderColor']))
-        if o['color'] is not None and rgba(o['color'])[3]:d.rectangle(rect,fill=rgba(o['color']))
+        if o['kind']!='Line' and o['color'] is not None and rgba(o['color'])[3]:d.rectangle(rect,fill=rgba(o['color']))
         texture=o['texture']
+        if texture==9001 and w>0 and h>0:
+            art=map_art.copy()
+            if o['crop'] is not None:
+                u=vals(o['crop']);art=art.crop((u[0]*art.width,u[2]*art.height,u[1]*art.width,u[3]*art.height))
+            art=art.resize((max(1,round(w)),max(1,round(h))),Image.Resampling.LANCZOS);im.alpha_composite(art,(round(x),round(y)))
         if isinstance(texture,str) and '\\Media\\' in texture and w>0 and h>0:
             file=root/'Media'/(texture.split('\\')[-1]+'.tga'); art=Image.open(file).convert('RGBA')
             if o['crop'] is not None:
@@ -260,4 +269,4 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','map_editor','map_editor_drag','map_following','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','editing','recording','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

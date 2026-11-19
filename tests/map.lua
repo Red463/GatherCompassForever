@@ -7,6 +7,20 @@ test('map projection respects non square geometry rotation and minimap clipping'
  near(A.Arrow.Angle(point(.5,.4),point(.5,.5),1000,500,0),0)
  near(A.Arrow.Angle(point(.6,.5),point(.5,.5),1000,500,0),-math.pi/2)
 end)
+
+test('review heat replaces lines and stopping clears heat while keeping resource markers',function()
+ dofile('tests/wow.lua');fakeUI();local A={};for _,name in ipairs({'Store','Client','Follower','Map'}) do module(name,A) end
+ A.Client.Position=function() return point(.1) end;A.Client.Size=function() return 1000,500 end;A.Client.Distance=distance;A.Client.Facing=function() return 0 end
+ C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end
+ local db=A.Store.Open();db.settings.routeStyle='heatmap';local route={mapID=1,width=1000,height=500,points={point(.2),point(.3)},loop=true}
+ A.plan={route=route,review=true};A.Map.Refresh(db,route,nil);assert(A.Map.worldHeat[1]:IsShown())
+ eq(#A.Map.worldLines,0);local f=A.Follower.New(route,point(.1),distance);A.plan.review=false
+ A.Map.Refresh(db,route,f);eq(#A.Map.miniLines,0);eq(A.Map.targetIndex,f.index)
+ db.settings.routeStyle='lines';A.Map.Refresh(db,route,f);eq(A.Map.worldHeat[1]:IsShown(),false);assert(A.Map.worldLines[1]:IsShown())
+ db.settings.routeStyle='heatmap';A.Map.Refresh(db,route,f);WorldMapFrame:Hide();eq(A.Map.worldHeat[1]:IsVisible(),false)
+ WorldMapFrame:Show();A.Map.Refresh(db,nil,nil);eq(A.Map.worldHeat[1]:IsShown(),false)
+ C_Minimap=nil
+end)
 test('browsing another saved route cannot draw an inactive world route',function()
  dofile('tests/wow.lua'); fakeUI(); local A={}; module('Store',A); module('Client',A); module('Map',A)
  A.Client.Position=function() return point(.1) end; A.Client.Size=function() return 1000,500 end

@@ -38,6 +38,7 @@ function fakeUI()
  function methods:Enable() self:SetEnabled(true) end
  function methods:Disable() self:SetEnabled(false) end
  function methods:SetEnabled(v) local changed=self.enabled~=v; self.enabled=v; local f=self.scripts[v and 'OnEnable' or 'OnDisable']; if changed and f then f(self) end end
+ function methods:SetTexCoord(...) self.coords={...} end
  function methods:SetTexture(v) self.texture=v end
  function methods:SetVertexColor(...) self.vertexColor={...} end
  function methods:EnableMouse(v) self.mouse=v;self.mouseClicks=v;self.mouseMotion=v end
@@ -68,7 +69,7 @@ function fakeUI()
  PanelTemplates_SelectTab=function(tab) assert(type(tab.LeftActive)=='table');tab:Disable() end
  PanelTemplates_DeselectTab=function(tab) assert(type(tab.Left)=='table');tab:Enable() end
  UIParent=CreateFrame('Frame'); Minimap=CreateFrame('Frame'); Minimap:SetSize(200,200)
- WorldMapFrame=CreateFrame('Frame'); WorldMapFrame.ScrollContainer=CreateFrame('Frame'); WorldMapFrame.canvas=CreateFrame('Frame')
+ WorldMapFrame=CreateFrame('Frame'); WorldMapFrame.ScrollContainer=CreateFrame('Frame'); WorldMapFrame.canvas=CreateFrame('Frame',nil,WorldMapFrame)
  WorldMapFrame.GetCanvas=function(self) return self.canvas end
  WorldMapFrame.GetMapID=function() return 1 end
  WorldMapFrame.ScrollContainer.GetNormalizedCursorPosition=function() return .25,.4 end

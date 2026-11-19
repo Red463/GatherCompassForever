@@ -14,7 +14,7 @@ with zipfile.ZipFile(path) as z:
     assert metadata['Version'] == '0.9.0'
     assert metadata['X-License'] == 'MIT'
     assert metadata['IconTexture'] == r'Interface\AddOns\GatherCompassForever\Media\Icon'
-    for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow']:
+    for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow', 'HeatBlob']:
         assert f'GatherCompassForever/Media/{texture}.tga' in names
     for line in toc.splitlines():
         if line.strip() and not line.startswith('#'):
@@ -31,6 +31,12 @@ with zipfile.ZipFile(path) as z:
         pixels = data[18:18+64*64*4]
         assert pixels[(32*64+32)*4+3] == 0, 'Marker centre must stay transparent'
         assert max(pixels[3::4]) == 255, 'Marker outline missing'
+    heat = z.read('GatherCompassForever/Media/HeatBlob.tga')
+    assert heat[2] == 2 and heat[16] == 32
+    size = int.from_bytes(heat[12:14], 'little')
+    assert size == 128 and int.from_bytes(heat[14:16], 'little') == size
+    alpha = heat[18:18+size*size*4][3::4]
+    assert alpha[size//2*size+size//2] > 250 and alpha[0] == 0
     for name in names:
         if name.endswith(('.lua','.md','.txt','.toc')):
             assert b'estimat' not in z.read(name).lower(), f'Prohibited wording in shipped file: {name}'

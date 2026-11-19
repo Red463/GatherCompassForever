@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.18.1 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.18.2 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -57,7 +57,7 @@ route guidance continue normally.
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.18.1.zip` from
+1. Download `Gatherly-0.18.2.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -333,7 +333,7 @@ The selected materials do not change automatically when your profession skill ri
 sizes/opacities and grouping on each map; minimap outlines have their own size and
 opacity. The nearby-hide distance affects icons/counts, while hollow outlines stay
 at their real known positions. Each map has separate **Line opacity** and
-**Heatmap opacity** sliders; the Routes sketch follows the world-map values.
+**Heatmap opacity** sliders; world-map heat defaults to 50%. The Routes sketch follows the world-map values.
 The minimap's **Show route overlay** switch enables either style independently
 of node-marker visibility. Zero opacity hides that overlay without changing
 coverage, guidance or markers. Existing minimap opacity seeds both new minimap

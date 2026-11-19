@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.2 - 2026-11-19
+
+- Default world-map heatmap opacity to 50%. Preserve saved opacity choices and all other overlay defaults.
+
 ## 0.18.1 - 2026-11-19
 
 - Show movable route controls automatically when guidance starts, with Stop route, Open panel and Skip next node.

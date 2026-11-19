@@ -35,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide();C_Minimap={GetViewRadius=function() return 200 end}
-A={version='0.18.0'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Coverage','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
+A={version='0.18.1'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Coverage','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','RouteControls','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -103,6 +103,7 @@ def render(scene):
     if scene=='route_heatmap':lua.execute("A.UI.controls.routeStyle:SelectValue('heatmap')")
     if scene=='route_selected':lua.execute("A.UI.routeSketch.pins[1].scripts.OnClick(A.UI.routeSketch.pins[1])")
     if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
+    if scene=='route_controls':lua.execute('A.UI.actions.start()')
     if scene=='preferences':lua.execute("A.UI.SetTab('settings')")
     if scene in ('welcome','welcome_importing'):
         lua.execute("A.UI.SetTab('welcome')")
@@ -158,7 +159,7 @@ def render(scene):
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHERLY 0.18.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHERLY 0.18.1 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
@@ -310,4 +311,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['routes_small','routes_standard','routes_large','preferences_small','preferences_standard','preferences_large','marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','mini_heat_dark','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_zoom','arrow_reduced_range','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['route_controls','routes_small','routes_standard','routes_large','preferences_small','preferences_standard','preferences_large','marker_filters','marker_override','resize_min','resize_wide','resize_tall','codex_min','codex_wide','nodes_min','welcome_min','preferences_min','welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','mini_heat_dark','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_zoom','arrow_reduced_range','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

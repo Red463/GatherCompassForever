@@ -23,14 +23,14 @@ function moduleUI(A)
  -- Failure tests explicitly replace these APIs after setup.
  if not C_Minimap then C_Minimap={GetViewRadius=function() return 200 end} end
  if not A.FarmingSession then module('FarmingSession',A) end
- for _,name in ipairs({'Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Heatmap','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI'}) do module(name,A) end
+ for _,name in ipairs({'Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Heatmap','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','RouteControls','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI'}) do module(name,A) end
 end
 function distance(a,b)
  if not a or not b or a.mapID~=b.mapID then return nil end
  return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*500)^2)
 end
 function point(x,y) return {mapID=1,x=x,y=y or 0.5,kind='travel'} end
-local suites={'clarity_review','clarity_ui','codex_scroll','virtual_list','filter_modes','panel_resize','store','resources','selection','marker_groups','skill_tooltip','atlas','resource_library','codex','codex_review_regressions','node_display','client','gathering','imports','editor','recorder','planner','coverage','farming_session','map_art','heatmap','mini_heat','follower','map','corridor_render','grouped_maps','skin','dropdown','arrow','minimap_button','difficulty_probe','filter_sidebar','welcome','route_view','corridor_ui','ui','resource_library_view','expedition','bootstrap'}
+local suites={'route_controls','clarity_review','clarity_ui','codex_scroll','virtual_list','filter_modes','panel_resize','store','resources','selection','marker_groups','skill_tooltip','atlas','resource_library','codex','codex_review_regressions','node_display','client','gathering','imports','editor','recorder','planner','coverage','farming_session','map_art','heatmap','mini_heat','follower','map','corridor_render','grouped_maps','skin','dropdown','arrow','minimap_button','difficulty_probe','filter_sidebar','welcome','route_view','corridor_ui','ui','resource_library_view','expedition','bootstrap'}
 for _,suite in ipairs(suites) do
  local f=io.open('tests/'..suite..'.lua')
  assert(f,'Missing required test suite: '..suite); f:close(); dofile('tests/'..suite..'.lua')

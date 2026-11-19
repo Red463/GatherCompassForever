@@ -197,6 +197,7 @@ local function refreshStatus(p)
  U.status:SetText(safe(text))
 end
 function U.Refresh()
+ if A.RouteControls and A.db then A.RouteControls.Update(A.follower) end
  if not U.frame or not A.db then return end
  if not U.frame:IsShown() then return end
  local p=A.Client.Position(); local work=A.editor or A.recording or A.recordedDraft

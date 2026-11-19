@@ -14,6 +14,10 @@ function V.New(parent,U)
   A.db.settings.routeMarkerOverride=not A.db.settings.routeMarkerOverride;U.Refresh()
   if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
  end);U.controls.markerRouteOverride=markerOption
+ local miniOption=S.Check(v.frame,'Show route controls',function()
+  A.db.settings.routeControls=A.db.settings.routeControls==false;U.Refresh()
+ end);U.controls.miniRouteControls=miniOption
+ S.Hint(miniOption,'Show route controls','Automatically show a movable panel with Stop route, Open panel and Skip next node while following a route. Turning this off hides the panel without stopping guidance.')
  S.Hint(markerOption,'Map markers during a route','While guidance is active, including paused guidance, both maps show nodes matching the sources, gathering types and materials saved with that route. Your normal map-marker selections return when the route stops or finishes. Route lines and the arrow are unaffected.')
  U.controls.routeStyle=place(S.Dropdown(v.frame,{{value='lines',label='Route lines'},{value='heatmap',label='Heatmap corridor'}},U.actions.routeStyle),538,69,172,26)
  v.selection=label('Select a node on the map to remove it from this route.',0,74,528,20,11,S.muted)
@@ -27,13 +31,15 @@ function V.New(parent,U)
   local top=v.narrow and 36 or 0
   move(U.controls.generateStart,w-336,top,162,26);move(U.controls.generateReview,w-166,top,166,26)
   move(v.info,0,33+top,w,32)
-  move(markerOption,0,68+top,24,24);markerOption.label:SetSize(w-36,24);markerOption:SetHitRectInsets(0,-(w-32),0,0)
+  move(markerOption,0,68+top,24,24);markerOption.label:SetSize(w-268,24);markerOption:SetHitRectInsets(0,-(w-264),0,0)
+  move(miniOption,w-222,68+top,24,24);miniOption.label:SetSize(194,24);miniOption:SetHitRectInsets(0,-194,0,0)
   move(U.controls.routeStyle,w-172,97+top,172,26)
   move(v.selection,0,102+top,w-182,20)
   move(v.sketch.frame,0,130+top,w,math.max(80,h-162-top))
   for _,e in ipairs({{U.controls.removeNode,0,128},{U.controls.undoNode,136,128},{U.controls.map,w-136,136}}) do move(e[1],e[2],h-26,e[3],26) end
  end
  function v.Refresh()
+  miniOption:SetChecked(A.db.settings.routeControls~=false)
   markerOption:SetChecked(A.db.settings.routeMarkerOverride==true)
   local plan=A.plan;local route=plan and plan.route;local nodes=U.SelectedNodes()
   local text=plan and plan.message or 'Tick the materials you want, then generate a nearby route. No save step is needed.'

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.1 - 2026-11-19
+
+- Show movable route controls automatically when guidance starts, with Stop route, Open panel and Skip next node.
+- Remember the control panel position and keep it available during paused or suspended guidance; hide it when guidance ends.
+- Add Show route controls to Routes so the floating panel can be disabled without changing guidance.
+
 ## 0.18.0
 
 - Generate a shared centre-path corridor for Lines and Heatmap. Count selected known locations within 90% of the client-measured fully zoomed-out minimap radius, including locations outside the narrower painted band. Preserve coverage of the previously included local nodes and the 450-yard connection/closure limit.

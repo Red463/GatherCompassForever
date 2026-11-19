@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version=A.Skin and A.Skin.AddonVersion('0.18.0') or '0.18.0'
+A.version=A.Skin and A.Skin.AddonVersion('0.18.1') or '0.18.1'
 function A.Print(text)
  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gatherly:|r '..tostring(text)) end
 end
@@ -118,6 +118,7 @@ function A.Tick(elapsed)
   A.detector:Expire(now)
   if A.recording then A.recording:Sample(p,now) end
   if A.follower then A.follower:Tick(p,now,A.detector:IsGathering(now)) end
+  A.RouteControls.Update(A.follower)
   local f=A.follower
   A.Arrow.Update(p,A.Client.Facing(),f and f:Target() or nil,A.Client.Distance,f and f:Snapshot() or nil)
  end

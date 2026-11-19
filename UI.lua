@@ -68,7 +68,7 @@ function U.DisplayRoute()
  if A.follower and A.follower.status~='complete' and A.follower.status~='stopped' then return A.follower.route end
  return A.plan and A.plan.review and A.plan.route or nil
 end
-function U.SetTab(tab) if tab=='welcome' or tab=='routes' or tab=='atlas' or tab=='resources' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
+function U.SetTab(tab) if tab=='atlas' or tab=='resources' then tab='codex' end;if tab=='welcome' or tab=='routes' or tab=='codex' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
 function U.SetCompact(on) S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
 local function buildHeader()
  U.header=place(CreateFrame('Frame',nil,U.frame),U.frame,12,2,936,60)
@@ -81,18 +81,14 @@ local function buildHeader()
  U.controls.close:SetFrameLevel(math.max(U.controls.close:GetFrameLevel(),U.header:GetFrameLevel()+2))
  S.Hint(U.controls.minimize,'Minimise','Keep only the navigation bar visible.')
  U.nav=place(CreateFrame('Frame',nil,U.frame),U.frame,12,64,936,32);U.nav.topTabs=true;U.nav:SetFrameLevel(U.header:GetFrameLevel()+1);U.tabs={}
- for i,t in ipairs({{'welcome','Welcome',132},{'routes','Routes',132},{'atlas','Node Atlas',132},{'resources','Resources',132},{'nodes','Node display',132},{'settings','Preferences',132}}) do
+ for i,t in ipairs({{'welcome','Welcome',154},{'routes','Routes',154},{'codex','Node Codex',154},{'nodes','Node display',154},{'settings','Preferences',154}}) do
   local b=S.Tab(U.nav,t[2],t[3],function() U.SetTab(t[1]) end,true)
-  place(b,U.nav,8+(i-1)*140,0,t[3],32);U.tabs[t[1]]=b;U.controls['tab'..t[1]]=b
+  place(b,U.nav,8+(i-1)*164,0,t[3],32);U.tabs[t[1]]=b;U.controls['tab'..t[1]]=b
  end
 end
 local function buildSidebar()
  U.filterSidebar=A.FilterSidebar.New(U.body,U);U.sidebar=U.filterSidebar.frame
  U.materialRows=U.filterSidebar.rows;U.materialEmpty=U.filterSidebar.empty;U.sourceCounts=U.filterSidebar.count
-end
-local function buildAtlas()
- U.atlasView=A.AtlasView.New(U.content,U);U.atlas=U.atlasView.frame
- U.atlasRows=U.atlasView.rows;U.atlasInfo=U.atlasView.info;U.atlasPageLabel=U.atlasView.pageLabel
 end
 local function buildPreferences()
  U.preferences=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,377)
@@ -181,8 +177,8 @@ local function buildWindow()
  U.frame:EnableMouse(true);U.frame:SetFrameStrata('DIALOG'); U.frame:SetClampedToScreen(true); U.frame:SetMovable(true); S.FitWindow(U.frame,W,H); buildHeader()
  U.body=place(CreateFrame('Frame',nil,U.frame),U.frame,12,100,936,414); buildSidebar()
  U.content=place(CreateFrame('Frame',nil,U.body),U.body,194,0,742,414)
- U.routeView=A.RouteView.New(U.content,U);U.library=U.routeView.frame;buildAtlas(); buildPreferences(); buildNodeOptions(); buildFooter()
- U.resourceLibraryView=A.ResourceLibraryView.New(U.content,U)
+ U.routeView=A.RouteView.New(U.content,U);U.library=U.routeView.frame;buildPreferences(); buildNodeOptions(); buildFooter()
+ U.codexView=A.ResourceLibraryView.New(U.content,U);U.resourceLibraryView=U.codexView
  U.welcomeView=A.WelcomeView.New(U.content,U)
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherCompassForeverWindow' end
  U.frame:HookScript('OnHide',function() S.CloseDropdown() end)
@@ -214,7 +210,6 @@ function U.RefreshMode()
  U.footerName:SetWidth(compact and 250 or 340); U.footerMeta:SetWidth(compact and 280 or 370)
 end
 local function refreshSidebar(p) U.filterSidebar.Refresh(p) end
-local function refreshAtlas() U.atlasView.Refresh() end
 local function refreshFooter(p)
  local f=A.follower;local active=f and (f.status=='running' or f.status=='paused' or f.status=='suspended')
  local r=active and f.route or A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute]
@@ -245,14 +240,14 @@ function U.Refresh()
  if not U.frame:IsShown() then return end
  local p=A.Client.Position(); local work=A.editor or A.recording or A.recordedDraft
  if U.compact then U.RefreshMode(); refreshFooter(p); refreshStatus(p); return end
- local resource=U.tab=='resources';local welcome=U.tab=='welcome';local full=resource or welcome;local nodes=full and {} or U.SelectedNodes()
+ local resource=U.tab=='codex';local welcome=U.tab=='welcome';local full=resource or welcome;local nodes=full and {} or U.SelectedNodes()
  show(U.sidebar,not full);place(U.content,U.body,full and 0 or 194,0,full and 936 or 742,414)
  U.RefreshMode(); for id,b in pairs(U.tabs) do S.Selected(b,id==U.tab) end
- show(U.library,U.tab=='routes'); show(U.atlas,U.tab=='atlas'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
+ show(U.library,U.tab=='routes'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
  show(U.resourceLibraryView.frame,resource)
  show(U.welcomeView.frame,welcome)
  if not full then refreshSidebar(p) end
- if U.tab=='routes' then U.routeView.Refresh() elseif U.tab=='atlas' then refreshAtlas() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
+ if U.tab=='routes' then U.routeView.Refresh() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
  refreshFooter(p); refreshStatus(p)
  local marker=A.Resources.Settings(A.db.settings)
  U.controls.nodeWorld:SetChecked(marker.world);U.controls.nodeMini:SetChecked(marker.mini)

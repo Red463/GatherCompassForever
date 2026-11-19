@@ -37,7 +37,6 @@ Arrow.lua
 MapArt.lua
 RouteSketch.lua
 RouteView.lua
-AtlasView.lua
 ResourceLibraryView.lua
 UIActions.lua
 FilterSidebar.lua

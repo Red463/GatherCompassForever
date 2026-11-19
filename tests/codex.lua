@@ -1,0 +1,40 @@
+local function setup()
+ dofile('tests/wow.lua');fakeUI();local A={};for _,n in ipairs({'Store','Client','Planner','Follower'}) do module(n,A) end;moduleUI(A)
+ A.db=A.Store.Open();A.Client.Position=function() return point(.1) end;A.Client.Distance=distance;A.Client.Size=function() return 1000,500 end
+ A.Resources.Skills=function() return {herb=109,ore=260},{herb={maxRank=150,bonus=0},ore={maxRank=300,bonus=0}} end
+ A.UI.Build();A.UI.SetTab('codex');A.UI.frame:Show();A.UI.Refresh();return A,A.UI.codexView
+end
+test('Node Codex replaces both old pages with skill-coloured catalogue tiles and no Welcome button',function()
+ local A,V=setup();assert(V);eq(A.UI.tabs.atlas,nil);eq(A.UI.tabs.resources,nil);assert(A.UI.tabs.codex);eq(A.UI.controls.resourceWelcome,nil)
+ eq(A.UI.sidebar:IsShown(),false);eq(V.frame:GetWidth(),896)
+ V.SetSearch('Earthroot');local tile=V.tiles[1];eq(tile.item.skill.key,'green');near(tile.label.textColor[2],A.Resources.colors.green[2]);tile.scripts.OnEnter(tile);near(tile.label.textColor[2],A.Resources.colors.green[2])
+ V.SetSearch('Thorium');eq(V.tiles[1].item.skill.key,'orange');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(#V.item.sources,2)
+ eq(A.UI.controls.atlasDetail,nil)
+end)
+test('Codex browsing filters source zone and skill without changing farming selections',function()
+ local A,V=setup();A.Store.Observe(A.db,{mapID=1,x=.2,y=.5,kind='herb',materialID='gm:herb:403',name='Earthroot',source='confirmed'})
+ A.Store.Observe(A.db,{mapID=2,x=.3,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='imported'})
+ V.SetSearch('');A.UI.controls.codexScope:SelectValue('current');eq(#V.model.items,1);eq(V.model.items[1].name,'Earthroot')
+ A.UI.controls.codexSource:SelectValue('imported');eq(#V.model.items,0)
+ A.UI.controls.codexScope:SelectValue('all');A.UI.controls.codexSource:SelectValue('combined');A.UI.controls.codexSkill:SelectValue('skillups')
+ for _,item in ipairs(V.model.items) do assert(item.skill.key=='green' or item.skill.key=='yellow' or item.skill.key=='orange') end
+ eq(A.db.settings.kind,'both');eq(A.db.settings.materials,nil)
+end)
+test('Codex routes and nearest guidance use the selected resource and respect active guidance',function()
+ local A,V=setup();for i=1,4 do A.Store.Observe(A.db,{mapID=1,x=.1+i*.05,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='imported'}) end
+ V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);V.Plan();assert(A.plan and A.plan.review);eq(A.UI.tab,'routes');eq(A.db.settings.materials,nil)
+ A.UI.SetTab('codex');V.Guide();local f=A.follower;assert(f and #f.route.points==1);eq(A.plan.review,false)
+ A.UI.SetTab('codex');V.Plan();eq(A.follower,f)
+ A.UI.actions.stop();A.UI.SetKind('ore');A.UI.SetTab('codex');V.Guide();eq(A.follower,nil);assert(A.status:find('Routes',1,true))
+end)
+test('Welcome material selection opens the actual Routes checkboxes',function()
+ local A=setup();A.UI.SetTab('welcome');local b=A.UI.welcomeView.resources;eq(b:GetText(),'Choose materials');b.scripts.OnClick();eq(A.UI.tab,'routes');eq(A.UI.sidebar:IsVisible(),true)
+end)
+
+test('Codex handles missing position and retains its source scope in zone details',function()
+ local A,V=setup();A.Store.Observe(A.db,{mapID=1,x=.2,y=.5,kind='herb',materialID='gm:herb:403',name='Earthroot',source='confirmed'})
+ A.Store.Observe(A.db,{mapID=2,x=.3,y=.5,kind='herb',materialID='gm:herb:403',name='Earthroot',source='imported'})
+ A.UI.controls.codexSource:SelectValue('confirmed');V.SetSearch('Earthroot');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(V.item.count,1);eq(#V.item.zones,1)
+ A.Client.Position=function() return nil end;A.UI.Refresh();eq(A.UI.controls.codexGuide:IsEnabled(),false);assert(V.localInfo:GetText():find('Position unavailable',1,true))
+ V.Back();A.UI.controls.codexScope:SelectValue('current');eq(#V.model.items,0);assert(V.empty:GetText():find('Position unavailable',1,true))
+end)

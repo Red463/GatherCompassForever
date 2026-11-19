@@ -34,7 +34,7 @@ end)
 
 test('review edits cannot replace an unrelated nearest-node follower or revive its old review',function()
  local A,U=setup();U.actions.generateReview();local plan=A.plan
- U.SetTab('atlas');U.atlasView.Select('herb:401');U.atlasView.Guide();local nearest=A.follower;assert(nearest);eq(plan.review,false)
+ U.SetTab('codex');U.codexView.SetSearch('Peacebloom');U.codexView.tiles[1].scripts.OnClick(U.codexView.tiles[1]);U.codexView.Guide();local nearest=A.follower;assert(nearest);eq(plan.review,false)
  U.OpenRoutes();U.actions.selectNode(plan.candidates[1].key);U.actions.removeNode();eq(A.follower,nearest);eq(plan.review,false)
  nearest.status='complete';eq(U.DisplayRoute(),nil)
 end)

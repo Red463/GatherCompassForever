@@ -30,7 +30,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -45,13 +45,13 @@ function populate()
  end
  A.UI.actions.generateReview()
 end
-function atlasPopulate()
+function codexPopulate()
  A.Resources.Skills=function() return {herb=109,ore=70},{herb={maxRank=150,bonus=0},ore={maxRank=150,bonus=0}} end
  time=function() return 100000 end
  for i=1,8 do A.Store.Observe(A.db,{mapID=1,x=.22+i*.022,y=.4+i*.014,kind='herb',name='Earthroot',materialID='gm:herb:403',source=i%2==0 and 'confirmed' or 'imported',time=100000-i*180}) end
  for map=2,3 do for i=1,6 do A.Store.Observe(A.db,{mapID=map,x=.1+i*.07,y=.2+i*.02,kind='herb',name='Earthroot',materialID='gm:herb:403',source='imported'}) end end
  for i,name in ipairs({'Briarthorn','Mageroyal','Wild Steelbloom'}) do A.Store.Observe(A.db,{mapID=1,x=.4+i*.04,y=.5,kind='herb',name=name,materialID='node:herb:'..name,source='imported'}) end
- A.UI.SetTab('atlas');A.UI.atlasView.Select('herb:403')
+ A.UI.SetTab('codex')
 end
 '''
 map_art=Image.new('RGBA',(1000,667),'#a29460')
@@ -72,7 +72,7 @@ def render(scene):
     lua=LuaRuntime(unpack_returned_tuples=True);lua.execute(CAPTURE)
     if scene not in ('empty','atlas_empty'):lua.execute('populate()')
     if scene.startswith('resources'):
-        lua.execute("atlasPopulate();A.UI.SetTab('resources')")
+        lua.execute("codexPopulate();A.UI.SetTab('resources')")
         if scene=='resources_herb':lua.execute("A.UI.resourceLibraryView.SetSearch('Earthroot');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
         if scene=='resources_ore':lua.execute("A.Store.Observe(A.db,{mapID=1,x=.5,y=.5,kind='ore',name='Small Thorium Vein',materialID='gm:ore:214',source='imported'});A.Store.Observe(A.db,{mapID=2,x=.6,y=.5,kind='ore',name='Rich Thorium Vein',materialID='gm:ore:215',source='imported'});A.UI.resourceLibraryView.SetSearch('Thorium');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
         if scene=='resources_zero':lua.execute("A.UI.resourceLibraryView.SetSearch('Black Lotus');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
@@ -103,12 +103,6 @@ def render(scene):
     if scene in ('arrow_name','arrow_name_no_progress'):lua.execute('A.db.settings.arrowNodeName=true')
     if scene=='arrow_name_no_progress':lua.execute('A.db.settings.arrowProgress=false')
     if scene in ('arrow','arrow_name','arrow_name_no_progress'):lua.execute("A.UI.controls.start.scripts.OnClick();A.Arrow.Update(A.Client.Position(),0,A.follower:Target(),A.Client.Distance,A.follower:Snapshot())")
-    if scene.startswith('atlas'):
-        if scene=='atlas_empty':lua.execute("A.UI.SetTab('atlas')")
-        else:lua.execute('atlasPopulate()')
-        if scene=='atlas_zones':lua.execute("A.UI.controls.atlasDetail:SelectValue('zones')")
-        if scene=='atlas_all_zones':lua.execute("A.UI.controls.atlasScope:SelectValue('all');A.UI.controls.atlasSort:SelectValue('difficulty')")
-        if scene=='atlas_locations_page2':lua.execute('A.UI.controls.atlasDetailNext.scripts.OnClick()')
     objects=vals(lua.globals().captured);byid={int(o['captureID']):o for o in objects}; boxes={0:(0,0,1280,800)};resolving=set()
     def ident(o):return int(o['captureID']) if o and o['captureID'] is not None else 0
     def box(o):
@@ -269,4 +263,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

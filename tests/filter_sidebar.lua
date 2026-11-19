@@ -27,7 +27,7 @@ test('unavailable current position does not expose another zone materials while 
  A.Client.Position=function() return nil end;U.Refresh()
  for _,row in ipairs(U.materialRows) do eq(row.materialID,nil) end
  eq(U.filterSidebar.empty:IsShown(),true);assert(U.filterSidebar.empty:GetText():find('Position unavailable',1,true))
- U.SetTab('atlas');U.atlasView.SetScope('all');eq(U.materialRows[1].materialID,'gm:herb:401')
+ U.SetTab('codex');U.codexView.SetSearch('Peacebloom');eq(U.codexView.model.items[1].count,1);eq(U.sidebar:IsShown(),false)
 end)
 test('bulk material checkboxes include offscreen and other-zone materials then allow edits',function()
  local A,U=setup()

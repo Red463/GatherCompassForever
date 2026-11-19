@@ -27,7 +27,7 @@ function V.New(parent,U)
   U.actions.import();U.Refresh()
  end,'primary');place(import,view.cards[1],14,151,260,26);U.controls.import=import
  S.Hint(import,'Import all node data','Load herb and ore locations for every supported zone from installed GatherMate2_Data, with GatherMate2 observations as a fallback. Personal discoveries stay separate.')
- view.resources=place(S.Button(view.cards[2],'Browse resources',function() U.SetTab('resources') end,'subtle'),view.cards[2],14,151,260,26)
+ view.resources=place(S.Button(view.cards[2],'Choose materials',U.OpenRoutes,'subtle'),view.cards[2],14,151,260,26)
  view.routes=place(S.Button(view.cards[3],'Open routes',U.OpenRoutes,'subtle'),view.cards[3],14,151,260,26)
  label(f,'Import status',2,322,892,20,13,S.gold)
  view.status=label(f,'',2,346,892,46,12,S.muted)

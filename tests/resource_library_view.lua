@@ -11,7 +11,7 @@ local function add(A,map,x,id,name,kind)
 end
 
 test('Resources is a full-width grid with independent type search and paged square item buttons',function()
- local A,V=viewSetup();eq(A.UI.tab,'resources');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
+ local A,V=viewSetup();eq(A.UI.tab,'codex');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
  assert(#V.model.items>35);eq(#V.tiles,27);eq(V.tiles[1].cell:GetWidth(),V.tiles[1].cell:GetHeight())
  A.UI.controls.resourceNext.scripts.OnClick();eq(V.page,2)
  A.UI.controls.resourceType:SelectValue('ore');eq(V.kind,'ore');eq(V.page,1)

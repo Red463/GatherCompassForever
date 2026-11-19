@@ -1,4 +1,4 @@
-local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Arrow','MinimapButton','MapArt','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
+local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Arrow','MinimapButton','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
 local function setup(saved,configure)
  dofile('tests/wow.lua'); fakeUI(); local A={}; GatherCompassForeverDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}
@@ -34,7 +34,7 @@ test('generation and Atlas use contextual names without saving or changing archi
  local A=setup();A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='imported'})
  A.UI.actions.generateReview();eq(A.plan.route.name,'Test Zone - Silverleaf Loop');eq(next(A.db.routes),nil)
  local first=A.Store.SaveRoute(A.db,A.plan.route);A.UI.actions.generateReview();eq(A.plan.route.name,'Test Zone - Silverleaf Loop (2)')
- A.UI.SetTab('atlas');A.UI.atlasView.Plan();eq(A.plan.route.name,'Test Zone - Silverleaf Loop (2)')
+ A.UI.SetTab('codex');A.UI.codexView.SetSearch('Silverleaf');A.UI.codexView.tiles[1].scripts.OnClick(A.UI.codexView.tiles[1]);A.UI.codexView.Plan();eq(A.plan.route.name,'Test Zone - Silverleaf Loop (2)')
  eq(A.db.routes[first].name,'Test Zone - Silverleaf Loop')
 end)
 

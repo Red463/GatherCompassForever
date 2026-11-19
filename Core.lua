@@ -14,7 +14,7 @@ function A.Import()
  local provider,stats=A.Imports.Provider()
  if not provider then A.status='Enable compatible GatherMate2 and GatherMate2_Data addons to import spawn data. Personal recording still works.'; A.UI.Refresh(); return end
  A.importJob=coroutine.create(function()
-  local count,processed=0,0; local zones={}
+  local count=0; local zones={}
   local work,started=0,importClock()
   local function checkpoint()
    work=work+1;if work%64~=0 then return end
@@ -33,7 +33,6 @@ function A.Import()
    local it=A.importIterator; local good,k,o=pcall(it[1],it[2],it[3]); it[3]=k
    if not good then A.status='Import stopped: '..tostring(k); return end
    if k==nil then break end
-   processed=processed+1
    if type(o)=='table' then o.source='imported'; if write(o) then count=count+1; zones[o.mapID]=true end end
    checkpoint()
   end

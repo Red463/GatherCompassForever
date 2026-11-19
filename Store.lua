@@ -41,8 +41,9 @@ function S.Observe(db,o,candidates)
  for _,n in ipairs(candidates or list) do
   local alias=n.name and o.name and n.name==o.name and (n.materialID:match('^node:') or o.materialID:match('^node:'))
   if n.kind==o.kind and (n.materialID==o.materialID or alias) and not (n.objectID and o.objectID and n.objectID~=o.objectID) then
-   local d=S.distance and S.distance(n,o)
-   if (d and d<=5) or (n.x==o.x and n.y==o.y) then match=n; break end
+   local exact=n.x==o.x and n.y==o.y
+   local d=not exact and S.distance and S.distance(n,o)
+   if exact or (d and d<=5) then match=n; break end
   end
  end
  if not match then
@@ -73,31 +74,42 @@ end
 -- policy; their revision changes invalidate any grid built before they moved.
 function S.ImportWriter(db,size,checkpoint)
  local caches,revision={},db.nodeRevision
+ local function stamp() return type(GetTime)=='function' and GetTime() or nil end
  local function insert(cache,n,i)
   if not S.Position(n) then return end
   local x,y=math.floor(n.x*cache.width/5),math.floor(n.y*cache.height/5)
-  local key=x..':'..y;local cell=cache.cells[key] or {};cache.cells[key]=cell;cell[#cell+1]=n;cache.order[n]=i
+  local column=cache.cells[x] or {};cache.cells[x]=column
+  local cell=column[y] or {};column[y]=cell;cell[#cell+1]=n;cache.order[n]=i
  end
  local function build(mapID)
   local w,h;if size then w,h=size(mapID) end
-  if not S.Number(w) or not S.Number(h) or w<=0 or h<=0 then return {fallback=true} end
-  local before=db.nodeRevision;local cache={width=w,height=h,cells={},order={}}
+  if not S.Number(w) or not S.Number(h) or w<=0 or h<=0 then return {fallback=true,width=w,height=h,stamp=stamp()} end
+  local before,frame=db.nodeRevision,stamp();local cache={width=w,height=h,cells={},order={}}
   for i,n in ipairs(db.nodes[mapID] or {}) do insert(cache,n,i);if checkpoint then checkpoint() end end
   if before~=db.nodeRevision then return nil end
+  if stamp()~=frame and size then local nowW,nowH=size(mapID);if nowW~=w or nowH~=h then return nil end end
+  cache.stamp=stamp()
   return cache
  end
  return function(o)
   if not S.Position(o) then return nil end
   if revision~=db.nodeRevision then caches={} end
   local cache=caches[o.mapID]
+  local frame=stamp()
+  if cache and cache.stamp~=frame then
+   local w,h;if size then w,h=size(o.mapID) end
+   if cache.width~=w or cache.height~=h then cache=nil else cache.stamp=frame end
+  end
   while not cache do cache=build(o.mapID);if not cache then caches={} end end
   caches[o.mapID]=cache
   local candidates
   if not cache.fallback then
    candidates={};local x,y=math.floor(o.x*cache.width/5),math.floor(o.y*cache.height/5)
-   for dx=-1,1 do for dy=-1,1 do
-    for _,n in ipairs(cache.cells[(x+dx)..':'..(y+dy)] or {}) do candidates[#candidates+1]=n end
-   end end
+   for dx=-1,1 do local column=cache.cells[x+dx]
+    if column then for dy=-1,1 do
+     for _,n in ipairs(column[y+dy] or {}) do candidates[#candidates+1]=n end
+    end end
+   end
    table.sort(candidates,function(a,b) return cache.order[a]<cache.order[b] end)
   end
   local n,created=S.Observe(db,o,candidates)

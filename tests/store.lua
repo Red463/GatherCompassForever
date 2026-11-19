@@ -39,6 +39,15 @@ test('indexed importer preserves ordinary merge behavior without zone metrics an
  assert(calls<4000*20,'Distant nodes should not be scanned: '..calls)
  eq(write({mapID=1,x=9,y=.5,kind='herb',materialID='bad',source='imported'}),nil)
 end)
+
+test('exact repeat imports avoid distance APIs and changed frame metrics rebuild the spatial grid',function()
+ local S=setup();local db=S.Open();local calls=0;local width=1000;local tick=0;local oldTime=GetTime;GetTime=function() return tick end
+ S.distance=function(a,b) calls=calls+1;return math.abs(a.x-b.x)*width end
+ local write=S.ImportWriter(db,function() return width,500 end);local p=write(node(.104,nil,'imported'))
+ eq(write(node(.104,nil,'imported')),p);eq(calls,0)
+ width=500;tick=1;eq(write(node(.113,nil,'imported')),p);eq(#db.nodes[1],1)
+ GetTime=oldTime
+end)
 test('future schema is untouched and uses memory only',function()
  local S=setup(); local old={version=99,nodes={precious=true},custom='keep'}
  local db,w,reason=S.Open(old); eq(w,false); assert(reason); eq(old.nodes.precious,true); eq(old.version,99); assert(db~=old)

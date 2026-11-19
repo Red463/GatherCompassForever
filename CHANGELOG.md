@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.6 - 2026-11-19
+
+- Reduce recurring heatmap memory allocation by reusing density/fade arrays, strip records and modern gradient colour objects after warmup. Keep the smooth renderer and its colour/opacity settings.
+- Skip hidden world-marker work and refresh those markers immediately when the world map opens.
+- Cull minimap candidates before distance calculations, sorting and grouping, while preserving the pin-library fallback for unsupported shapes or unavailable geometry. Cache matching node lists by database revision, zone and filter.
+- Add allocation, colour reuse, selection invalidation, world-map reopening and minimap-work regressions, plus a reproducible offline refresh profiler. Native client hitch reduction still needs confirmation.
+
 ## 0.18.5 - 2026-11-19
 
 - Reduce blocky minimap heat and hard opacity bands by replacing coarse flat-colour squares with thin strips and shared, interpolated horizontal edge samples.

@@ -1,6 +1,21 @@
 local _, A = ...
 local M={pins={},byKey={},worldLines={},worldShadows={},miniLines={},worldHeat={},miniHeat={}}; A.Map=M
 local positionHandle,paintHandle
+local selectedDB,selectedRevision,selectedCache
+local function filterKey(filter)
+ local ids={}
+ for id,on in pairs(filter.materials or {}) do local key=tostring(id);ids[#ids+1]=#key..':'..key..(on and '1' or '0') end
+ table.sort(ids)
+ return (filter.source or 'combined')..'/'..(filter.kind or 'both')..'/'..(filter.materials and table.concat(ids,';') or '*')
+end
+local function selectedNodes(db,mapID,filter,signature)
+ if selectedDB~=db or selectedRevision~=db.nodeRevision then selectedDB,selectedRevision,selectedCache=db,db.nodeRevision,{} end
+ for _,entry in ipairs(selectedCache) do if entry.mapID==mapID and entry.signature==signature then return entry.nodes end end
+ local nodes=A.Store.Select(db,mapID,filter)
+ table.insert(selectedCache,1,{mapID=mapID,signature=signature,nodes=nodes})
+ if #selectedCache>2 then table.remove(selectedCache) end
+ return nodes
+end
 function M.SetNodeFocus(mapID,materials,nodeKey,source)
  if mapID==nil then M.nodeFocus=nil;return true end
  if not A.Store.Number(mapID) or mapID<=0 or mapID%1~=0 or type(materials)~='table' or not WorldMapFrame then return nil,'World-map focus unavailable.' end
@@ -286,6 +301,13 @@ local function pin()
 end
 function M.Refresh(db,route,follower)
  if not CreateFrame then return end
+ M.lastDB,M.lastRoute,M.lastFollower=db,route,follower
+ if WorldMapFrame and M.refreshMap~=WorldMapFrame then
+  WorldMapFrame:HookScript('OnShow',function()
+   if M.lastDB then M.Refresh(M.lastDB,M.lastRoute,M.lastFollower) end
+  end)
+  M.refreshMap=WorldMapFrame
+ end
  hide(M.worldLines);hide(M.worldShadows);hide(M.miniLines);A.Heatmap.Hide(M.worldHeat);A.MiniHeat.Hide(M.miniHeat);M.targetIndex=nil
  local lib=pinsLib()
  for _,p in ipairs(M.pins) do p.wanted=false end
@@ -308,14 +330,29 @@ function M.Refresh(db,route,follower)
  local zone=route and route.mapID or player and player.mapID
  local settings=A.Resources.Settings(db.settings);local skills,skillContext=A.Resources.Skills()
  local filter=A.Selection.EffectiveMarker(db.settings,follower)
+ local selectionKey=filterKey(filter)
  local worldZone=map and map:IsShown() and map:GetMapID() or zone
+ local worldVisible=map and map:IsShown()
  local focus=map and map:IsShown() and M.nodeFocus and M.nodeFocus.mapID==worldZone and M.nodeFocus or nil
- local nodes=(settings.world or focus) and A.Store.Select(db,worldZone,filter) or {}
+ local nodes=(worldVisible and settings.world or focus) and selectedNodes(db,worldZone,filter,selectionKey) or {}
  if focus then
   local focused={};for _,node in ipairs(nodes) do if A.Selection.Matches(node,focus) then focused[#focused+1]=node end end;nodes=focused
  end
- local knownMiniNodes=A.Store.Select(db,player and player.mapID,filter)
- local miniNodes=settings.mini and knownMiniNodes or {}
+ local knownMiniNodes=selectedNodes(db,player and player.mapID,filter,selectionKey)
+ local miniRadius=A.Client.MinimapRadius()
+ local nodeW,nodeH;if player then nodeW,nodeH=A.Client.Size(player.mapID) end
+ local miniFacing=A.Client.MinimapFacing()
+ local markerShape=A.Client.MinimapShape()
+ local miniNodes={}
+ if settings.mini and Minimap and Minimap:IsShown() then
+  if player and nodeW and A.Store.Number(miniRadius) and miniRadius>0 and miniFacing~=nil and A.MiniHeat.InShape(0,0,Minimap:GetWidth(),Minimap:GetHeight(),markerShape) then
+   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
+   for _,node in ipairs(knownMiniNodes) do
+    local x,y=miniRaw(node,player,nodeW,nodeH,miniRadius,mw,mh,miniFacing)
+    if A.MiniHeat.InShape(x,y,mw,mh,markerShape) then miniNodes[#miniNodes+1]=node end
+   end
+  else for i,node in ipairs(knownMiniNodes) do miniNodes[i]=node end end
+ end
  local distances={}
  for _,node in ipairs(miniNodes) do distances[node.key]=A.Client.Distance(player,node) end
  table.sort(miniNodes,function(a,b)
@@ -408,7 +445,7 @@ function M.Refresh(db,route,follower)
   return f
  end
  local worldGroups
- if settings.groupWorld and canvas then
+ if settings.groupWorld and canvas and worldVisible then
   local scale=canvas.GetEffectiveScale and canvas:GetEffectiveScale() or 1
   local candidates=nodes;if selected then candidates={};for _,n in ipairs(nodes) do if n~=selected then candidates[#candidates+1]=n end end;add(selected,nil,selected,false) end
   local keys={};for _,n in ipairs(candidates) do keys[#keys+1]=n.key end
@@ -422,10 +459,6 @@ function M.Refresh(db,route,follower)
   if selected then add(selected,nil,selected,false) end
   local count=selected and 1 or 0;for _,n in ipairs(nodes) do if count>=400 then break end;if n~=selected then add(n,nil,n,false);count=count+1 end end
  end
- local miniRadius=A.Client.MinimapRadius()
- local nodeW,nodeH;if player then nodeW,nodeH=A.Client.Size(player.mapID) end
- local miniFacing=A.Client.MinimapFacing()
- local markerShape=A.Client.MinimapShape()
  local canGroup=Minimap and A.MiniHeat.InShape(0,0,Minimap:GetWidth(),Minimap:GetHeight(),markerShape) and settings.groupMini and player and nodeW and A.Store.Number(miniRadius) and miniRadius>0 and miniFacing~=nil and Minimap
  local miniGroups
  if canGroup then
@@ -481,7 +514,8 @@ function M.Refresh(db,route,follower)
   local function project(p) return miniRaw(p,player,w,h,radius,mw,mh,facing) end
   local heatHoles={{x=0,y=0,r=4,feather=5}}
   if snapshot and snapshot.target then local x,y=project(snapshot.target);heatHoles[#heatHoles+1]={x=x,y=y,r=3,feather=4} end
-  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.miniHeatOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
+  M.miniHeatWorkspace=M.miniHeatWorkspace or {}
+  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.miniHeatOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end,M.miniHeatWorkspace)
   A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape,A.Resources.HeatColour(settings.miniHeatColour).rgb)
  end
  local wi,mi=0,0

@@ -3,18 +3,33 @@ local H={};A.MiniHeat=H
 local names={'ROUND','SQUARE','CORNER-TOPLEFT','CORNER-TOPRIGHT','CORNER-BOTTOMLEFT','CORNER-BOTTOMRIGHT','SIDE-LEFT','SIDE-RIGHT','SIDE-TOP','SIDE-BOTTOM','TRICORNER-TOPLEFT','TRICORNER-TOPRIGHT','TRICORNER-BOTTOMLEFT','TRICORNER-BOTTOMRIGHT'}
 local quadrants={{true,true,true,true},{false,false,false,false},{true,false,false,false},{false,false,true,false},{false,true,false,false},{false,false,false,true},{true,true,false,false},{false,false,true,true},{true,false,true,false},{false,true,false,true},{true,true,true,false},{true,false,true,true},{true,true,false,true},{false,true,true,true}}
 local index={};for i,name in ipairs(names) do index[name]=i end
+local kernelEdge,weightScale=math.exp(-4),math.log(20)
 function H.InShape(x,y,w,h,shape)
  local slot=index[shape];if not slot or w<=0 or h<=0 then return false end
  if math.abs(x)>w/2 or math.abs(y)>h/2 then return false end
  local q=x<0 and (y>=0 and 1 or 2) or (y>=0 and 3 or 4)
  return not quadrants[slot][q] or (x/(w/2))^2+(y/(h/2))^2<=1
 end
-function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
- local field={};if not index[shape] or not A.Store.Number(w) or not A.Store.Number(h) or math.min(w,h)<=0 or not A.Store.Number(opacity) or opacity<=0 then return field end
+function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection,workspace)
+ local field=workspace and workspace.field or {}
+ if workspace then
+  field=field or {};workspace.field=field
+  for i=#field,1,-1 do field[i]=nil end
+ end
+ if not index[shape] or not A.Store.Number(w) or not A.Store.Number(h) or math.min(w,h)<=0 or not A.Store.Number(opacity) or opacity<=0 then return field end
  -- Thin strips with shared horizontal edge samples avoid the visible square
  -- plateaus of the old 40 x 40 constant-colour grid. At most 3,072 textures.
  local cols,rows=math.min(32,math.max(1,math.ceil(w/8))),math.min(96,math.max(1,math.ceil(h/2)))
- local cw,ch=w/cols,h/rows;local stride=cols+1;local density,fade={},{};local samples=A.Heatmap.Samples(route)
+ local cw,ch=w/cols,h/rows;local stride=cols+1
+ local density,fade,cells
+ if workspace then
+  density,fade,cells=workspace.density or {},workspace.fade or {},workspace.cells or {}
+  for i=1,workspace.vertexCount or 0 do density[i]=nil end
+  for i=1,workspace.cellCount or 0 do fade[i]=nil end
+  workspace.density,workspace.fade,workspace.cells=density,fade,cells
+  workspace.vertexCount,workspace.cellCount=stride*rows,cols*rows
+ else density,fade={},{} end
+ local samples=A.Heatmap.Samples(route)
  if samples.invalid then return field end
  local rx,ry=radiusProjection(samples.radius)
  if not A.Store.Number(rx) or not A.Store.Number(ry) or math.min(rx,ry)<=0 then return field end
@@ -34,11 +49,11 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
   if A.Store.Number(px) and A.Store.Number(py) and px+rx>=-w/2 and px-rx<=w/2 and py+ry>=-h/2 and py-ry<=h/2 then
    local left,right=clamp(math.floor((px-rx+w/2)/cw),0,cols),clamp(math.floor((px+rx+w/2)/cw),0,cols)
    local top,bottom=clamp(math.floor((h/2-py-ry)/ch),0,rows-1),clamp(math.floor((h/2-py+ry)/ch),0,rows-1)
-   local weight=.35+math.min(1,math.log(1+(p.density or 1))/math.log(20))
+   local weight=.35+math.min(1,math.log(1+(p.density or 1))/weightScale)
    for row=top,bottom do for col=left,right do
     local key=row*stride+col+1
     local dx=(-w/2+col*cw-px)/rx;local dy=(h/2-(row+.5)*ch-py)/ry;local q=dx*dx+dy*dy
-    if q<1 then density[key]=(density[key] or 0)+weight*(math.exp(-q*4)-math.exp(-4)) end
+    if q<1 then density[key]=(density[key] or 0)+weight*(math.exp(-q*4)-kernelEdge) end
    end end
   end
  end
@@ -49,15 +64,26 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
    -- and feathering still fade its edges and keep tracking clearance soft.
    local il,ir=1-math.exp(-dl*1.5),1-math.exp(-dr*1.5)
    local strength=.72*math.min(1,opacity)*(fade[row*cols+col+1] or 1)
-   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=(il+ir)/2*strength,green=.48+.18*(il+ir)/2,
-    alphaLeft=il*strength,alphaRight=ir*strength,greenLeft=.48+.18*il,greenRight=.48+.18*ir}
+   local i=#field+1;local cell=cells and cells[i] or {}
+   if cells then cells[i]=cell end
+   cell.x,cell.y,cell.width,cell.height=x,y,cw,ch
+   cell.alpha,cell.green=(il+ir)/2*strength,.48+.18*(il+ir)/2
+   cell.alphaLeft,cell.alphaRight,cell.greenLeft,cell.greenRight=il*strength,ir*strength,.48+.18*il,.48+.18*ir
+   field[i]=cell
   end
  end end
  return field
 end
 function H.Hide(pool) for _,t in ipairs(pool) do t:Hide() end end
 local function legacy(t,r,gl,gr,b,al,ar) t:SetGradientAlpha('HORIZONTAL',r,gl,b,al,r,gr,b,ar) end
-local function modern(t,r,gl,gr,b,al,ar) t:SetGradient('HORIZONTAL',CreateColor(r,gl,b,al),CreateColor(r,gr,b,ar)) end
+local function color(t,key,r,g,b,a)
+ local c=t[key]
+ if not c then c=CreateColor(r,g,b,a);t[key]=c
+ elseif type(c.SetRGBA)=='function' then c:SetRGBA(r,g,b,a)
+ else c.r,c.g,c.b,c.a=r,g,b,a end
+ return c
+end
+local function modern(t,r,gl,gr,b,al,ar) t:SetGradient('HORIZONTAL',color(t,'heatLeftColor',r,gl,b,al),color(t,'heatRightColor',r,gr,b,ar)) end
 local function paint(pool,t,c,colour)
  local r,b=colour and colour[1] or 1,colour and colour[3] or .06
  local gl,gr=colour and colour[2] or c.greenLeft or c.green,colour and colour[2] or c.greenRight or c.green

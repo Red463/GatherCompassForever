@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.18.5 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.18.6 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -61,7 +61,7 @@ route guidance continue normally.
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.18.5.zip` from
+1. Download `Gatherly-0.18.6.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -247,6 +247,10 @@ field keeps small feathered clearance around the player and current destination.
 Minimap heat uses thin blended strips to reduce square patches and hard opacity
 bands. The renderer reuses a bounded texture pool and supports both gradient APIs;
 builds without either gradient API use a finer flat-strip fallback.
+Recurring refreshes reuse the heat field's scratch arrays, strip records and
+gradient colours. World-marker work pauses while that map is closed, and minimap
+distance/grouping work is restricted to nearby nodes. Marker selections are cached
+until the data or filters change; opening the world map refreshes it immediately.
 It no longer cuts holes around every possible spawn. Thin route lines retain their
 known-node clearance. Native unknown live
 blips are not enumerable, so check tracking contrast in your client. Unsupported

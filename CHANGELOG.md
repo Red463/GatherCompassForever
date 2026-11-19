@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.4 - 2026-11-19
+
+- Restyle floating route controls as a 272 x 64 Classic toolbar using native dialog trim and the main panel background artwork where available.
+- Keep text at its normal size and place Stop, Open panel, Skip and the heatmap-colour swatch in one row. Hover for full control descriptions.
+- Keep colour names readable in a full-width popup while reducing its launcher to a swatch. Saved position, colour, guidance and auto-open settings are preserved.
+
 ## 0.18.3 - 2026-11-19
 
 - Add a Heatmap colour menu and current-colour swatch to the movable route controls. Choose Amber, Yellow, Cyan, Pink, Green or White to suit minimap terrain.

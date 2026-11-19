@@ -11,7 +11,9 @@ test('mini panel colour choice applies immediately without changing the route an
  local redraw=0;A.Map={Refresh=function(db,route,follower)
   redraw=redraw+1;eq(A.Resources.Settings(db.settings).miniHeatColour,'cyan');eq(route,f.route);eq(follower,f)
  end}
+ assert(C.frame:GetWidth()<=280 and C.frame:GetHeight()<=68,'Controls should fit a compact toolbar')
  eq(C.colour:GetValue(),'amber');C.colour.scripts.OnClick(C.colour);eq(A.Skin.dropdownOwner,C.colour)
+ assert(A.Skin.dropdownMenu:GetWidth()>=150);assert(A.Skin.dropdownMenu.rows[1].label:GetWidth()>=105,'Swatch menu must keep colour names readable')
  C.colour:SelectValue('cyan');eq(redraw,1);eq(A.db.settings.nodeDisplay.miniHeatColour,'cyan');eq(C.colour:GetValue(),'cyan')
  eq(U.frame:IsShown(),false);eq(A.follower,f);eq(A.plan,plan);eq(A.Skin.dropdownOwner,nil)
  A.db=A.Store.Open(A.Store.Copy(A.db));C.Update(f);eq(C.colour:GetValue(),'cyan')

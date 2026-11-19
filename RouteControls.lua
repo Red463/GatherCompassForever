@@ -19,11 +19,25 @@ function C.SavePosition()
 end
 function C.Build()
  if C.frame then return C.frame end
- local S=A.Skin;local f=S.Panel(UIParent);C.frame=f
- f:SetSize(344,116);f:SetFrameStrata('DIALOG');f:SetClampedToScreen(true);f:SetMovable(true);f:EnableMouse(true)
+ local S=A.Skin;local f=CreateFrame('Frame',nil,UIParent,'BackdropTemplate');C.frame=f
+ f:SetSize(272,64);f:SetFrameStrata('DIALOG');f:SetClampedToScreen(true);f:SetMovable(true);f:EnableMouse(true)
+ f.opaqueBase=S.Fill(f,{.045,.038,.03,1},'BACKGROUND',-8)
+ -- Reuse the main native frame's stone artwork, with the same tint. The
+ -- dialog texture is a Classic fallback when the native background is absent.
+ local source=A.UI and A.UI.chrome and A.UI.chrome.Bg
+ local object=type(source)=='table' or type(source)=='userdata'
+ local texture=object and type(source.GetTexture)=='function' and source:GetTexture()
+ local native=type(texture)=='string' or type(texture)=='number'
+ C.background=f:CreateTexture(nil,'BACKGROUND');C.background:SetAllPoints()
+ C.background:SetTexture(native and texture or 'Interface\\DialogFrame\\UI-DialogBox-Background')
+ if native and type(source.GetTexCoord)=='function' then C.background:SetTexCoord(source:GetTexCoord()) end
+ C.background:SetVertexColor(.85,.85,.85,1)
+ f:SetBackdrop({edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=16});f:SetBackdropBorderColor(1,1,1,1)
  local bar=CreateFrame('Frame',nil,f);C.titlebar=bar
- bar:SetPoint('TOPLEFT',f,'TOPLEFT',8,-5);bar:SetSize(328,30);bar:EnableMouse(true);bar:RegisterForDrag('LeftButton')
- local title=S.Label(bar,'Gatherly - Route controls',13,S.gold);title:SetPoint('LEFT',bar,'LEFT',4,0);title:SetSize(320,24)
+ bar:SetPoint('TOPLEFT',f,'TOPLEFT',8,-5);bar:SetSize(256,22);bar:EnableMouse(true);bar:RegisterForDrag('LeftButton')
+ local header=bar:CreateTexture(nil,'BACKGROUND');header:SetAllPoints();header:SetTexture('Interface\\DialogFrame\\UI-DialogBox-Background');header:SetVertexColor(.65,.5,.35,1)
+ local rule=bar:CreateTexture(nil,'BORDER');rule:SetColorTexture(.48,.36,.19,1);rule:SetPoint('BOTTOMLEFT',bar,'BOTTOMLEFT',0,0);rule:SetSize(256,1)
+ local title=S.Label(bar,'Gatherly',13,S.gold);title:SetPoint('CENTER',bar,'CENTER',0,0);title:SetSize(248,20);title:SetJustifyH('CENTER')
  local function finish()
   if C.dragging then f:StopMovingOrSizing();C.dragging=false;C.SavePosition() end
  end
@@ -32,22 +46,23 @@ function C.Build()
  f:RegisterEvent('DISPLAY_SIZE_CHANGED');f:RegisterEvent('UI_SCALE_CHANGED')
  f:SetScript('OnEvent',function() finish();C.Position() end)
  S.Hint(bar,'Route controls','Drag this heading to move the panel. Its position is remembered.')
- for _,spec in ipairs({{'stop','Stop route',10,100},{'open','Open panel',116,100},{'skip','Skip next node',222,112}}) do
+ for _,spec in ipairs({{'stop','Stop',10,64},{'open','Open panel',78,86},{'skip','Skip >',168,58}}) do
   local key=spec[1]
   local b=S.Button(f,spec[2],function()
    if key=='open' then A.UI.OpenRoutes() else A.UI.actions[key]() end
   end)
-  b:SetPoint('TOPLEFT',f,'TOPLEFT',spec[3],-42);b:SetSize(spec[4],26);C[key]=b
+  b:SetPoint('TOPLEFT',f,'TOPLEFT',spec[3],-32);b:SetSize(spec[4],24);C[key]=b
  end
+ S.Hint(C.stop,'Stop route','Stop guidance and hide the route controls.')
+ S.Hint(C.open,'Open panel','Open Gatherly on the Routes page without stopping guidance.')
  S.Hint(C.skip,'Skip next node','Advance to the next route waypoint. Corridor routes use points along the farming path.')
- local label=S.Label(f,'Heatmap colour',12,S.text);label:SetPoint('TOPLEFT',f,'TOPLEFT',12,-78);label:SetSize(112,26)
  C.colour=S.Dropdown(f,A.Resources.HeatColours,function(value)
   A.Resources.Settings(A.db.settings).miniHeatColour=value;C.Update(A.follower)
   if A.Map then A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.follower) end
  end)
- C.colour:SetPoint('TOPLEFT',f,'TOPLEFT',132,-78);C.colour:SetSize(202,26)
- C.colour.label:ClearAllPoints();C.colour.label:SetPoint('LEFT',C.colour,'LEFT',32,0);C.colour.label:SetPoint('RIGHT',C.colour,'RIGHT',-28,0);C.colour.label:SetHeight(22)
- C.swatch=C.colour:CreateTexture(nil,'ARTWORK');C.swatch:SetPoint('LEFT',C.colour,'LEFT',10,0);C.swatch:SetSize(14,14)
+ C.colour:SetPoint('TOPLEFT',f,'TOPLEFT',232,-32);C.colour:SetSize(26,24);C.colour.menuWidth=156
+ C.colour.label:Hide();C.colour.caret:Hide()
+ C.swatch=C.colour:CreateTexture(nil,'ARTWORK');C.swatch:SetPoint('CENTER',C.colour,'CENTER',0,0);C.swatch:SetSize(14,14)
  S.Hint(C.colour,'Minimap heatmap colour','Choose a colour that stands out against the terrain. Applies immediately to minimap heat only, without restarting guidance. Opacity is set in Node display. Amber restores the original tint.')
  C.Position();f:Hide();return f
 end

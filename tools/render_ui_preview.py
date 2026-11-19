@@ -15,7 +15,13 @@ CreateFrame=function(...)
  f.SetPoint=function(self,...) local a={...}; if type(a[2])~='table' then a={a[1],self.parent,a[1],a[2] or 0,a[3] or 0} elseif type(a[3])~='string' then a={a[1],a[2],a[1],a[3] or 0,a[4] or 0} end; self.anchors[#self.anchors+1]=a end
  f.ClearAllPoints=function(self) self.anchors={};self.all=nil end
  f.SetAllPoints=function(self,target) self.all=target or self.parent end
- f.SetBackdrop=function(self,v) self.backdrop=v end
+ f.SetBackdrop=function(self,v)
+  self.backdrop=v
+  if v and v.edgeFile=='Interface\\DialogFrame\\UI-DialogBox-Border' then
+   if not self.previewTrim then self.previewTrim=self:CreateTexture(nil,'BORDER');self.previewTrim:SetAllPoints() end
+   self.previewTrim:SetTexture(v.edgeFile)
+  end
+ end
  f.SetBackdropColor=function(self,...) self.backColor={...} end
  f.SetBackdropBorderColor=function(self,...) self.borderColor={...} end
  f.SetFont=function(self,path,size,flags) self.fontPath=path;self.fontSize=size;self.fontFlags=flags end
@@ -35,12 +41,14 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide();C_Minimap={GetViewRadius=function() return 200 end}
-A={version='0.18.3'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Coverage','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','RouteControls','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
+A={version='0.18.4'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Coverage','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','RouteControls','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
 A.Client.Probe=function() return {loot=true,position=true,distance=true,facing=true,minimap=true} end
 A.Store.distance=A.Client.Distance; C_Map={GetMapInfo=function(id) return {name=({[1]='Ashenvale',[2]='Darkshore',[3]='Elwynn Forest'})[id] or 'Zone '..tostring(id)} end}; C_Map.GetMapArtID=function() return 1 end;C_Map.GetMapArtLayers=function() return {{layerWidth=1000,layerHeight=667,tileWidth=1000,tileHeight=667}} end;C_Map.GetMapArtLayerTextures=function() return {9001} end;A.UI.Build();A.UI.OpenRoutes()
+-- Approximate the native PortraitFrame background file and UVs in the frame double.
+A.UI.chrome.Bg={GetTexture=function() return 9002 end,GetTexCoord=function() return 0,1,0,1 end}
 function populate()
  local nodes={}
  for i=1,18 do local n=A.Store.Observe(A.db,{mapID=1,x=.18+(i%6)*.08,y=.18+math.floor(i/6)*.14,kind=i%3==0 and 'ore' or 'herb',name=i%3==0 and 'Copper vein' or i%2==0 and 'Silverleaf' or 'Peacebloom',materialID='m'..(i%3),source=i%2==0 and 'confirmed' or 'imported'});nodes[#nodes+1]=n end
@@ -103,8 +111,8 @@ def render(scene):
     if scene=='route_heatmap':lua.execute("A.UI.controls.routeStyle:SelectValue('heatmap')")
     if scene=='route_selected':lua.execute("A.UI.routeSketch.pins[1].scripts.OnClick(A.UI.routeSketch.pins[1])")
     if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
-    if scene=='route_controls':lua.execute('A.UI.actions.start()')
-    if scene=='route_controls_colour':lua.execute("A.db.settings.routeControlsPosition={x=.5,y=.6};A.UI.actions.start();A.RouteControls.colour:SelectValue('cyan');A.RouteControls.colour.scripts.OnClick(A.RouteControls.colour)")
+    if scene=='route_controls':lua.execute('Minimap:Hide();A.UI.actions.start()')
+    if scene=='route_controls_colour':lua.execute("Minimap:Hide();A.db.settings.routeControlsPosition={x=.5,y=.6};A.UI.actions.start();A.RouteControls.colour:SelectValue('cyan');A.RouteControls.colour.scripts.OnClick(A.RouteControls.colour)")
     if scene=='preferences':lua.execute("A.UI.SetTab('settings')")
     if scene in ('welcome','welcome_importing'):
         lua.execute("A.UI.SetTab('welcome')")
@@ -160,7 +168,7 @@ def render(scene):
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHERLY 0.18.3 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHERLY 0.18.4 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
@@ -238,6 +246,7 @@ def render(scene):
                 tile=Image.new('RGBA',(max(1,round(w)),max(1,round(h))),colour);im.alpha_composite(tile,(round(x),round(y)))
             else:d.rectangle(rect,fill=colour)
         texture=o['texture']
+        if texture==9002:d.rectangle(rect,fill='#34322f')
         if texture==9001 and w>0 and h>0:
             art=map_art.copy()
             if scene=='mini_heat_dark':art=ImageChops.multiply(art,Image.new('RGBA',art.size,(75,85,50,255)))
@@ -259,6 +268,10 @@ def render(scene):
             im.alpha_composite(art,(round(x),round(y)))
         if isinstance(texture,str) and w>0 and h>0 and '\\Media\\' not in texture:
             if 'UI-DialogBox-Background' in texture:d.rectangle(rect,fill='#211b15',outline='#65533a')
+            elif 'UI-DialogBox-Border' in texture:
+                d.rectangle(rect,outline='#352a1b',width=4)
+                d.rectangle((x+2,y+2,x+w-2,y+h-2),outline='#9a8968',width=2)
+                d.rectangle((x+5,y+5,x+w-5,y+h-5),outline='#5d513d',width=1)
             elif 'UI-Panel-Button-' in texture:
                 disabled='Disabled' in texture
                 d.rectangle(rect,fill='#37322d' if disabled else '#611b13',outline='#8d7650',width=2)

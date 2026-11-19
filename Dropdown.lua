@@ -56,7 +56,8 @@ local function open(button)
  S.CloseDropdown();S.dropdownOwner=button;button.menuOpen=true
  menu.options=options(button);menu.focus=1;menu.mouseDown=false
  menu:ClearAllPoints();menu:SetPoint('TOPLEFT',button,'BOTTOMLEFT',0,-2)
- menu:SetScale(button:GetEffectiveScale()/UIParent:GetEffectiveScale());menu:SetSize(button:GetWidth(),#menu.options*24+12)
+ local width=math.max(button:GetWidth(),button.menuWidth or 0)
+ menu:SetScale(button:GetEffectiveScale()/UIParent:GetEffectiveScale());menu:SetSize(width,#menu.options*24+12)
  for i,item in ipairs(menu.options) do
   local row=menu.rows[i]
   if not row then
@@ -66,8 +67,8 @@ local function open(button)
    row.label:ClearAllPoints();row.label:SetPoint('LEFT',row,'LEFT',25,0);row.label:SetJustifyH('LEFT')
    row.check=row:CreateTexture(nil,'OVERLAY');row.check:SetTexture('Interface\\Buttons\\UI-CheckBox-Check');row.check:SetPoint('LEFT',row,'LEFT',3,0);row.check:SetSize(18,18)
   end
-  row:ClearAllPoints();row:SetPoint('TOPLEFT',menu,'TOPLEFT',6,-6-(i-1)*24);row:SetSize(button:GetWidth()-12,24)
-  row.label:SetSize(button:GetWidth()-45,22);row.value=item.value;row:SetText(item.label)
+  row:ClearAllPoints();row:SetPoint('TOPLEFT',menu,'TOPLEFT',6,-6-(i-1)*24);row:SetSize(width-12,24)
+  row.label:SetSize(width-45,22);row.value=item.value;row:SetText(item.label)
   local selected=item.value==button.value;S.Selected(row,selected)
   if selected then row.check:Show();menu.focus=i else row.check:Hide() end
   row:Show()

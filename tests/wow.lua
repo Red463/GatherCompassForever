@@ -9,6 +9,11 @@ function fakeUI()
  function methods:SetFontString(t) self.fontString=t end
  function methods:GetFontString() return self.fontString end
  function methods:SetColorTexture(r,g,b,a) self.color={r,g,b,a or 1} end
+ function methods:SetGradientAlpha(orientation,r1,g1,b1,a1,r2,g2,b2,a2)
+  self.gradient={orientation=orientation,left={r1,g1,b1,a1},right={r2,g2,b2,a2}}
+  self.color={(r1+r2)/2,(g1+g2)/2,(b1+b2)/2,(a1+a2)/2}
+ end
+ function methods:SetGradient(orientation,left,right) methods.SetGradientAlpha(self,orientation,left.r,left.g,left.b,left.a,right.r,right.g,right.b,right.a) end
  function methods:SetTextColor(r,g,b,a) self.textColor={r,g,b,a or 1} end
  function methods:SetFont(path,size,flags) self.fontPath=path;self.fontSize=size;self.fontFlags=flags end
  function methods:SetScale(v) self.scale=v end
@@ -45,7 +50,7 @@ function fakeUI()
  function methods:SetTexCoord(...) self.coords={...} end
  function methods:SetNormalTexture(v) self.normalTexture=v end
  function methods:SetTexture(v) self.texture=v end
- function methods:SetVertexColor(...) self.vertexColor={...} end
+ function methods:SetVertexColor(...) self.vertexColor={...};self.gradient=nil end
  function methods:EnableMouse(v) self.mouse=v;self.mouseClicks=v;self.mouseMotion=v end
  function methods:EnableMouseMotion(v) self.mouseMotion=v end
  function methods:SetBackdrop(v) self.backdrop=v end

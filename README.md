@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.18.4 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.18.5 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -61,7 +61,7 @@ route guidance continue normally.
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.18.4.zip` from
+1. Download `Gatherly-0.18.5.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -244,6 +244,9 @@ regenerate the route. Heat also appears on the minimap in brighter amber/gold to
 out over dark terrain, replacing its route lines,
 while resource markers and the destination marker remain. Its bounded transparent
 field keeps small feathered clearance around the player and current destination.
+Minimap heat uses thin blended strips to reduce square patches and hard opacity
+bands. The renderer reuses a bounded texture pool and supports both gradient APIs;
+builds without either gradient API use a finer flat-strip fallback.
 It no longer cuts holes around every possible spawn. Thin route lines retain their
 known-node clearance. Native unknown live
 blips are not enumerable, so check tracking contrast in your client. Unsupported
@@ -254,6 +257,8 @@ destination aligned with the heat without modifying the shared pin library.
 ![Soft density corridor over an illustrative map](docs/images/route-heatmap.png)
 
 ![Amber minimap heat on illustrative dark terrain, with simulated tracking dots and player clearance](docs/images/minimap-heat.png)
+
+![Before and after minimap banding correction, rendered from actual Lua paint output over a flat background](docs/images/minimap-smoothing.png)
 
 ### Guide arrow
 

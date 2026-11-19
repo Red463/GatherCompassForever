@@ -11,8 +11,10 @@ function H.InShape(x,y,w,h,shape)
 end
 function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
  local field={};if not index[shape] or not A.Store.Number(w) or not A.Store.Number(h) or math.min(w,h)<=0 or not A.Store.Number(opacity) or opacity<=0 then return field end
- local cols,rows=math.min(40,math.max(1,math.ceil(w/5))),math.min(40,math.max(1,math.ceil(h/5)))
- local cw,ch=w/cols,h/rows;local density,fade={},{};local samples=A.Heatmap.Samples(route)
+ -- Thin strips with shared horizontal edge samples avoid the visible square
+ -- plateaus of the old 40 x 40 constant-colour grid. At most 3,072 textures.
+ local cols,rows=math.min(32,math.max(1,math.ceil(w/8))),math.min(96,math.max(1,math.ceil(h/2)))
+ local cw,ch=w/cols,h/rows;local stride=cols+1;local density,fade={},{};local samples=A.Heatmap.Samples(route)
  if samples.invalid then return field end
  local rx,ry=radiusProjection(samples.radius)
  if not A.Store.Number(rx) or not A.Store.Number(ry) or math.min(rx,ry)<=0 then return field end
@@ -30,30 +32,50 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
  for _,p in ipairs(samples) do
   local px,py=project(p)
   if A.Store.Number(px) and A.Store.Number(py) and px+rx>=-w/2 and px-rx<=w/2 and py+ry>=-h/2 and py-ry<=h/2 then
-   local left,right=clamp(math.floor((px-rx+w/2)/cw),0,cols-1),clamp(math.floor((px+rx+w/2)/cw),0,cols-1)
+   local left,right=clamp(math.floor((px-rx+w/2)/cw),0,cols),clamp(math.floor((px+rx+w/2)/cw),0,cols)
    local top,bottom=clamp(math.floor((h/2-py-ry)/ch),0,rows-1),clamp(math.floor((h/2-py+ry)/ch),0,rows-1)
    local weight=.35+math.min(1,math.log(1+(p.density or 1))/math.log(20))
    for row=top,bottom do for col=left,right do
-    local key=row*cols+col+1
-    if fade[key]~=0 then
-     local dx=(-w/2+(col+.5)*cw-px)/rx;local dy=(h/2-(row+.5)*ch-py)/ry;local q=dx*dx+dy*dy
-     if q<1 then density[key]=(density[key] or 0)+weight*(math.exp(-q*4)-math.exp(-4)) end
-    end
+    local key=row*stride+col+1
+    local dx=(-w/2+col*cw-px)/rx;local dy=(h/2-(row+.5)*ch-py)/ry;local q=dx*dx+dy*dy
+    if q<1 then density[key]=(density[key] or 0)+weight*(math.exp(-q*4)-math.exp(-4)) end
    end end
   end
  end
  for row=0,rows-1 do for col=0,cols-1 do
-  local d=density[row*cols+col+1];local x,y=-w/2+col*cw,h/2-row*ch
-  if d and d>.005 and H.InShape(x,y,w,h,shape) and H.InShape(x+cw,y,w,h,shape) and H.InShape(x,y-ch,w,h,shape) and H.InShape(x+cw,y-ch,w,h,shape) then
+  local dl,dr=density[row*stride+col+1] or 0,density[row*stride+col+2] or 0;local x,y=-w/2+col*cw,h/2-row*ch
+  if math.max(dl,dr)>.005 and (fade[row*cols+col+1] or 1)>0 and H.InShape(x,y,w,h,shape) and H.InShape(x+cw,y,w,h,shape) and H.InShape(x,y-ch,w,h,shape) and H.InShape(x+cw,y-ch,w,h,shape) then
    -- A bright amber core stays readable over dark terrain; the density field
    -- and feathering still fade its edges and keep tracking clearance soft.
-   local intensity=1-math.exp(-d*1.5)
-   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=intensity*.72*math.min(1,opacity)*(fade[row*cols+col+1] or 1),green=.48+.18*intensity}
+   local il,ir=1-math.exp(-dl*1.5),1-math.exp(-dr*1.5)
+   local strength=.72*math.min(1,opacity)*(fade[row*cols+col+1] or 1)
+   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=(il+ir)/2*strength,green=.48+.18*(il+ir)/2,
+    alphaLeft=il*strength,alphaRight=ir*strength,greenLeft=.48+.18*il,greenRight=.48+.18*ir}
   end
  end end
  return field
 end
 function H.Hide(pool) for _,t in ipairs(pool) do t:Hide() end end
+local function legacy(t,r,gl,gr,b,al,ar) t:SetGradientAlpha('HORIZONTAL',r,gl,b,al,r,gr,b,ar) end
+local function modern(t,r,gl,gr,b,al,ar) t:SetGradient('HORIZONTAL',CreateColor(r,gl,b,al),CreateColor(r,gr,b,ar)) end
+local function paint(pool,t,c,colour)
+ local r,b=colour and colour[1] or 1,colour and colour[3] or .06
+ local gl,gr=colour and colour[2] or c.greenLeft or c.green,colour and colour[2] or c.greenRight or c.green
+ local al,ar=c.alphaLeft or c.alpha,c.alphaRight or c.alpha
+ local p=t.heatPaint
+ if p and p.r==r and p.gl==gl and p.gr==gr and p.b==b and p.al==al and p.ar==ar then return end
+ p=p or {};p.r,p.gl,p.gr,p.b,p.al,p.ar=r,gl,gr,b,al,ar;t.heatPaint=p
+ t:SetColorTexture(1,1,1,1)
+ if not pool.gradientMode then
+  -- Probe once per pool: Forever builds may expose either gradient API.
+  if type(t.SetGradientAlpha)=='function' and pcall(legacy,t,r,gl,gr,b,al,ar) then pool.gradientMode='legacy';return end
+  if type(t.SetGradient)=='function' and type(CreateColor)=='function' and pcall(modern,t,r,gl,gr,b,al,ar) then pool.gradientMode='modern';return end
+  pool.gradientMode='flat'
+ end
+ if pool.gradientMode=='legacy' then legacy(t,r,gl,gr,b,al,ar)
+ elseif pool.gradientMode=='modern' then modern(t,r,gl,gr,b,al,ar)
+ else t:SetVertexColor(1,1,1,1);t:SetColorTexture(r,(gl+gr)/2,b,(al+ar)/2) end
+end
 function H.Draw(pool,parent,field,shape,colour)
  H.Hide(pool);local slot=index[shape];if not slot then return end
  if not pool.mask and type(parent.CreateMaskTexture)=='function' then
@@ -63,8 +85,17 @@ function H.Draw(pool,parent,field,shape,colour)
  if pool.mask then local col,row=(slot-1)%4,math.floor((slot-1)/4);pool.mask:SetTexCoord(col/4,(col+1)/4,row/4,(row+1)/4) end
  for i,c in ipairs(field) do
   local t=pool[i]
-  if not t then t=parent:CreateTexture(nil,'BACKGROUND',nil,1);pool[i]=t;if pool.mask and t.AddMaskTexture then t:AddMaskTexture(pool.mask) end end
-  t:SetColorTexture(colour and colour[1] or 1,colour and colour[2] or c.green,colour and colour[3] or .06,c.alpha)
-  t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
+  if not t then
+   t=parent:CreateTexture(nil,'BACKGROUND',nil,1);pool[i]=t;if pool.mask and t.AddMaskTexture then t:AddMaskTexture(pool.mask) end
+   if type(t.SetSnapToPixelGrid)=='function' then pcall(t.SetSnapToPixelGrid,t,false) end
+   if type(t.SetTexelSnappingBias)=='function' then pcall(t.SetTexelSnappingBias,t,0) end
+  end
+  paint(pool,t,c,colour)
+  local rect=t.heatRect
+  if not rect or rect.parent~=parent or rect.x~=c.x or rect.y~=c.y or rect.width~=c.width or rect.height~=c.height then
+   t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height)
+   rect=rect or {};rect.parent,rect.x,rect.y,rect.width,rect.height=parent,c.x,c.y,c.width,c.height;t.heatRect=rect
+  end
+  t:Show()
  end
 end

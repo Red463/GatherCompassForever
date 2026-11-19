@@ -1,4 +1,24 @@
 local function setup() dofile('tests/wow.lua');fakeUI();local A={};for _,n in ipairs({'Store','Client','Heatmap','MiniHeat'}) do module(n,A) end;return A end
+test('minimap heat has no coarse opacity bands over a continuous route without terrain or marker holes',function()
+ local A=setup();local route={width=1000,height=500,corridor=true,heatRadius=117,coverageRadius=180,points={point(.3),point(.7)}}
+ local field=A.MiniHeat.Field(route,function(p) return (p.x-.5)*500,0 end,223,217,'SQUARE',{},.65,function(r) return r*.5,r*.5 end)
+ local pool={};A.MiniHeat.Draw(pool,Minimap,field,'SQUARE',{.1,.9,1})
+ local function alpha(x,y)
+  for _,t in ipairs(pool) do
+   local left,top=t.point[4],t.point[5]
+   if x>=left and x<left+t.width and y<=top and y>top-t.height then
+    local g=rawget(t,'gradient')
+    if g then local f=(x-left)/t.width;return g.left[4]*(1-f)+g.right[4]*f end
+    return t.color[4]
+   end
+  end
+  return 0
+ end
+ local worst=0
+ for y=-90,89 do worst=math.max(worst,math.abs(alpha(42.5,y+.5)-alpha(42.5,y+1.5))) end
+ assert(worst<=.03,'Coarse minimap band changes opacity by '..worst..' in one pixel')
+ for x=-100,99 do assert(math.abs(alpha(x+.5,25.5)-alpha(x+1.5,25.5))<=.03,'Hard horizontal tile edge') end
+end)
 test('minimap heat palette changes only cell RGB and preserves density opacity and masking',function()
  local A=setup();module('Resources',A)
  local route={width=1000,height=500,points={point(.3),point(.7)}}
@@ -11,15 +31,36 @@ test('minimap heat palette changes only cell RGB and preserves density opacity a
   else near(pool[1].color[1],1);near(pool[1].color[2],field[1].green);near(pool[1].color[3],.06) end
  end
 end)
+
+test('minimap heat supports both gradient APIs and safe flat fallback without changing opacity',function()
+ local saved=CreateColor
+ local ok,err=pcall(function()
+  for _,mode in ipairs({'legacy','modern','flat'}) do
+   local A=setup();CreateColor=function(r,g,b,a) return {r=r,g=g,b=b,a=a} end
+   local create=Minimap.CreateTexture
+   Minimap.CreateTexture=function(self,...)
+    local t=create(self,...)
+    if mode~='legacy' then t.SetGradientAlpha=function() error('unavailable legacy API') end end
+    if mode=='flat' then t.SetGradient=false end
+    return t
+   end
+   local field={{x=0,y=20,width=10,height=2,alpha=.4,alphaLeft=.2,alphaRight=.6,green=.6}}
+   local pool={};A.MiniHeat.Draw(pool,Minimap,field,'SQUARE',{.1,.9,1});eq(pool.gradientMode,mode);near(pool[1].color[4],.4)
+   A.MiniHeat.Draw(pool,Minimap,field,'SQUARE',{1,1,1});near(pool[1].color[1],1);near(pool[1].color[4],.4);eq(#pool[1].masks,1)
+   if mode~='flat' then near(pool[1].gradient.left[4],.2);near(pool[1].gradient.right[4],.6) end
+  end
+ end)
+ CreateColor=saved;assert(ok,err)
+end)
 test('minimap heat uses bounded nonoverlapping cells with safe opacity and tracking clearance',function()
  local A=setup();local r={mapID=1,width=1000,height=500,points={point(.1),point(.4)},loop=true}
  local field=A.MiniHeat.Field(r,function(p) return (p.x-.2)*500,0 end,200,200,'ROUND',{{x=0,y=0,r=8},{x=40,y=0,r=7}},.35,function(radius) return radius*.5,radius*.5 end)
- assert(#field>0 and #field<=1600)
+ assert(#field>0 and #field<=3072)
  for _,c in ipairs(field) do
   assert(c.alpha>0 and c.alpha<=.35);assert(A.MiniHeat.InShape(c.x,c.y,200,200,'ROUND'));assert(A.MiniHeat.InShape(c.x+c.width,c.y-c.height,200,200,'ROUND'))
   for _,hole in ipairs({{x=0,y=0,r=8},{x=40,y=0,r=7}}) do local dx=math.max(c.x-hole.x,0,hole.x-c.x-c.width);local dy=math.max(c.y-c.height-hole.y,0,hole.y-c.y);assert(dx*dx+dy*dy>=hole.r*hole.r) end
  end
- local pool={};A.MiniHeat.Draw(pool,Minimap,field,'ROUND');assert(#pool<=1600);assert(pool[1].masks and #pool[1].masks==1);A.MiniHeat.Hide(pool);eq(pool[1]:IsShown(),false)
+ local pool={};A.MiniHeat.Draw(pool,Minimap,field,'ROUND');assert(#pool<=3072);assert(pool[1].masks and #pool[1].masks==1);A.MiniHeat.Hide(pool);eq(pool[1]:IsShown(),false)
  eq(#A.MiniHeat.Field(r,function() return 0,0 end,200,200,'UNKNOWN',{},1,function() return 50,50 end),0)
 end)
 test('minimap shape quadrants and ignored rotation match their native projection',function()

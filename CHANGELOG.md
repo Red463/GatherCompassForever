@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.5 - 2026-11-19
+
+- Reduce blocky minimap heat and hard opacity bands by replacing coarse flat-colour squares with thin strips and shared, interpolated horizontal edge samples.
+- Support both texture-gradient APIs, with a safe fine-strip fallback, and disable independent texture pixel snapping where available to reduce seams.
+- Reuse geometry and paint state within a bounded 3,072-texture pool. Preserve colours, opacity controls, player/destination clearance, map shapes and world-map rendering.
+- Add a deterministic banding regression, gradient-compatibility tests and a before/after renderer comparison.
+
 ## 0.18.4 - 2026-11-19
 
 - Restyle floating route controls as a 272 x 64 Classic toolbar using native dialog trim and the main panel background artwork where available.

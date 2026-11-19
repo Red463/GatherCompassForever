@@ -28,7 +28,7 @@ test('map-marker preview includes a map-backed labelled appearance example',func
 end)
 test('minimap launcher shows the complete badge without a second border or clipping mask',function()
  local A=setup();module('MinimapButton',A);A.MinimapButton.Build();local b=A.MinimapButton.frame
- eq(b.icon.texture,A.Skin.media..'EmptyEmblem');eq(b.icon.point[1],'CENTER');eq(b.icon.point[4],0);eq(b.icon.point[5],0)
+ eq(b.icon.texture,A.Skin.media..'EmptyEmblem');eq(b.icon.all,b)
  local uv=b.icon.coords;eq(uv[1],0);eq(uv[2],1);eq(uv[3],0);eq(uv[4],1)
  eq(b.icon:GetWidth(),32);eq(b.icon:GetHeight(),32);eq(b.border,nil);eq(b.mask,nil);eq(b.icon.masks,nil)
 end)

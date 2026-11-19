@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 - 2026-11-19
+
+- First 1.0 release package for WoW Forever 1.60.1, with the existing MIT license and saved-data format.
+- Fix minimap launcher conflicts with EQoL Button Sink: collected buttons keep their manager-owned position, size and visibility; minimap drag logic stops while collected and works again after release.
+- Make the launcher artwork follow its button size, preserve unrelated update handlers, and honour the Gatherly visibility preference when a collector shows the button.
+- Add collector lifecycle regressions and a CurseForge submission kit containing the addon ZIP, supplied square icon, project description and changelog.
+
 ## 0.18.6 - 2026-11-19
 
 - Reduce recurring heatmap memory allocation by reusing density/fade arrays, strip records and modern gradient colour objects after warmup. Keep the smooth renderer and its colour/opacity settings.

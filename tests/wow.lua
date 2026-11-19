@@ -2,8 +2,10 @@
 function fakeUI()
  local methods={}
  function methods:SetScript(k,v) self.scripts[k]=v end
+ function methods:GetScript(k) return self.scripts[k] end
  function methods:HookScript(k,v) local old=self.scripts[k]; self.scripts[k]=function(...) if old then old(...) end; v(...) end end
  function methods:SetPoint(...) self.point={...} end
+ function methods:SetAllPoints(target) self.all=target or self.parent end
  function methods:SetText(t) self.text=t; if rawget(self,'fontString') then self.fontString:SetText(t) end end
  function methods:SetTitle(text) self.title=text end
  function methods:SetFontString(t) self.fontString=t end
@@ -38,8 +40,8 @@ function fakeUI()
  function methods:SetHeight(h) self.height=h end
  function methods:SetParent(p) self.parent=p end
  function methods:GetParent() return self.parent end
- function methods:GetWidth() return rawget(self,'width') or 500 end
- function methods:GetHeight() return rawget(self,'height') or 500 end
+ function methods:GetWidth() local all=rawget(self,'all');return all and all:GetWidth() or rawget(self,'width') or 500 end
+ function methods:GetHeight() local all=rawget(self,'all');return all and all:GetHeight() or rawget(self,'height') or 500 end
  function methods:Show() local changed=self.shown==false;self.shown=true;if changed and self.scripts.OnShow then self.scripts.OnShow(self) end end
  function methods:Hide() local changed=self.shown~=false;self.shown=false;if changed and self.scripts.OnHide then self.scripts.OnHide(self) end end
  function methods:IsShown() return self.shown~=false end

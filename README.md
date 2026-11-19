@@ -7,14 +7,14 @@
 A gathering companion for **WoW Forever**: remember herb and ore locations, discover
 where resources grow, build farming routes and follow a clear in-game guide arrow.
 
-[Download the addon](https://github.com/Red463/Gatherly/releases/latest) ?
-[Report a bug](https://github.com/Red463/Gatherly/issues) ?
-[Changelog](CHANGELOG.md) ? [Contributing](CONTRIBUTING.md)
+[Download the addon](https://github.com/Red463/Gatherly/releases/latest) |
+[Report a bug](https://github.com/Red463/Gatherly/issues) |
+[Changelog](CHANGELOG.md) | [Contributing](CONTRIBUTING.md)
 
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.18.6 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 1.0.0 | **Client interface:** 16001 | **Command:** `/gatherly`
 
 ## What it does
 
@@ -61,7 +61,7 @@ route guidance continue normally.
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.18.6.zip` from
+1. Download `Gatherly-1.0.0.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -368,6 +368,9 @@ The title bar includes the installed addon version (including prerelease metadat
 The header shows the complete supplied badge inside the native portrait frame.
 The minimap launcher uses the badge's own gold compass border and transparency,
 without an extra ring or a circular crop that cuts its points.
+It follows EQoL Button Sink's position, size and visibility while collected.
+Dragging around the minimap resumes when the collector releases it. The Gatherly
+visibility preference still hides the launcher in either location.
 Use `/gatherly` to reopen the panel when its minimap button is hidden.
 
 ![Centred minimap launcher using the supplied compass-and-leaf artwork](docs/images/minimap-launcher.png)
@@ -445,6 +448,11 @@ python tools/check_publication.py
 Tests use Lua 5.1 through Lupa. The installable archive is generated in `dist/`;
 it is not the same as GitHub's source archive. The installed addon makes no network
 requests and needs no external service.
+
+For the first CurseForge upload, build the ZIP, then run
+`python tools/prepare_curseforge_release.py` and `python tests/curseforge_release.py`.
+The [submission brief](https://github.com/Red463/Gatherly/blob/main/docs/curseforge-release.md)
+lists the generated icon, Markdown description, changelog and upload fields.
 
 ## License
 

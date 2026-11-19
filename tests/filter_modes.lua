@@ -45,3 +45,12 @@ test('native skill enumeration does not infer absence from collapsed or incomple
  collapsed=false;mining=true;ranks,ctx=A.Resources.Skills();eq(ctx.ore.known,true);eq(ranks.ore,1)
  mining=false;ranks,ctx=A.Resources.Skills();eq(ctx.ore.known,false);C_SkillInfo=nil
 end)
+
+test('a listed profession with unreadable rank stays known but its difficulty stays neutral',function()
+ local A={};module('Store',A);module('Client',A);module('Resources',A);C_SkillInfo=nil;GetNumSkillLines=nil;GetSkillLineInfo=nil
+ GetProfessions=function() return 1 end;GetProfessionInfo=function() return 'Mining',nil,nil,75,0,0,186,nil end
+ local ranks,ctx=A.Resources.Skills();eq(ctx.ore.known,true);eq(A.Resources.SkillDetails({kind='ore',materialID='gm:ore:201'},ranks,ctx).key,'unknown')
+ GetProfessions=nil;GetProfessionInfo=nil
+ C_SkillInfo={GetNumSkillLines=function() return 1 end,GetSkillLineInfo=function() return {isHeader=false,isCollapsed=false,skillID=nil,rank=1} end}
+ ranks,ctx=A.Resources.Skills();assert(not ctx.ore or ctx.ore.known~=false);C_SkillInfo=nil
+end)

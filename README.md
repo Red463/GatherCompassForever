@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.12.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.13.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -23,7 +23,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 - **Import all zones.** Read installed GatherMate2_Data directly, with GatherMate2's
   saved observations as a fallback. Repeated imports merge matching locations.
 - **Choose what to farm.** Filter by source, herbs/ore and individual materials, with
-  shared checkboxes for maps and generated routes, a scrolling material list and
+  independent map-marker and route-target checkboxes, scrolling lists and
   one-time Gatherable (including grey) or Skill-ups material selection.
 - **Generate a local corridor.** Start immediately, or review a large zone map and
   remove individual nodes with undo. No save step is needed.
@@ -33,7 +33,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   requirements, and review a resource route or guide to a nearby known location.
 - **Read crowded maps.** Shared count badges group overlapping icons; hover for a
   resource breakdown. Minimap outlines retain their original spawn positions.
-- **Tune map markers.** Separate World map/Minimap pages control sizes, opacity,
+- **Tune map markers.** Visible nodes chooses everyday markers; World map/Minimap pages control sizes, opacity,
   grouping and nearby-icon hiding without losing hollow outlines.
 - **Resize the panel.** Drag its bottom-right corner to expand the map and lists while
   keeping text and controls at their normal size. Dimensions and position are saved.
@@ -42,7 +42,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.12.0.zip` from
+1. Download `GatherCompassForever-0.13.0.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -76,7 +76,7 @@ These are **layout previews rendered from the addon's Lua UI**, with substitute
 fonts, placeholder resource icons and an illustrative map canvas. They are not
 in-game screenshots; actual Forever textures and rendering can differ.
 
-### Welcome and shared filters
+### Welcome and route targets
 
 Welcome introduces the workflow, imports all available zones and shows import status.
 It appears on first use; **Choose materials** in step 2 opens the Routes checkboxes.
@@ -84,7 +84,9 @@ Guide-arrow clicks still open Routes directly.
 
 ![Welcome tab with introduction, all-zone import and quick navigation](docs/images/welcome.png)
 
-Source and Gathering use independent checkboxes. The material list supports mouse-wheel
+The Routes sidebar is labelled **Route targets** and controls new routes and their
+review sketch. Everyday map markers have separate selections under **Node display >
+Visible nodes**. Both use source/type checkboxes and skill-coloured materials. The route material list supports mouse-wheel
 scrolling and a scrollbar, with icons and skill-coloured names.
 
 ![Checkbox filters and a vertically scrolling material list](docs/images/filters.png)
@@ -114,7 +116,9 @@ Exactly coincident review nodes still open the chooser so every member remains s
 ### Node Codex
 
 Node Codex combines the previous Atlas and Resources pages. Browse the full supported
-catalogue with type, skill, source and zone filters plus name search. Tiles show the
+catalogue with type, skill, source and zone filters plus name search. The tile grid
+and ranked-zone list scroll vertically; search and column headers stay visible.
+Back restores your previous scroll position. Tiles show the
 best skill-up state among currently gatherable sources; scoped results use only
 sources with matching locations. The unrestricted catalogue includes all supported
 sources. Details show every source's own requirement and colour. Unknown data stays neutral.
@@ -123,7 +127,7 @@ Codex browsing does not rewrite Routes checkboxes. Current-zone route/nearest ac
 use the selected resource intersected with those checkboxes, and preserve active
 guidance until it is stopped. Coordinate tables and the redundant Welcome button
 have been removed. Map buttons are available only when matching locations also pass
-the Routes checkboxes. Items without location data remain in the default full catalogue.
+the effective map-marker selections. Items without location data remain in the default full catalogue.
 
 ![Node Codex with skill-coloured tiles and browsing filters](docs/images/node-codex.png)
 
@@ -131,12 +135,14 @@ the Routes checkboxes. Items without location data remain in the default full ca
 
 ### Heatmap corridor
 
-Select **Heatmap corridor** above the route sketch to replace the lines with a soft,
-warm band through the generated farming areas. It is a route view, rather than a
+Select **Heatmap corridor** above the route sketch to replace the lines with a darker,
+soft burgundy band through the generated farming areas. It is a route view, rather than a
 live resource scanner. The arrow follows the same points; switching views does not
 regenerate the route. Heat also appears on the minimap, replacing its route lines,
 while resource markers and the destination marker remain. Its bounded transparent
-field leaves clearance around the player and known resources. Native unknown live
+field keeps small feathered clearance around the player and current destination.
+It no longer cuts holes around every possible spawn. Thin route lines retain their
+known-node clearance. Native unknown live
 blips are not enumerable, so check tracking contrast in your client. Unsupported
 custom minimap shapes hide heat rather than spilling outside the map. When Forever
 ignores minimap rotation, an addon-owned projection keeps icons, outlines and the
@@ -175,7 +181,7 @@ zone into one circuit. The displayed counts show when other areas are omitted.
 
 **Node Codex** offers ranked zones, personal history, skill-coloured sources and
 current-zone resource guidance in one page. Clicking a ranked zone focuses that
-resource on the world map, subject to shared checkbox filters. Closing the map
+resource on the world map, subject to the effective map-marker filters. Closing the map
 restores its usual display.
 
 ## Settings and commands
@@ -191,13 +197,27 @@ restores its usual display.
 | `/gcf inspect report` | Show the latest local capture |
 | `/gcf inspect off` | Cancel a pending capture |
 
-The sidebar filters this addon's node markers on both maps and new route generation
-together. Tick **My discoveries**, **Imported locations**, **Herbs** and **Ore** in any
-combination, then tick individual materials. Unticking every source or type gives no
-matching nodes; it does not reset your choices. These selections do not change a
-current plan or interrupt guidance already running. Review markers follow the new
-selections; regenerate to apply them to the route itself. A changed-selection message
-reminds you to generate again when you want the new choices applied.
+**Routes > Route targets** controls new route generation and the review sketch.
+Changing these choices does not change everyday map markers or interrupt the current
+route. Regenerate when you want the new choices applied to guidance.
+
+**Node display > Visible nodes** controls ordinary world-map and minimap markers
+across all zones. Marker-only users can configure everything here without generating
+a route. Sources, gathering types and material selections are independent of Routes.
+Existing shared preferences are copied into both sets on upgrade; explicit empty
+selections are retained.
+
+Optionally enable **Use route selections while following**. Both maps then use the
+active guidance's saved filter snapshot, including while paused or suspended.
+Changing the sidebar mid-route does not rewrite that snapshot. Stop/completion
+restores everyday markers without overwriting their preferences. The Visible nodes
+page identifies when the override is active. It is off by default.
+
+![Everyday map-marker choices and the optional temporary route override](docs/images/marker-filters.png)
+
+In either set, unticking every source or gathering type gives no matching nodes;
+this does not reset your choices. Marker filters do not hide the route overlay,
+destination or arrow.
 
 **All** selects all materials; untick it to clear the selection. **Gatherable** selects
 known resources your current skill can gather, including grey resources and capped
@@ -206,7 +226,7 @@ known orange, yellow and green materials across matching known zones once. It ex
 grey, too-difficult and unknown resources, and you can edit the result afterward.
 The selected materials do not change automatically when your profession skill rises.
 
-**Node display** has separate **World map** and **Minimap** pages. Configure icon
+**Node display** has **Visible nodes**, **World map** and **Minimap** pages. Configure icon
 sizes/opacities and grouping on each map; minimap outlines have their own size and
 opacity. The nearby-hide distance affects icons/counts, while hollow outlines stay
 at their real known positions. **Show route overlay** and its strength slider apply
@@ -217,15 +237,25 @@ bounded strength to keep it transparent. Existing appearance values are preserve
 
 ![Minimap markers, tracking clearance and route-overlay controls](docs/images/node-display-mini.png)
 
-**Preferences** controls arrival distance, arrow scale,
-optional labels and minimap-button visibility. Use `/gcf` to restore the minimap
-button if it is hidden.
+**Preferences** groups Navigation, Guide arrow and Panel & minimap controls.
+**Advance to next waypoint within** sets a radius: at15 yards, entering a15-yard
+radius advances the guide without requiring a harvest. Larger values advance sooner;
+smaller values require a closer approach. Changes apply immediately. Gathering and
+overlapping-stop movement safeguards still apply.
+
+![Preferences with navigation explanation and grouped arrow/panel settings](docs/images/preferences.png)
+
+The title bar includes the addon version. Header and minimap emblems use a centred
+crop of the original high-resolution badge; the launcher keeps one aligned gold ring.
+Use `/gcf` to reopen the panel when its minimap button is hidden.
+
+![Centred minimap launcher using the supplied compass-and-leaf artwork](docs/images/minimap-launcher.png)
 
 ### Panel size
 
 Drag the grip at the bottom-right corner to change width and height independently.
-Extra space enlarges the Routes map, shows more materials and increases Codex page
-capacity. Narrow layouts wrap controls or offer an interior scrollbar; normal text,
+Extra space enlarges the Routes map, shows more materials and increases the visible Codex
+area. Narrow layouts wrap controls or offer an interior scrollbar; normal text,
 buttons and icons keep their existing sizes. Preferences shows the current dimensions
 and **Reset panel size** (scroll down when needed).
 
@@ -246,7 +276,9 @@ Recorded coordinates reflect the interaction position, which can differ from the
 object's exact centre.
 
 Skill colours use **Classic reference data**, current profession rank and readable
-cap/bonus information. Unknown information stays neutral. Native tooltip inspection
+cap/bonus information. A confirmed missing profession is red with Learn Mining or
+Learn Herbalism guidance. Failed/incomplete queries and unreadable ranks remain
+neutral. Native tooltip inspection
 is optional, stored locally and does not automatically change the skill rules.
 
 Routes use nearby spatial groups and geometric connections of at most 450 yards,

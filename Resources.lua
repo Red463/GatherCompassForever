@@ -110,7 +110,8 @@ local function readableName(spell,english)
 end
 function R.Skills()
  local ranks,context={},{};local labels={herb=readableName(2366,'Herbalism'),ore=readableName(2575,'Mining')}
- local function record(kind,rank,maxRank,bonus)
+ local function record(kind,rank,maxRank,bonus,present)
+  if present and not context[kind] then context[kind]={known=true} end
   if not ranks[kind] and S.Number(rank) and rank>0 then
    ranks[kind]=rank;context[kind]={maxRank=S.Number(maxRank) and maxRank>0 and maxRank or nil,bonus=S.Number(bonus) and bonus or nil}
   end
@@ -130,7 +131,7 @@ function R.Skills()
     local ok,name,_,rank,maxRank,_,_,line,bonus=pcall(GetProfessionInfo,index)
     name=A.Client.Read(name);line=A.Client.Read(line)
     if not ok or type(name)~='string' or not S.Number(line) then valid=false else
-     found=found+1;for kind,id in pairs(profession) do if line==id or name==labels[kind] then record(kind,rank,maxRank,bonus) end end
+     found=found+1;for kind,id in pairs(profession) do if line==id or name==labels[kind] then record(kind,rank,maxRank,bonus,true) end end
     end
    end
   end end
@@ -143,10 +144,11 @@ function R.Skills()
    local row=call(C_SkillInfo and C_SkillInfo.GetSkillLineInfo,i)
    if type(row)~='table' or A.Client.Read(row.isHeader)==nil or A.Client.Read(row.isCollapsed)==nil then valid=false
    elseif row.isHeader then if row.isCollapsed then valid=false end
+   elseif not S.Number(A.Client.Read(row.skillID)) then valid=false
    else
     for kind,id in pairs(profession) do if A.Client.Read(row.skillID)==id then
      local bonus=S.Number(row.modifier) and S.Number(row.tempPoints) and row.modifier+row.tempPoints or nil
-     record(kind,row.rank,row.maxRank,bonus)
+     record(kind,row.rank,row.maxRank,bonus,true)
     end end
    end
   end
@@ -161,7 +163,7 @@ function R.Skills()
    for kind,label in pairs(labels) do if name==label then record(kind,rank,maxRank,bonus) end end
   end
  end end
- for kind in pairs(profession) do if ranks[kind] then context[kind].known=true elseif complete then context[kind]={known=false} end end
+ for kind in pairs(profession) do if ranks[kind] then context[kind].known=true elseif complete and not (context[kind] and context[kind].known) then context[kind]={known=false} end end
  return ranks,context
 end
 R.colors={orange={1,.5,.15},yellow={1,.85,.20},green={.30,.85,.35},grey={.50,.50,.50},red={.90,.25,.25},unknown={.9,.9,.85}}

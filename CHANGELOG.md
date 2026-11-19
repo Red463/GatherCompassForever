@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.0
+
+- Separate everyday Map markers from Route targets, migrating existing selections into independent copies. Add Visible nodes settings and an optional route-filter snapshot override that restores everyday markers on Stop/completion.
+- Darken heat corridors with bounded composited opacity. Replace per-spawn minimap heat cutouts with small feathered player/destination clearance; retain known-node gaps for thin lines.
+- Replace Codex tile and ranked-zone pagination with recycled vertical scrolling, preserving query/Back/reflow position and all custom resources.
+- Mark confirmed missing gathering professions red, while unreadable ranks or incomplete queries remain neutral. Refresh on skill changes.
+- Group Preferences into Navigation, Guide arrow and Panel & minimap, with a live explanation of the waypoint arrival radius.
+- Include the runtime version in the title bar; show map artwork behind the marker appearance example.
+- Centre the portrait slot/mask and minimap icon/ring, using a tighter crop of the original high-resolution emblem without changing source artwork.
+- Preserve panel resizing, routes, node history, navigation behaviour and MIT licensing.
+
 ## 0.12.0
 
 - Add a draggable bottom-right panel resize grip with saved width, height and screen-relative position. Keep normal text, controls and guide-arrow size unchanged.

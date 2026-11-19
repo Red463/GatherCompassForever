@@ -33,6 +33,7 @@ RouteSketch.lua
 AtlasView.lua
 ResourceLibraryView.lua
 UIActions.lua
+FilterSidebar.lua
 UI.lua
 MinimapButton.lua
 Core.lua

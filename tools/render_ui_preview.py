@@ -28,7 +28,7 @@ CreateFrame=function(...)
  f.SetEndPoint=function(self,...) self.lineEnd={...} end
  return f
 end
-A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -84,6 +84,9 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
         lua.execute("A.UI.frame:Hide();Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(180,180);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',900,-100);Minimap:SetBackdropColor(.12,.16,.09,1);A.MinimapButton.Build()")
     if scene=='material_skills':
         lua.execute("A.Resources.Skills=function() return {herb=109},{herb={maxRank=150,bonus=0}} end;A.Store.Observe(A.db,{mapID=1,x=.5,y=.5,kind='herb',name='Earthroot',materialID='gm:herb:403',source='imported'});A.UI.SetKind('herb')")
+    if scene in ('filters_scroll','filters_scroll_end'):
+        lua.execute("for i,item in ipairs(A.Resources.Catalog()) do A.Store.Observe(A.db,{mapID=1,x=.1+i*.005,y=.5,kind=item.kind,name=item.name,materialID=item.materialID,source='imported'}) end;A.Resources.Skills=function() return {herb=109,ore=75},{herb={maxRank=150,bonus=0},ore={maxRank=150,bonus=0}} end;A.UI.Refresh()")
+        if scene=='filters_scroll_end':lua.execute('A.UI.filterSidebar:SetOffset(A.UI.filterSidebar.maximum)')
     if scene=='editing':lua.execute('WorldMapFrame:Hide();A.UI.Edit(A.db.routes[A.selectedRoute]);A.editIndex=4;A.UI.Refresh()')
     if scene=='recording':lua.execute("A.UI.controls.record.scripts.OnClick(); for i=1,6 do A.recording:Sample({mapID=1,x=.2+i*.02,y=.4+i*.01},i) end;A.UI.Refresh()")
     if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
@@ -126,6 +129,7 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
             if constraints:a=constraints[0];x,y=a[2]-w*a[0],a[3]-h*a[1]
             else:x,y,_,_=box(o['parent'])
             r=(x,y,w,h)
+        if o['scrollOwner'] is not None:r=(r[0],r[1]-(o['scrollOwner']['verticalScroll'] or 0),r[2],r[3])
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(1280,800),'#0c1711');d=ImageDraw.Draw(im)
@@ -140,6 +144,14 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
         x,y,w,h=box(o);rect=(round(x),round(y),round(x+w),round(y+h))
         if w<0 or h<0:raise AssertionError('Negative geometry')
         if o['parent'] is not None and ident(o['parent']['opaqueBase'])==ident(o):continue
+        clipping=None;ancestor=o['parent']
+        while ancestor is not None and ident(ancestor)!=0:
+            if ancestor['kind']=='ScrollFrame':
+                ax,ay,aw,ah=box(ancestor);clipping=(round(ax),round(ay),round(ax+aw),round(ay+ah))
+                break
+            ancestor=ancestor['parent']
+        if clipping and (rect[2]<=clipping[0] or rect[0]>=clipping[2] or rect[3]<=clipping[1] or rect[1]>=clipping[3]):continue
+        before=im.copy() if clipping and (rect[0]<clipping[0] or rect[1]<clipping[1] or rect[2]>clipping[2] or rect[3]>clipping[3]) else None
         template=o['template'] or ''
         if template=='PortraitFrameTemplate':
             d.rectangle(rect,fill='#34322f',outline='#514d42',width=5)
@@ -169,11 +181,14 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
             d.rectangle((x+3,y+3,x+w-3,y+h-3),fill='#17120d',outline='#aa8a4a',width=2)
             if o['checked']:d.line([(x+5,y+h*.5),(x+w*.42,y+h-5),(x+w-4,y+5)],fill='#f6db87',width=2)
         if o['kind']=='Slider':
-            d.rectangle((x,y+5,x+w,y+h-5),fill='#0e0d0a',outline='#827456',width=2)
             minimum,maximum=o['minimum'] or 0,o['maximum'] or 1
-            value=o['value'] or minimum;fraction=max(0,min(1,(value-minimum)/(maximum-minimum)))
-            tx=x+8+(w-16)*fraction
-            d.rectangle((tx-6,y-3,tx+6,y+h+3),fill='#958a70',outline='#d0bd91',width=2)
+            value=o['value'] or minimum;fraction=max(0,min(1,(value-minimum)/(maximum-minimum))) if maximum>minimum else 0
+            if o['orientation']=='VERTICAL':
+                d.rectangle((x+3,y,x+w-3,y+h),fill='#0e0d0a',outline='#827456',width=2)
+                ty=y+12+(h-24)*fraction;d.rectangle((x,ty-10,x+w,ty+10),fill='#958a70',outline='#d0bd91',width=2)
+            else:
+                d.rectangle((x,y+5,x+w,y+h-5),fill='#0e0d0a',outline='#827456',width=2)
+                tx=x+8+(w-16)*fraction;d.rectangle((tx-6,y-3,tx+6,y+h+3),fill='#958a70',outline='#d0bd91',width=2)
         if o['backColor'] is not None:
             if o['backdrop'] is not None and 'UI-DialogBox-Background' in (o['backdrop']['bgFile'] or ''):
                 d.rectangle(rect,fill='#171410',outline='#675b49',width=2)
@@ -235,8 +250,11 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
                 length=d.textlength(s,font=f);tx=x+(w-length)/2 if o['justify']=='CENTER' else x+w-length if o['justify']=='RIGHT' else x
                 d.text((tx,ty),s,font=f,fill=rgba(o['textColor'],(220,225,210,255)),stroke_width=1 if 'OUTLINE' in (o['fontFlags'] or '') else 0,stroke_fill='#15120e');ty+=step
             text_report.append({'text':text,'box':[x,y,w,h]})
+        if before is not None:
+            mask=Image.new('L',im.size);ImageDraw.Draw(mask).rectangle(clipping,fill=255)
+            im=Image.composite(im,before,mask);d=ImageDraw.Draw(im)
     d.text((160,768),'Rendered from native Lua definitions. Native Blizzard textures and fonts are approximated; live Forever rendering still needs checking.',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#839785')
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['library','map_editor','map_editor_drag','map_following','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','editing','recording','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['filters_scroll','filters_scroll_end','library','map_editor','map_editor_drag','map_following','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','editing','recording','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

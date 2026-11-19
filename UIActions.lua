@@ -181,9 +181,6 @@ function A.UIActions.Bind(U)
  function actions.nodeMiniIconOpacity(_,value) opacity('miniIconOpacity',value) end
  function actions.nodeOutlineOpacity(_,value) opacity('miniOutlineOpacity',value) end
  function actions.import() if A.Import then A.Import() end end
- function actions.allMaterials() A.db.settings.materials=nil; U.Refresh() end
- function actions.prevMaterials() U.materialPage=math.max(1,U.materialPage-1); U.Refresh() end
- function actions.nextMaterials() U.materialPage=U.materialPage+1; U.Refresh() end
  function actions.prevRoute() U.routePage=math.max(1,U.routePage-1); U.Refresh() end
  function actions.nextRoute() U.routePage=U.routePage+1; U.Refresh() end
  function actions.map(keepPanel)

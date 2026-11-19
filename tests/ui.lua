@@ -9,7 +9,7 @@ test('UI source kind and material controls affect actual node selection',functio
  A.UI.SetKind('both'); A.UI.ToggleMaterial('a'); eq(#A.UI.SelectedNodes(),1); eq(A.UI.SelectedNodes()[1].materialID,'b')
 end)
 
-test('material skill colours survive hover selection and paging then refresh rank cap and bonus',function()
+test('material skill colours survive hover selection and scrolling then refresh rank cap and bonus',function()
  dofile('tests/wow.lua');fakeUI();local A={};module('Store',A);module('Client',A);moduleUI(A)
  A.db=A.Store.Open();A.Client.Position=function() return point(.1) end
  local rank,cap,bonus=109,150,0
@@ -25,7 +25,7 @@ test('material skill colours survive hover selection and paging then refresh ran
  earth.scripts.OnMouseUp(earth);earth.scripts.OnLeave(earth);colour(earth,'green')
  earth.scripts.OnClick(earth);eq(earth.check:IsShown(),false);colour(earth,'green')
  rank,cap=75,75;A.UI.Refresh();colour(row('Earthroot'),'grey')
- A.UI.controls.nextMaterials.scripts.OnClick();colour(row('Wild Steelbloom'),'red')
+ A.UI.filterSidebar:SetOffset(A.UI.filterSidebar.maximum);colour(row('Wild Steelbloom'),'red')
  rank,cap,bonus=110,150,5;A.UI.Refresh();colour(row('Wild Steelbloom'),'orange')
  rank=nil;A.UI.Refresh();colour(row('Wild Steelbloom'),'unknown')
  local tooltip={};GameTooltip.SetText=function(_,value) tooltip={value} end;GameTooltip.AddLine=function(_,value) tooltip[#tooltip+1]=value end

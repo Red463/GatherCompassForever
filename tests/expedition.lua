@@ -216,11 +216,11 @@ test('floating arrow status stays clickable and restores direction cleanly after
  eq(f.stateGlyph:IsShown(),false);eq(f.icon:IsShown(),true);eq(f.shadow:IsShown(),true);eq(f.label:GetText(),'300 yd')
 end)
 
-test('top tabs and gathering dropdowns apply real filters and close open menus',function()
+test('top tabs and gathering checkboxes apply real filters and close open menus',function()
  local A=setup();local U=A.UI
  assert(U.nav.topTabs);assert(U.nav:GetFrameLevel()>U.header:GetFrameLevel())
- U.controls.source:SelectValue('confirmed');eq(A.db.settings.source,'confirmed')
- U.controls.kind:SelectValue('ore');eq(A.db.settings.kind,'ore')
+ U.controls.sourceImported.scripts.OnClick();eq(A.db.settings.source,'confirmed')
+ U.controls.kindHerb.scripts.OnClick();eq(A.db.settings.kind,'ore')
  U.SetTab('nodes');U.controls.nodeOutline.scripts.OnClick(U.controls.nodeOutline);assert(A.Skin.dropdownMenu:IsShown())
  U.SetTab('settings');eq(A.Skin.dropdownMenu:IsShown(),false)
 end)

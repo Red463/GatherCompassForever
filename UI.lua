@@ -1,6 +1,6 @@
 local _, A = ...
 local S=A.Skin
-local U={controls={},materialPage=1,routePage=1,tab='routes',compact=false}; A.UI=U
+local U={controls={},routePage=1,tab='routes',compact=false}; A.UI=U
 local W,H=960,624
 local ROUTES_PER_PAGE=6
 local function safe(v) return tostring(v or ''):gsub('|','||') end
@@ -32,16 +32,6 @@ function U.ZoneName(id)
 end
 function U.Filter() return A.Selection.Filter(A.db.settings) end
 function U.SelectedNodes() local p=A.Client.Position(); return A.Store.Select(A.db,p and p.mapID,U.Filter()) end
-function U.MaterialNodes(p)
- local scope=U.tab=='atlas' and U.atlasView and U.atlasView.scope or 'current'
- local filter={source='combined',kind=A.db.settings.kind or 'both'}
- if scope~='all' then return A.Store.Select(A.db,scope=='current' and p and p.mapID or A.Store.Number(scope) and scope or nil,filter) end
- local result={}
- for _,entry in ipairs(A.Atlas.Index(A.db).resources) do
-  if filter.kind=='both' or entry.kind==filter.kind then for _,node in ipairs(entry.nodes) do result[#result+1]=node end end
- end
- return result
-end
 function U.FiltersChanged()
  U.Refresh()
  if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.editor and nil or A.follower) end
@@ -97,32 +87,8 @@ local function buildHeader()
  end
 end
 local function buildSidebar()
- U.sidebar=place(S.Panel(U.body,{.075,.115,.085,1}),U.body,0,0,194,414)
- label(U.sidebar,'Node source',16,13,162,20,13,S.gold)
- dropdown(U.sidebar,'source',{{value='combined',label='All known points'},{value='confirmed',label='My discoveries'},{value='imported',label='Imported points'}},16,40,162,U.SetSource)
- U.sourceCounts=label(U.sidebar,'',16,76,162,36,11,S.muted);U.sourceCounts:SetWordWrap(true)
- label(U.sidebar,'Gathering',16,132,162,20,13,S.gold)
- dropdown(U.sidebar,'kind',{{value='both',label='Herbs and ore'},{value='herb',label='Herbs'},{value='ore',label='Ore'}},16,160,162,U.SetKind)
- label(U.sidebar,'Materials',16,210,88,20,13,S.gold)
- button(U.sidebar,'allMaterials','All',106,208,32,24,'quiet'); button(U.sidebar,'prevMaterials','<',142,208,18,24,'quiet'); button(U.sidebar,'nextMaterials','>',164,208,18,24,'quiet')
- U.materialRows={}
- for i=1,4 do
-  local b=button(U.sidebar,'material'..i,'',16,235+(i-1)*24,162,23,'quiet',function(self) if self.materialID then U.ToggleMaterial(self.materialID) end end)
-  b.box=b:CreateTexture(nil,'ARTWORK'); b.box:SetTexture('Interface\\Buttons\\UI-CheckBox-Up'); b.box:SetSize(20,20); b.box:SetPoint('LEFT',b,'LEFT',0,0)
-  b.check=b:CreateTexture(nil,'OVERLAY'); b.check:SetTexture('Interface\\Buttons\\UI-CheckBox-Check'); b.check:SetSize(20,20); b.check:SetPoint('LEFT',b,'LEFT',0,0)
-  b.icon=b:CreateTexture(nil,'ARTWORK'); b.icon:SetSize(18,18); b.icon:SetPoint('LEFT',b,'LEFT',24,0)
-  b.label:ClearAllPoints(); b.label:SetPoint('LEFT',b,'LEFT',48,0); b.label:SetSize(114,22); b.label:SetJustifyH('LEFT')
-  S.Hint(b,'Route material',function()
-   local d=b.materialDetails
-   if not d then return b.materialName or '' end
-   return (b.materialName or '')..'\n'..d.requirement..'\n'..d.summary..(d.transition and ('\n'..d.transition) or '')..(d.contextNote and ('\n'..d.contextNote) or '')..'\n'..(d.source=='reference' and 'Source: Reference data (Classic)' or 'Source: Unknown')
-  end); U.materialRows[i]=b
- end
- U.materialEmpty=label(U.sidebar,'Gather or import nodes to see materials here.',18,241,158,66,12,S.dim); U.materialEmpty:SetWordWrap(true)
- local rule=S.Fill(U.sidebar,{.18,.25,.19,1}); place(rule,U.sidebar,16,345,162,1)
- label(U.sidebar,'External data',16,353,162,18,12,S.gold)
- button(U.sidebar,'import','Import node data',16,379,162,24,'subtle')
- S.Hint(U.controls.import,'Import all spawn data','Loads all herb and ore zones from installed GatherMate2_Data, wherever you are. Existing GatherMate2 observations are a fallback. Personal confirmations stay separate.')
+ U.filterSidebar=A.FilterSidebar.New(U.body,U);U.sidebar=U.filterSidebar.frame
+ U.materialRows=U.filterSidebar.rows;U.materialEmpty=U.filterSidebar.empty;U.sourceCounts=U.filterSidebar.count
 end
 local function buildLibrary()
  U.library=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,377)
@@ -305,33 +271,7 @@ function U.RefreshMode()
  place(U.controls.workReturn,U.footer,width-200-shift,18,180,26)
  U.footerName:SetWidth(compact and 250 or 340); U.footerMeta:SetWidth(compact and 280 or 370)
 end
-local function refreshSidebar(p)
- local source=A.db.settings.source or 'combined';local kind=A.db.settings.kind or 'both'
- local all=U.MaterialNodes(p); local counts={combined=#all,confirmed=0,imported=0};local matching=0
- for _,n in ipairs(all) do if n.confirmed then counts.confirmed=counts.confirmed+1 end; if n.imported then counts.imported=counts.imported+1 end end
- U.controls.source:SetValue(source);U.controls.kind:SetValue(kind)
- U.sourceCounts:SetText(counts.combined..' known / '..counts.confirmed..' personal\n'..counts.imported..' imported')
- local names,ids,resources={},{},{}
- for _,n in ipairs(all) do if not names[n.materialID] then names[n.materialID]=n.name or n.materialID; resources[n.materialID]=n; ids[#ids+1]=n.materialID end end
- table.sort(ids,function(a,b) return names[a]<names[b] end)
- local pages=math.max(1,math.ceil(#ids/4)); U.materialPage=math.max(1,math.min(pages,U.materialPage))
- local skills,context=A.Resources.Skills()
- for i,row in ipairs(U.materialRows) do
-  local id=ids[(U.materialPage-1)*4+i]; row.materialID=id; show(row,id~=nil)
-  if id then
-   local on=not A.db.settings.materials or A.db.settings.materials[id]
-   row.materialName=names[id];row.materialDetails=A.Resources.SkillDetails(resources[id],skills,context);row.labelColor=row.materialDetails.color
-   row:SetText(safe(names[id]));row.icon:SetTexture(A.Resources.Icon(resources[id]));show(row.check,on);S.Selected(row,on)
-  else row.materialName=nil;row.materialDetails=nil;row.labelColor=nil end
- end
- show(U.materialEmpty,#ids==0); U.controls.prevMaterials:SetEnabled(U.materialPage>1); U.controls.nextMaterials:SetEnabled(U.materialPage<pages)
- local scope=U.tab=='atlas' and U.atlasView and U.atlasView.scope or 'current'
- local zone=scope=='all' and 'All zones' or U.ZoneName(A.Store.Number(scope) and scope or p and p.mapID)
- for _,n in ipairs(all) do
-  if (source=='combined' or source=='confirmed' and n.confirmed or source=='imported' and n.imported) and (not A.db.settings.materials or A.db.settings.materials[n.materialID]) then matching=matching+1 end
- end
- U.zone:SetText(safe(zone)..'  -  '..matching..' matching locations')
-end
+local function refreshSidebar(p) U.filterSidebar.Refresh(p) end
 local function routeSummary(r)
  local nodes={}; for _,n in ipairs(A.db.nodes[r.mapID] or {}) do nodes[n.key]=n end
  local herbs,ore,unknown=0,0,false

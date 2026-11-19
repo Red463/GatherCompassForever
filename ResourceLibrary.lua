@@ -48,32 +48,50 @@ function L.Index(db)
  cachedIndex,cachedItems=index,items;return items
 end
 local skillOrder={orange=1,yellow=2,green=3,grey=4,unknown=5,red=6}
+local scopedBase,scopedCache
+local function scopedItems(db,options)
+ local base=L.Index(db)
+ if scopedBase~=base then scopedBase=base;scopedCache={} end
+ local source=options.source or 'combined';local current=options.scope=='current'
+ if source=='combined' and not current then return base end
+ local signature=source..'/'..(current and tostring(options.mapID) or 'all')
+ if scopedCache[signature] then return scopedCache[signature] end
+ local items={}
+ for _,original in ipairs(base) do
+  local item=stats();item.id=original.id;item.kind=original.kind;item.itemID=original.itemID;item.template=original.template
+  item.nodes={};item.zones={};item.materialIDs={};item.sources={};local zones,rows={},{}
+  for _,row in ipairs(original.sources) do local copy=stats();copy.node=row.node;item.sources[#item.sources+1]=copy;rows[A.Atlas.Key(row.node)]=copy end
+  for _,node in ipairs(original.nodes) do
+   local on=source=='combined' or source=='confirmed' and node.confirmed or source=='imported' and node.imported
+   if on and (not current or node.mapID==options.mapID) then
+    add(item,node);item.nodes[#item.nodes+1]=node;item.materialIDs[node.materialID]=true
+    local row=rows[A.Atlas.Key(node)];if row then add(row,node) end
+    local zone=zones[node.mapID];if not zone then zone=stats();zone.mapID=node.mapID;zones[node.mapID]=zone;item.zones[#item.zones+1]=zone end;add(zone,node)
+   end
+  end
+  table.sort(item.zones,function(a,b) if a.count~=b.count then return a.count>b.count end;return a.mapID<b.mapID end)
+  items[#items+1]=item
+ end
+ scopedCache[signature]=items;return items
+end
 function L.Query(db,kind,search,options)
  options=options or {};search=type(search)=='string' and search:lower():match('^%s*(.-)%s*$') or ''
- local ranks,context=options.ranks,options.context
- if not ranks then ranks,context=A.Resources.Skills() end
+ local ranks,context=options.ranks,options.context;if not ranks then ranks,context=A.Resources.Skills() end
+ local restricted=options.scope=='current' or options.source and options.source~='combined'
  local result={items={}}
- for _,base in ipairs(L.Index(db)) do if not kind or kind=='all' or kind==base.kind then
+ for _,base in ipairs(scopedItems(db,options)) do if not kind or kind=='all' or kind==base.kind then
   local name=A.Resources.ItemName(base.template)
   if search=='' or name:lower():find(search,1,true) then
-   local item=stats();item.id=base.id;item.kind=base.kind;item.itemID=base.itemID;item.template=base.template
-   item.name=name;item.icon=A.Resources.ItemIcon(base.template);item.sources=base.sources;item.nodes={};item.zones={};item.materialIDs={};local zones={}
-   for _,row in ipairs(item.sources) do local d=A.Resources.SkillDetails(row.node,ranks,context)
+   local item={};for key,value in pairs(base) do item[key]=value end
+   item.name=name;item.icon=A.Resources.ItemIcon(base.template);item.skillSources={}
+   for _,row in ipairs(item.sources) do if not restricted or row.count>0 then
+    item.skillSources[#item.skillSources+1]=row;local d=A.Resources.SkillDetails(row.node,ranks,context)
     if not item.skill or skillOrder[d.key]<skillOrder[item.skill.key] then item.skill=d end
-   end
-   for _,node in ipairs(base.nodes) do
-    local source=options.source or 'combined';local on=source=='combined' or source=='confirmed' and node.confirmed or source=='imported' and node.imported
-    if on and (options.scope~='current' or node.mapID==options.mapID) then
-     add(item,node);item.nodes[#item.nodes+1]=node;item.materialIDs[node.materialID]=true
-     local zone=zones[node.mapID];if not zone then zone=stats();zone.mapID=node.mapID;zones[node.mapID]=zone;item.zones[#item.zones+1]=zone end;add(zone,node)
-    end
-   end
-   table.sort(item.zones,function(a,b) if a.count~=b.count then return a.count>b.count end;return a.mapID<b.mapID end)
-   if options.scope~='current' and (not options.source or options.source=='combined') then item.zones=base.zones;item.nodes=base.nodes;item.materialIDs=base.materialIDs end
-   local skill=options.skill or 'all';local key=item.skill and item.skill.key or 'unknown'
+   end end
+   if not item.skill then item.skill=A.Resources.SkillDetails(item.template,ranks,context) end
+   local skill=options.skill or 'all';local key=item.skill.key
    local eligible=skill=='all' or skill=='gatherable' and key~='red' and key~='unknown' or skill=='skillups' and (key=='orange' or key=='yellow' or key=='green')
-   local located=options.scope~='current' and (not options.source or options.source=='combined') or item.count>0
-   if eligible and located then result.items[#result.items+1]=item end
+   if eligible and (not restricted or item.count>0) then result.items[#result.items+1]=item end
   end
  end end
  table.sort(result.items,function(a,b) local an,bn=a.name:lower(),b.name:lower();if an~=bn then return an<bn end;return a.id<b.id end)

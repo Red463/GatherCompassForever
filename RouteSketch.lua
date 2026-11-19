@@ -82,12 +82,12 @@ function A.RouteSketch.New(parent)
    if route and route.loop and #points>1 then line(points[#points],points[1]) end
   end
   local nodes=options.nodes or points;local plan=options.plan
-  if self.picker.plan~=plan or self.picker.revision~=(plan and plan.revision) then self.picker:Close() end
+  if self.picker.plan~=plan or self.picker.revision~=(plan and plan.revision) or self.picker.viewKey~=options.viewKey then self.picker:Close() end
   local grouping=not A.db or A.Resources.Settings(A.db.settings).groupWorld
-  local cacheKey=tostring(nodes)..':'..tostring(plan and plan.revision)..':'..tostring(options.selected)..':'..self.zoom..':'..w..':'..h..':'..tostring(self.art.aspect or self.aspect)..':'..tostring(grouping)
+  local cacheKey=tostring(nodes)..':'..tostring(plan and plan.revision)..':'..tostring(options.selected)..':'..self.zoom..':'..w..':'..h..':'..tostring(self.art.aspect or self.aspect)..':'..tostring(grouping)..':'..tostring(options.viewKey)
   if self.groupsKey~=cacheKey then
    local candidates={};for _,n in ipairs(nodes) do if not plan or not plan.excluded[n.key or A.FarmingSession.Key(n)] then candidates[#candidates+1]=n end end
-   self.groups=A.MarkerGroups.Build(candidates,project,grouping and 20 or .000001,{focus=options.selected,disabled=not grouping});self.groupsKey=cacheKey
+   self.groups=A.MarkerGroups.Build(candidates,project,grouping and 20 or .000001,{focus=options.selected,disabled=false});self.groupsKey=cacheKey
   end
   local used=0
   for _,g in ipairs(self.groups) do
@@ -101,12 +101,12 @@ function A.RouteSketch.New(parent)
      f.halo=f:CreateTexture(nil,'OVERLAY');f.halo:SetTexture(S.media..'NodeRing');f.halo:SetSize(28,28);f.halo:SetPoint('CENTER');f.halo:SetVertexColor(1,.82,.35,1)
      f.count=S.Label(f,'',11,S.gold);f.count:SetPoint('CENTER',f,'CENTER',10,8);f.count:SetSize(35,20)
      f:SetScript('OnClick',function(button)
-      if #button.group.members>1 then self.picker:Open(button.group.members,button,button.plan)
+      if #button.group.members>1 then self.picker:Open(button.group.members,button,button.plan,button.viewKey)
       elseif button.select then button.select(button.nodeKey) end
      end)
      A.SkillTooltip.Bind(f,function() return f.group and #f.group.members>1 and (#f.group.members..' known locations') or 'Known location' end,function() return f.group and A.SkillTooltip.Entries(f.group.members) or {} end,'Click to choose a location. Removal affects this route only.')
     end
-    f.group=g;f.plan=plan;f.nodeKey=key;f.node=n;f.select=options.onSelect;f:ClearAllPoints();f:SetPoint('CENTER',self.canvas,'TOPLEFT',x,y)
+    f.group=g;f.plan=plan;f.viewKey=options.viewKey;f.nodeKey=key;f.node=n;f.select=options.onSelect;f:ClearAllPoints();f:SetPoint('CENTER',self.canvas,'TOPLEFT',x,y)
     f.icon:SetTexture(g.mixed and S.media..'Icon' or A.Resources.Icon(n))
     local included=not plan or not route;local selected=false
     for _,member in ipairs(g.members) do

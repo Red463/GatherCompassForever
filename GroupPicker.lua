@@ -26,8 +26,8 @@ function A.GroupPicker.New(parent,onSelect)
  v.bar=S.Slider(f,0,0,1,function(_,value) if not v.syncing then v.offset=math.floor(value+.5);refresh() end end)
  v.bar:SetOrientation('VERTICAL');v.bar:SetPoint('TOPRIGHT',f,'TOPRIGHT',-9,-37);v.bar:SetSize(14,196);v.bar.lowLabel:Hide();v.bar.highLabel:Hide()
  f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',wheel)
- function v:Open(members,anchor,plan)
-  self.members=members;self.offset=0;self.plan=plan;self.revision=plan and plan.revision
+ function v:Open(members,anchor,plan,viewKey)
+  self.members=members;self.offset=0;self.plan=plan;self.viewKey=viewKey;self.revision=plan and plan.revision
   f:ClearAllPoints();f:SetPoint('TOPLEFT',anchor,'BOTTOMLEFT',0,-4);refresh();f:Show()
  end
  function v:Close() f:Hide();self.members=nil end

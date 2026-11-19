@@ -53,3 +53,12 @@ test('incomplete native overlay files fall back to usable reveal metadata',funct
  local v=A.MapArt.New(UIParent);v:Draw(1,{left=0,top=0,right=1,bottom=1},1000,600);eq(#v.overlays,2);eq(v.overlays[2].texture,92)
  C_MapExplorationInfo=nil;C_Map=nil
 end)
+
+test('unavailable exploration after a phase change never revives the previous phase cache',function()
+ local A=setup();local art=7;A.MapReveal={[7]={['20:20:0:0']='123'}}
+ C_Map={GetMapArtID=function() return art end,GetMapArtLayers=function() return {{layerWidth=100,layerHeight=100,tileWidth=100,tileHeight=100}} end,GetMapArtLayerTextures=function() return {1} end}
+ C_MapExplorationInfo={GetExploredMapTextures=function() if art==7 then return {} end end}
+ local v=A.MapArt.New(UIParent);local b={left=0,top=0,right=1,bottom=1};v:Draw(1,b,100,100);eq(v.overlays[1].texture,123)
+ art=8;v:Draw(1,b,100,100);eq(v.overlays[1]:IsShown(),false);v:Draw(1,b,100,100);eq(v.overlays[1]:IsShown(),false)
+ C_MapExplorationInfo=nil;C_Map=nil
+end)

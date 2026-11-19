@@ -40,7 +40,7 @@ end)
 
 test('resource zone focus preserves navigation and filters and guards unfinished work',function()
  local A,V=viewSetup();add(A,2,.2,402,'Silverleaf');add(A,1,.3,402,'Silverleaf')
- A.db.settings.materials={unrelated=true};A.db.settings.kind='ore';A.db.settings.source='confirmed'
+ A.db.settings.materials={unrelated=true,['gm:herb:402']=true};A.db.settings.kind='herb';A.db.settings.source='imported'
  V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(V.item.count,2)
  local following=A.Follower.New({mapID=1,points={point(.5),point(.6)}},point(.1),distance);A.follower=following
  local focus,refreshed,mapID
@@ -48,7 +48,7 @@ test('resource zone focus preserves navigation and filters and guards unfinished
   Refresh=function(db,route,follower) eq(db,A.db);eq(route,following.route);eq(follower,following);refreshed=true end}
  WorldMapFrame.SetMapID=function(_,id) mapID=id end
  V.ShowZone(2);eq(focus.id,2);eq(focus.materials['gm:herb:402'],true);eq(focus.source,'combined');eq(mapID,2);eq(refreshed,true)
- eq(A.follower,following);eq(A.db.settings.kind,'ore');eq(A.db.settings.materials.unrelated,true);eq(A.UI.frame:IsShown(),false)
+ eq(A.follower,following);eq(A.db.settings.kind,'herb');eq(A.db.settings.materials.unrelated,true);eq(A.UI.frame:IsShown(),false)
  A.UI.frame:Show();A.editor=A.Editor.New({mapID=1,name='Keep',points={point(.2)}});A.UI.Refresh();focus=nil;V.ShowZone(1)
  eq(focus,nil);eq(A.editor.draft.name,'Keep');eq(A.UI.frame:IsShown(),true)
 end)

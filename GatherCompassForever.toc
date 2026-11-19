@@ -31,6 +31,7 @@ FarmingSession.lua
 Follower.lua
 Heatmap.lua
 MiniHeat.lua
+MinimapPins.lua
 Map.lua
 Skin.lua
 Dropdown.lua

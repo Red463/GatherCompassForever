@@ -31,11 +31,21 @@ function V.New(parent,U)
  end
  function view.Open(id) view.selectedID=id;view.mode='detail';view.zonePage=1;S.CloseDropdown();U.Refresh() end
  function view.Back() view.mode='grid';U.Refresh() end
+ local function mapAvailable(item,mapID)
+  local filter=U.Filter();local signature=A.FarmingSession.Signature(filter)..'/'..view.source
+  if view.mapNodes~=item.nodes or view.mapSignature~=signature then
+   view.mapNodes=item.nodes;view.mapSignature=signature;view.mapZones={}
+   local focus={source=view.source,materials=item.materialIDs}
+   for _,n in ipairs(item.nodes) do if A.Selection.Matches(n,filter) and A.Selection.Matches(n,focus) then view.mapZones[n.mapID]=true end end
+  end
+  return view.mapZones[mapID]==true
+ end
  function view.ShowZone(mapID)
   if work() then message('Save or discard the current draft or recording before opening a resource map.');return end
   local item=view.item;local valid=false
   if item then for _,zone in ipairs(item.zones) do if zone.mapID==mapID then valid=true;break end end end
   if not valid or not WorldMapFrame or not A.Map or not A.Map.SetNodeFocus then message('Select a zone with known locations first.');return end
+  if not mapAvailable(item,mapID) then message('Select this resource and its source in Routes to show matching map locations.');return end
   local ok,reason=A.Map.SetNodeFocus(mapID,item.materialIDs,nil,view.source)
   if not ok then message(reason or 'World-map resource focus is unavailable.');return end
   WorldMapFrame:Show();if WorldMapFrame.SetMapID then WorldMapFrame:SetMapID(mapID) end
@@ -62,7 +72,7 @@ function V.New(parent,U)
   b.icon=b:CreateTexture(nil,'ARTWORK');place(b.icon,b,22,7,44,44)
   b.label:ClearAllPoints();place(b.label,b,4,53,80,31);b.label:SetJustifyH('CENTER');b.label:SetFont(S.bodyFont,11,'');b.label:SetWordWrap(true)
   A.SkillTooltip.Bind(b,'Resource information',function()
-   local entries={};if b.item then for _,row in ipairs(b.item.sources) do entries[#entries+1]={node=row.node} end end;return entries
+   local entries={};if b.item then for _,row in ipairs(b.item.skillSources or b.item.sources) do entries[#entries+1]={node=row.node} end end;return entries
   end,function()
    local item=b.item;if not item then return '' end
    return item.count..' known locations in '..#item.zones..' zones. Click for sources, history and ranked zones.'
@@ -169,7 +179,7 @@ function V.New(parent,U)
   local can=#nodes>0 and best~=nil and not active and not work()
   U.controls.codexPlan:SetEnabled(can);U.controls.codexGuide:SetEnabled(can)
   local zoneAvailable=false;for _,z in ipairs(item.zones) do if player and z.mapID==player.mapID then zoneAvailable=true end end
-  U.controls.codexMap:SetEnabled(zoneAvailable and not work())
+  U.controls.codexMap:SetEnabled(zoneAvailable and player and mapAvailable(item,player.mapID) and not work())
   view.localInfo:SetText(not player and 'Position unavailable. Return to a gathering zone to plan or guide.' or #nodes..' current-zone locations matching Routes'..(best and string.format(' / Nearest known: %.0f yd',best) or ' / Select this resource in Routes to guide')..(active and ' / Stop current guidance first' or ''))
 
   view.profession:SetText((item.kind=='herb' and 'Herbalism' or 'Mining')..' / '..#item.sources..(#item.sources==1 and ' gathering source' or ' gathering sources'))
@@ -189,7 +199,8 @@ function V.New(parent,U)
    local index=(view.zonePage-1)*7+i;local zone=item.zones[index];row.zone=zone;show(row,zone~=nil)
    if zone then
     row:SetText(safe(index..'. '..U.ZoneName(zone.mapID)));row.counts:SetText(zone.count..' / '..zone.confirmed)
-    row:SetEnabled(not work() and WorldMapFrame~=nil and A.Map~=nil and A.Map.SetNodeFocus~=nil)
+    local matches=mapAvailable(item,zone.mapID)
+    row:SetEnabled(matches and not work() and WorldMapFrame~=nil and A.Map~=nil and A.Map.SetNodeFocus~=nil)
    end
   end
   show(view.zoneEmpty,#item.zones==0);view.zonePageLabel:SetText('Zones '..view.zonePage..' / '..pages..' / Click a zone to show its map')

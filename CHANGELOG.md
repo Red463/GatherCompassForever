@@ -11,6 +11,9 @@
 - Show active heat corridors on the minimap with bounded opacity, known-node/player clearance, standard-shape masks and effective rotation support. Stop/completion clears the overlay.
 - Reveal supported Routes map artwork using pinned attributed MIT metadata from OpenMap; load textures from the installed client and fall back to native explored art for unsupported map-art IDs.
 - Keep existing storage, routing/session ownership, shared filters, arrow behaviour and MIT licensing. No new addon dependency or copied client artwork.
+- Keep scoped Codex colours tied to matching sources, cache warm queries, and disable map actions when shared selections have no matching locations.
+- Keep review pickers consistent with changed selections and allow exactly coincident members to be selected even with grouping disabled.
+- Clear previous-phase reveal tiles and preserve square-minimap corner icons; align markers and heat when Forever ignores minimap rotation.
 
 ## 0.10.0
 

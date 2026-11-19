@@ -36,13 +36,19 @@ function C.MinimapRadius()
   local ok,r=pcall(C_Minimap.GetViewRadius);if ok and S.Number(r) and r>0 then return r end
  end
 end
+function C.MinimapRotationIgnored()
+ if not C_Minimap or type(C_Minimap.IsRotateMinimapIgnored)~='function' then return false end
+ local ok,value=pcall(C_Minimap.IsRotateMinimapIgnored);if ok then value=C.Read(value);if type(value)=='boolean' then return value end end
+end
+function C.MinimapShape()
+ if type(GetMinimapShape)~='function' then return 'ROUND' end
+ local ok,value=pcall(GetMinimapShape);value=ok and C.Read(value)
+ return type(value)=='string' and value or 'UNKNOWN'
+end
 function C.MinimapFacing()
  local ok,rotating=pcall(function() return GetCVar and C.Read(GetCVar('rotateMinimap'))=='1' end)
  if not ok then return nil end;if not rotating then return 0 end
- if C_Minimap and type(C_Minimap.IsRotateMinimapIgnored)=='function' then
-  local good,ignored=pcall(C_Minimap.IsRotateMinimapIgnored);if not good or C.Read(ignored)==nil then return nil end
-  if ignored then return 0 end
- end
+ local ignored=C.MinimapRotationIgnored();if ignored==nil then return nil end;if ignored then return 0 end
  return C.Facing()
 end
 function C.Probe()

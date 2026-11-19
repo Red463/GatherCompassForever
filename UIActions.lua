@@ -40,7 +40,7 @@ function A.UIActions.Bind(U)
  function actions.generateReview() return U.ReviewNodes(U.SelectedNodes()) end
  function actions.selectNode(key)
   if not A.plan or A.plan.excluded[key] then return end
-  if A.plan.byKey[key] then A.plan.selected=key;U.Refresh() end
+  if A.plan.byKey[key] and A.Selection.Matches(A.plan.byKey[key],U.Filter()) then A.plan.selected=key;U.Refresh() end
  end
  local function rebuild(method)
   local plan=A.plan;if not plan then return end

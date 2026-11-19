@@ -292,10 +292,12 @@ function M.Refresh(db,route,follower)
  local function retire()
   for _,p in ipairs(M.pins) do
    if p.key and not p.wanted and p~=M.dragFrame then
-    if lib and not p.editorHandle then if p.mini then lib:RemoveMinimapIcon(M,p) else lib:RemoveWorldMapIcon(M,p) end end
+    if p.directMini and M.nativeMiniPins then M.nativeMiniPins:Remove(p)
+    elseif lib and not p.editorHandle then if p.mini then lib:RemoveMinimapIcon(M,p) else lib:RemoveWorldMapIcon(M,p) end end
     M.byKey[p.key]=nil; p.key=nil; p.signature=nil;p:Hide();if p.editorHandle then p:SetParent(UIParent);p.editorHandle=nil end
    end
   end
+  if M.nativeMiniPins then M.nativeMiniPins:Refresh() end
  end
  local player=A.Client.Position(); local map=WorldMapFrame; local canvas=map and map:GetCanvas()
  local worldLayer=M.WorldRouteLayer(canvas)
@@ -322,7 +324,8 @@ function M.Refresh(db,route,follower)
  end)
  local function add(p,index,node,mini)
   local editing=index and not node and not mini and M.editLayer
-  if not lib and not editing then return end
+  local direct=mini and A.Client.MinimapRotationIgnored()==true
+  if not lib and not editing and not direct then return end
   local key=(mini and 'm:' or 'w:')..(node and ('node:'..node.key) or ('point:'..index))
   local f=M.byKey[key] or pin(); M.byKey[key]=f; f.key=key; f.wanted=true; f.mini=mini
   f.index=index; f.node=node;f.group=nil; f.label=index and ('Waypoint '..index) or node and node.name
@@ -365,7 +368,12 @@ function M.Refresh(db,route,follower)
    if f.EnableMouseMotion then f:EnableMouseMotion(true) else f:EnableMouse(true) end
   end
   local signature=p.mapID..':'..p.x..':'..p.y
-  if f~=M.dragFrame and signature~=f.signature then
+  if f.directMini and not direct then M.nativeMiniPins:Remove(f);f.signature=nil end
+  if direct then
+   if not f.directMini and f.signature and lib then lib:RemoveMinimapIcon(M,f) end
+   if not M.nativeMiniPins then M.nativeMiniPins=A.MinimapPins.New(miniRaw) end
+   M.nativeMiniPins:Add(f,p);f.signature=signature
+  elseif f~=M.dragFrame and signature~=f.signature then
    if mini then lib:AddMinimapIconMap(M,f,p.mapID,p.x,p.y,false,false)
    else
     -- HBD acquires a new world wrapper on each Add call. Retire the old
@@ -417,10 +425,11 @@ function M.Refresh(db,route,follower)
  local miniRadius=A.Client.MinimapRadius()
  local nodeW,nodeH;if player then nodeW,nodeH=A.Client.Size(player.mapID) end
  local miniFacing=A.Client.MinimapFacing()
- local canGroup=settings.groupMini and player and nodeW and A.Store.Number(miniRadius) and miniRadius>0 and miniFacing~=nil and Minimap
+ local markerShape=A.Client.MinimapShape()
+ local canGroup=Minimap and A.MiniHeat.InShape(0,0,Minimap:GetWidth(),Minimap:GetHeight(),markerShape) and settings.groupMini and player and nodeW and A.Store.Number(miniRadius) and miniRadius>0 and miniFacing~=nil and Minimap
  local miniGroups
  if canGroup then
-  miniGroups=A.MarkerGroups.Build(miniNodes,function(n) return M.MiniProject(n,player,nodeW,nodeH,miniRadius,Minimap:GetWidth(),Minimap:GetHeight(),miniFacing) end,settings.iconSize+4,{limit=400,focus=miniNodes[1] and miniNodes[1].key})
+  miniGroups=A.MarkerGroups.Build(miniNodes,function(n) local x,y=miniRaw(n,player,nodeW,nodeH,miniRadius,Minimap:GetWidth(),Minimap:GetHeight(),miniFacing);if A.MiniHeat.InShape(x,y,Minimap:GetWidth(),Minimap:GetHeight(),markerShape) then return x,y end end,settings.iconSize+4,{limit=400,focus=miniNodes[1] and miniNodes[1].key})
   local outlines=0
   for _,g in ipairs(miniGroups) do
    if #g.members>1 then
@@ -465,8 +474,7 @@ function M.Refresh(db,route,follower)
   A.Heatmap.Draw(M.worldHeat,worldLayer,route,function(p) return M.Project(p,canvas:GetWidth(),canvas:GetHeight()) end,function(radius) return radius/zw*canvas:GetWidth(),radius/zh*canvas:GetHeight() end)
  end
  if mini and heat and settings.routeLines and settings.routeOpacity>0 then
-  local shape='ROUND'
-  if type(GetMinimapShape)=='function' then local ok,value=pcall(GetMinimapShape);shape=ok and A.Client.Read(value) or 'UNKNOWN' end
+  local shape=markerShape
   if not M.miniHeatLayer then M.miniHeatLayer=CreateFrame('Frame',nil,Minimap);M.miniHeatLayer:EnableMouse(false);M.miniHeatLayer:SetAllPoints(Minimap) end
   if M.miniHeatLayer:GetParent()~=Minimap then M.miniHeatLayer:SetParent(Minimap);M.miniHeatLayer:ClearAllPoints();M.miniHeatLayer:SetAllPoints(Minimap) end
   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()

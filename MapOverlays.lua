@@ -12,6 +12,7 @@ function O.New()
   local fn=C_MapExplorationInfo and C_MapExplorationInfo.GetExploredMapTextures
   local signature=tostring(mapID)..':'..tostring(artID)..':'..layer.tileWidth..':'..layer.tileHeight..':'..tostring(fn)
   if self.cache and self.signature==signature then return self.cache,self.covered end
+  self.cache=nil
   local native=read(fn,mapID);local metadata=A.MapReveal and A.MapReveal[artID]
   local pieces,seen={},{};local covered=type(metadata)=='table';local tw,th=layer.tileWidth,layer.tileHeight
   local function add(w,h,x,y,files,top,hover)

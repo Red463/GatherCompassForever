@@ -22,13 +22,19 @@ function V.New(parent,U)
   if plan and not plan:Matches(U.Filter()) then text='Selections changed. Generate again to use them. '..(text or '') end
   v.info:SetText(text or '')
   local selected=plan and plan.byKey and plan.byKey[plan.selected]
+  local filter=U.Filter();local viewKey=A.FarmingSession.Signature(filter)..':'..tostring(plan and plan.revision)
+  if v.plan~=plan or v.nodesKey~=viewKey then
+   v.nodes={};for _,n in ipairs(plan and plan.candidates or nodes) do if A.Selection.Matches(n,filter) then v.nodes[#v.nodes+1]=n end end
+   v.plan=plan;v.nodesKey=viewKey
+  end
+  if selected and not A.Selection.Matches(selected,filter) then selected=nil;plan.selected=nil end
   v.selection:SetText(selected and ((selected.name or 'Node')..string.format('  /  %.1f, %.1f',selected.x*100,selected.y*100)) or 'Select a node to remove it. Scroll to zoom; right-drag to pan.')
   U.controls.removeNode:SetEnabled(selected~=nil);U.controls.undoNode:SetEnabled(plan~=nil and #plan.undo>0)
   U.controls.generateStart:SetEnabled(#nodes>0);U.controls.generateReview:SetEnabled(#nodes>0)
   U.controls.routeStyle:SetValue(A.db.settings.routeStyle=='heatmap' and 'heatmap' or 'lines')
   local f=A.follower;local following=f and f.session==plan and (f.status=='running' or f.status=='paused' or f.status=='suspended')
   local visible=plan and (plan.review or following)
-  v.sketch:Draw(visible and route or nil,nil,{plan=plan,nodes=plan and plan.candidates or nodes,selected=plan and plan.selected,onSelect=U.actions.selectNode,style=A.db.settings.routeStyle,mapID=plan and plan.mapID or (A.Client.Position() or {}).mapID})
+  v.sketch:Draw(visible and route or nil,nil,{plan=plan,nodes=plan and v.nodes or nodes,viewKey=viewKey,selected=plan and plan.selected,onSelect=U.actions.selectNode,style=A.db.settings.routeStyle,mapID=plan and plan.mapID or (A.Client.Position() or {}).mapID})
  end
  return v
 end

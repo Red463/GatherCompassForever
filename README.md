@@ -105,6 +105,7 @@ Badges show the number of known locations, including different resources. Hover
 for per-resource counts and skill colours. Zoom in to separate nearby locations.
 In the Routes sketch, click a badge and choose one member before using **Remove node**;
 the other members and stored history stay intact. Grouping can be disabled per map.
+Exactly coincident review nodes still open the chooser so every member remains selectable.
 
 ![Grouped review markers with an individual-location chooser](docs/images/grouped-nodes.png)
 
@@ -112,13 +113,15 @@ the other members and stored history stay intact. Grouping can be disabled per m
 
 Node Codex combines the previous Atlas and Resources pages. Browse the full supported
 catalogue with type, skill, source and zone filters plus name search. Tiles show the
-best skill-up state among currently gatherable sources; details show every source's
-own requirement and colour. Unknown data stays neutral.
+best skill-up state among currently gatherable sources; scoped results use only
+sources with matching locations. The unrestricted catalogue includes all supported
+sources. Details show every source's own requirement and colour. Unknown data stays neutral.
 
 Codex browsing does not rewrite Routes checkboxes. Current-zone route/nearest actions
 use the selected resource intersected with those checkboxes, and preserve active
 guidance until it is stopped. Coordinate tables and the redundant Welcome button
-have been removed. Items without location data remain in the default full catalogue.
+have been removed. Map buttons are available only when matching locations also pass
+the Routes checkboxes. Items without location data remain in the default full catalogue.
 
 ![Node Codex with skill-coloured tiles and browsing filters](docs/images/node-codex.png)
 
@@ -133,7 +136,9 @@ regenerate the route. Heat also appears on the minimap, replacing its route line
 while resource markers and the destination marker remain. Its bounded transparent
 field leaves clearance around the player and known resources. Native unknown live
 blips are not enumerable, so check tracking contrast in your client. Unsupported
-custom minimap shapes hide heat rather than spilling outside the map.
+custom minimap shapes hide heat rather than spilling outside the map. When Forever
+ignores minimap rotation, an addon-owned projection keeps icons, outlines and the
+destination aligned with the heat without modifying the shared pin library.
 
 ![Soft density corridor over an illustrative map](docs/images/route-heatmap.png)
 
@@ -188,7 +193,8 @@ The sidebar filters this addon's node markers on both maps and new route generat
 together. Tick **My discoveries**, **Imported locations**, **Herbs** and **Ore** in any
 combination, then tick individual materials. Unticking every source or type gives no
 matching nodes; it does not reset your choices. These selections do not change a
-current plan or interrupt guidance already running. A changed-selection message
+current plan or interrupt guidance already running. Review markers follow the new
+selections; regenerate to apply them to the route itself. A changed-selection message
 reminds you to generate again when you want the new choices applied.
 
 **All** selects all materials; untick it to clear the selection. **Gatherable** selects

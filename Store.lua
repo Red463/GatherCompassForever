@@ -72,22 +72,30 @@ function S.Observe(db,o,candidates)
 end
 -- An import owns this disposable grid. Ordinary gathers keep the same merge
 -- policy; their revision changes invalidate any grid built before they moved.
-function S.ImportWriter(db,size,checkpoint)
+function S.ImportWriter(db,size,checkpoint,frameToken)
  local caches,revision={},db.nodeRevision
- local function stamp() return type(GetTime)=='function' and GetTime() or nil end
+ local function stamp() return frameToken and frameToken() or nil end
+ local function dimensions(mapID)
+  local w,h;if size then w,h=size(mapID) end
+  if S.Number(w) and S.Number(h) and w>0 and h>0 then return w,h end
+ end
  local function insert(cache,n,i)
   if not S.Position(n) then return end
-  local x,y=math.floor(n.x*cache.width/5),math.floor(n.y*cache.height/5)
+  local x,y=n.x,n.y
+  if not cache.exact then x,y=math.floor(x*cache.width/5),math.floor(y*cache.height/5) end
   local column=cache.cells[x] or {};cache.cells[x]=column
   local cell=column[y] or {};column[y]=cell;cell[#cell+1]=n;cache.order[n]=i
  end
  local function build(mapID)
-  local w,h;if size then w,h=size(mapID) end
-  if not S.Number(w) or not S.Number(h) or w<=0 or h<=0 then return {fallback=true,width=w,height=h,stamp=stamp()} end
-  local before,frame=db.nodeRevision,stamp();local cache={width=w,height=h,cells={},order={}}
+  local w,h=dimensions(mapID)
+  local exact=not w and A.Client and size==A.Client.Size and S.distance==A.Client.Distance
+  -- Native Distance returns nil without Size, so only exact coordinates can
+  -- merge. A custom distance function retains the ordinary fallback policy.
+  if not w and not exact then return {fallback=true,stamp=stamp()} end
+  local before=db.nodeRevision;local cache={width=w,height=h,exact=exact,cells={},order={}}
   for i,n in ipairs(db.nodes[mapID] or {}) do insert(cache,n,i);if checkpoint then checkpoint() end end
   if before~=db.nodeRevision then return nil end
-  if stamp()~=frame and size then local nowW,nowH=size(mapID);if nowW~=w or nowH~=h then return nil end end
+  local nowW,nowH=dimensions(mapID);if nowW~=w or nowH~=h then return nil end
   cache.stamp=stamp()
   return cache
  end
@@ -96,17 +104,21 @@ function S.ImportWriter(db,size,checkpoint)
   if revision~=db.nodeRevision then caches={} end
   local cache=caches[o.mapID]
   local frame=stamp()
-  if cache and cache.stamp~=frame then
-   local w,h;if size then w,h=size(o.mapID) end
+  if cache and (frame==nil or cache.stamp~=frame) then
+   local w,h=dimensions(o.mapID)
    if cache.width~=w or cache.height~=h then cache=nil else cache.stamp=frame end
   end
   while not cache do cache=build(o.mapID);if not cache then caches={} end end
   caches[o.mapID]=cache
   local candidates
-  if not cache.fallback then
+  if cache.exact then
+   local column=cache.cells[o.x];candidates=column and column[o.y] or {}
+  elseif not cache.fallback then
    candidates={};local x,y=math.floor(o.x*cache.width/5),math.floor(o.y*cache.height/5)
-   for dx=-1,1 do local column=cache.cells[x+dx]
-    if column then for dy=-1,1 do
+   -- Rounding at an inclusive 5-yard boundary can place the two endpoints
+   -- two cells apart. Observe still applies the exact distance threshold.
+   for dx=-2,2 do local column=cache.cells[x+dx]
+    if column then for dy=-2,2 do
      for _,n in ipairs(column[y+dy] or {}) do candidates[#candidates+1]=n end
     end end
    end

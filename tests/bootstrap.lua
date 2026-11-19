@@ -64,6 +64,47 @@ test('building a large existing-zone index yields and resumes without Lua 5.1 pr
  debugprofilestop=oldProfile
 end)
 
+test('unavailable native zone geometry imports through an exact index without quadratic API calls',function()
+ local A=setup();local calls=0;C_Map.GetMapWorldSize=function() calls=calls+1 end
+ local list={};for i=1,4000 do list[i]={mapID=1,x=(i%100)*.009,y=math.floor(i/100)*.009,kind='herb',materialID='gm:herb:401',name='Peacebloom',key='seed'..i,imported=true} end
+ A.db.nodes[1]=list;A.db.nextNode=4001;A.UI.Refresh=function() end;A.Map.Refresh=function() end
+ A.Imports.Provider=function() return function() local i=0;return function()
+  i=i+1;if i>64 then return end
+  return i,{mapID=1,x=.995,y=i*.005,kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+ end end,{direct=64,fallback=0} end
+ local oldProfile=debugprofilestop;debugprofilestop=function() return 0 end
+ A.Import();A.Tick(1/60);assert(calls<32,'Unavailable metrics performed '..calls..' API calls in one frame')
+ for _=1,20 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);eq(#A.db.nodes[1],4064);assert(calls<100)
+ debugprofilestop=oldProfile
+end)
+
+test('throwing profiler APIs fall back safely and do not abort import',function()
+ local A=setup();local oldProfile,oldPrecise=debugprofilestop,GetTimePreciseSec
+ debugprofilestop=function() error('timer inaccessible') end;GetTimePreciseSec=function() error('precise timer inaccessible') end
+ A.Imports.Provider=function() return function() local i=0;return function()
+  i=i+1;if i>512 then return end
+  return i,{mapID=1,x=i*.001,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+ end end,{direct=512,fallback=0} end
+ A.Import();for _=1,20 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);assert(A.status:find('512 locations',1,true),tostring(A.status));assert(#A.db.nodes[1]>0)
+ debugprofilestop=oldProfile;GetTimePreciseSec=oldPrecise
+end)
+
+test('import resume tokens revalidate metrics when the game clock is frozen',function()
+ local A=setup();local width=1000;C_Map.GetMapWorldSize=function() return width,500 end
+ local oldProfile=debugprofilestop;debugprofilestop=function() return 0 end
+ A.Imports.Provider=function() return function() local i=0;return function()
+  i=i+1;if i>2049 then return end
+  if i~=1 and i~=2049 then return i,false end
+  return i,{mapID=1,x=i==1 and .104 or .113,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf'}
+ end end,{direct=2,fallback=0} end
+ A.Import();A.Tick(1/60);assert(A.importJob);eq(#A.db.nodes[1],1)
+ width=500;for _=1,10 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);eq(#A.db.nodes[1],1);assert(A.status:find('Imported 2 locations',1,true))
+ debugprofilestop=oldProfile
+end)
+
 test('real successful gathering events mark a future generated stop without importing pickup progress',function()
  local A,clock=setup();local nodes={}
  for i,x in ipairs({.2,.4,.6}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end

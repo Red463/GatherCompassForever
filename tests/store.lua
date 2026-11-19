@@ -48,6 +48,28 @@ test('exact repeat imports avoid distance APIs and changed frame metrics rebuild
  width=500;tick=1;eq(write(node(.113,nil,'imported')),p);eq(#db.nodes[1],1)
  GetTime=oldTime
 end)
+
+test('indexed merges include floating point five-yard boundaries without extending the merge radius',function()
+ local S=setup();S.distance=function(a,b) return math.sqrt(((a.x-b.x)*8000)^2+((a.y-b.y)*8000)^2) end
+ for _,axis in ipairs({'x','y'}) do
+  local db=S.Open();local o=node(.5,'node:herb:Peacebloom');o[axis]=.511875;local p=S.Observe(db,o)
+  local query=node(.5,'gm:herb:401','imported');query[axis]=.5125
+  local write=S.ImportWriter(db,function() return 8000,8000 end)
+  assert(S.distance(p,query)<=5);eq(write(query),p);eq(#db.nodes[1],1);eq(p.count,1);eq(p.materialID,'gm:herb:401')
+  local outside=S.Copy(query);outside[axis]=.512501;assert(write(outside)~=p)
+ end
+end)
+
+test('changed metrics stay correct with a frozen or unavailable frame clock',function()
+ local S=setup();local oldTime=GetTime
+ for _,clock in ipairs({'missing','frozen'}) do
+  GetTime=clock=='frozen' and function() return 0 end or nil
+  local width=1000;S.distance=function(a,b) return math.abs(a.x-b.x)*width end
+  local db=S.Open();local write=S.ImportWriter(db,function() return width,500 end)
+  local p=write(node(.104,nil,'imported'));width=500;eq(write(node(.113,nil,'imported')),p);eq(#db.nodes[1],1)
+ end
+ GetTime=oldTime
+end)
 test('future schema is untouched and uses memory only',function()
  local S=setup(); local old={version=99,nodes={precious=true},custom='keep'}
  local db,w,reason=S.Open(old); eq(w,false); assert(reason); eq(old.nodes.precious,true); eq(old.version,99); assert(db~=old)

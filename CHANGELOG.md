@@ -8,6 +8,7 @@
 - Avoid distance API calls for exact repeat locations and cache resource names by type/ID during each import.
 - Refresh the panel/maps immediately when an import finishes and keep route guidance on its independent tick. Preserve partial-error retry and all-zone coverage.
 - Add a repeatable synthetic first/repeat import benchmark with stored-node-count validation.
+- Preserve inclusive five-yard matches at floating-point cell boundaries, use exact-coordinate indexing when native map dimensions are unavailable, and protect timer fallbacks. Resume tokens revalidate metrics independently of the game clock.
 
 ## 0.16.0
 

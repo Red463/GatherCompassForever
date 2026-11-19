@@ -3,11 +3,11 @@ A.version=A.Skin and A.Skin.AddonVersion('0.16.1') or '0.16.1'
 function A.Print(text)
  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gatherly:|r '..tostring(text)) end
 end
+local function clockValue(timer,factor)
+ if type(timer)=='function' then local ok,n=pcall(timer);if ok and A.Store.Number(n) then return n*factor end end
+end
 local function importClock()
- if type(debugprofilestop)=='function' then local n=debugprofilestop();if A.Store.Number(n) then return n end end
- local timer=GetTimePreciseSec or GetTime
- if type(timer)=='function' then local n=timer();if A.Store.Number(n) then return n*1000 end end
- return 0
+ return clockValue(debugprofilestop,1) or clockValue(GetTimePreciseSec,1000) or clockValue(GetTime,1000) or 0
 end
 function A.Import()
  if A.importJob then A.status='An import is already running.'; A.UI.Refresh(); return end
@@ -15,15 +15,15 @@ function A.Import()
  if not provider then A.status='Enable compatible GatherMate2 and GatherMate2_Data addons to import spawn data. Personal recording still works.'; A.UI.Refresh(); return end
  A.importJob=coroutine.create(function()
   local count=0; local zones={}
-  local work,started=0,importClock()
+  local work,started,slice=0,importClock(),0
   local function checkpoint()
    work=work+1;if work%64~=0 then return end
    if work>=2048 or importClock()-started>=4 then
     A.status='Importing all zones: '..count..' locations...';coroutine.yield()
-    work=0;started=importClock()
+    slice=slice+1;work=0;started=importClock()
    end
   end
-  local write=A.Store.ImportWriter(A.db,A.Client.Size,checkpoint)
+  local write=A.Store.ImportWriter(A.db,A.Client.Size,checkpoint,function() return slice end)
   local ok,err=pcall(function()
    -- The coroutine yields outside pcall below: Lua 5.1 cannot yield across pcall.
    local iter,state,key=provider(); A.importIterator={iter,state,key}

@@ -8,7 +8,7 @@ test('Preferences explains waypoint radius live and groups resets with their own
  assert(v.arrivalLabel:GetText():find('Advance to next waypoint',1,true));assert(v.arrivalHelp:GetText():find('15 yards',1,true));assert(v.arrivalHelp:GetText():find('gather',1,true))
  U.controls.arrival.scripts.OnValueChanged(U.controls.arrival,25);assert(v.arrivalHelp:GetText():find('25 yards',1,true))
  eq(U.controls.resetArrow:GetParent(),v.arrow);eq(U.controls.resetPanel:GetParent(),v.panel)
- U.window:Resize(860,600);assert(v.scroller.maximum>0);eq(U.controls.arrival:GetHeight(),18)
+ U.window:SetPreset('small');assert(v.scroller.maximum>0);eq(U.controls.arrival:GetHeight(),18)
 end)
 test('expanded title uses runtime version and portrait is centred on the native container',function()
  local A,U=setup();eq(U.chrome.title,'Gather Compass Forever v0.13.0')

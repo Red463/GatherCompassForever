@@ -9,7 +9,7 @@ end)
 test('Node display provides full-width world and minimap pages without diagnostic clutter',function()
  dofile('tests/wow.lua');fakeUI();local A={};module('Store',A);module('Client',A);moduleUI(A);A.db=A.Store.Open();A.Client.Position=function() return point(.1) end;A.Client.Distance=distance
  A.UI.Build();A.UI.frame:Show();A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('world');local U=A.UI;local V=U.nodeDisplayView;assert(V)
- eq(U.sidebar:IsShown(),false);eq(U.content:GetWidth(),936);eq(V.world:IsShown(),true);eq(V.mini:IsShown(),false);eq(U.controls.inspectNode,nil);eq(U.professionRanks,nil)
+ eq(U.sidebar:IsShown(),false);eq(U.content:GetWidth(),U.frame:GetWidth()-24);eq(V.world:IsShown(),true);eq(V.mini:IsShown(),false);eq(U.controls.inspectNode,nil);eq(U.professionRanks,nil)
  U.controls.displayMini.scripts.OnClick();eq(V.mini:IsShown(),true);eq(V.world:IsShown(),false)
  U.controls.nodeGroupMini.scripts.OnClick();eq(A.Resources.Settings(A.db.settings).groupMini,false)
  U.controls.nodeWorldIconSize:SelectValue(20);eq(A.Resources.Settings(A.db.settings).worldIconSize,20)

@@ -137,7 +137,7 @@ end)
 
 test('Classic window has native chrome compact header bottom tabs and standard option controls',function()
  local A=setup();local U=A.UI
- eq(U.chrome.template,'PortraitFrameTemplate');assert(U.header:GetHeight()<=64);assert(U.frame:GetHeight()<650)
+ eq(U.chrome.template,'PortraitFrameTemplate');assert(U.header:GetHeight()<=64);eq(U.frame:GetHeight(),780)
  eq(U.tabs.routes.template,'PanelTopTabButtonTemplate')
  eq(U.controls.arrival.kind,'Slider');eq(U.controls.arrowScale.kind,'Slider');eq(U.controls.arrowProgress.kind,'CheckButton')
  eq(U.controls.arrival.mouse,true);eq(U.controls.arrowScale.mouse,true)

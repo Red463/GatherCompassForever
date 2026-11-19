@@ -5,7 +5,7 @@ local function setup(saved)
 end
 test('first opening shows Welcome once and preserves normal routes navigation afterward',function()
  local A,U=setup();eq(U.tab,'welcome');eq(A.db.settings.welcomeSeen,nil)
- U.Toggle();eq(U.welcomeView.frame:IsVisible(),true);eq(U.sidebar:IsShown(),false);eq(U.content:GetWidth(),936);eq(A.db.settings.welcomeSeen,true)
+ U.Toggle();eq(U.welcomeView.frame:IsVisible(),true);eq(U.sidebar:IsShown(),false);eq(U.content:GetWidth(),U.frame:GetWidth()-24);eq(A.db.settings.welcomeSeen,true)
  U.OpenRoutes();U.Toggle();U.Toggle();eq(U.tab,'routes')
  local B,V=setup(A.Store.Copy(A.db));eq(V.tab,'routes');V.Toggle();eq(V.sidebar:IsVisible(),true)
 end)

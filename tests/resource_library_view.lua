@@ -4,14 +4,14 @@ local function viewSetup()
  moduleUI(A)
  A.db=A.Store.Open();A.Client.Position=function() return point(.1) end;A.Client.Distance=distance;A.Client.Size=function() return 1000,500 end
  A.Resources.Skills=function() return {herb=109,ore=260},{herb={maxRank=150,bonus=0},ore={maxRank=300,bonus=0}} end
- A.UI.Build();A.UI.OpenRoutes();A.UI.SetTab('resources');assert(A.UI.resourceLibraryView);return A,A.UI.resourceLibraryView
+ A.UI.Build();A.UI.window:SetPreset('small');A.UI.OpenRoutes();A.UI.SetTab('resources');assert(A.UI.resourceLibraryView);return A,A.UI.resourceLibraryView
 end
 local function add(A,map,x,id,name,kind)
  A.Store.Observe(A.db,{mapID=map,x=x,y=.5,kind=kind or 'herb',materialID='gm:'..(kind or 'herb')..':'..id,name=name,source='imported'})
 end
 
 test('Resources is a full-width grid with independent type search and scrolling square item buttons',function()
- local A,V=viewSetup();eq(A.UI.tab,'codex');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
+ local A,V=viewSetup();eq(A.UI.tab,'codex');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),A.UI.frame:GetWidth()-24)
  assert(#V.model.items>35);assert(#V.tiles<=54);eq(V.tiles[1].cell:GetWidth(),V.tiles[1].cell:GetHeight())
  V.gridList:SetOffset(96);assert(V.gridList.scroller.offset>0)
  A.UI.controls.resourceType:SelectValue('ore');eq(V.kind,'ore');eq(V.gridList.scroller.offset,0)
@@ -58,15 +58,15 @@ test('resource page skips hidden or compact work and restores the original sideb
  A.ResourceLibrary.Query=function(...) calls=calls+1;return query(...) end
  A.UI.frame:Hide();A.UI.Refresh();eq(calls,0);A.UI.frame:Show();A.UI.SetCompact(true);A.UI.Refresh();eq(calls,0)
  A.UI.SetCompact(false);assert(calls>0);A.UI.SetTab('settings');calls=0;A.UI.Refresh();eq(calls,0)
- eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936);eq(A.UI.resourceLibraryView.frame:IsShown(),false)
- A.UI.SetTab('resources');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
+ eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),A.UI.frame:GetWidth()-24);eq(A.UI.resourceLibraryView.frame:IsShown(),false)
+ A.UI.SetTab('resources');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),A.UI.frame:GetWidth()-24)
 end)
 
 test('resource zone scrolling refreshes after imports and draft guards cover recording states',function()
- local A,V=viewSetup();for map=1,10 do add(A,map,.2,402,'Silverleaf') end
- V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(#V.item.zones,10)
- V.zoneList:SetOffset(10000);assert(V.zoneList.scroller.offset>0);local last=false;for _,r in ipairs(V.zoneRows) do if r.zone and r.zone.mapID==10 then last=true end end;assert(last)
- add(A,10,.3,402,'Silverleaf');A.UI.Refresh();eq(V.item.zones[1].mapID,10);eq(V.item.count,11)
+ local A,V=viewSetup();for map=1,40 do add(A,map,.2,402,'Silverleaf') end
+ V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(#V.item.zones,40)
+ V.zoneList:SetOffset(10000);assert(V.zoneList.scroller.offset>0);local last=false;for _,r in ipairs(V.zoneRows) do if r.zone and r.zone.mapID==40 then last=true end end;assert(last)
+ add(A,40,.3,402,'Silverleaf');A.UI.Refresh();eq(V.item.zones[1].mapID,40);eq(V.item.count,41)
  V.Back();V.searchBox:SetText('Copper');V.searchBox.scripts.OnTextChanged(V.searchBox)
  eq(V.search,'Copper');eq(V.gridList.scroller.offset,0);eq(#V.model.items,1);eq(A.UI.controls.resourceType:GetValue(),'all')
  V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);local focused=false;A.Map={SetNodeFocus=function() focused=true end}

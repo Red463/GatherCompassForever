@@ -1,7 +1,7 @@
 local function setup()
  dofile('tests/wow.lua');fakeUI();local A={};for _,m in ipairs({'Store','Client','Planner','Follower'}) do module(m,A) end;moduleUI(A)
  A.db=A.Store.Open();A.Client.Position=function() return point(.3) end;A.Client.Size=function() return 1000,500 end;A.Client.Distance=distance;A.Client.Probe=function() return {loot=true,facing=true,distance=true,minimap=true} end
- A.UI.Build();A.UI.OpenRoutes();A.UI.SetTab('codex');return A,A.UI.codexView
+ A.UI.Build();A.UI.window:SetPreset('small');A.UI.OpenRoutes();A.UI.SetTab('codex');return A,A.UI.codexView
 end
 test('Codex scrolling reaches a large catalogue with bounded recycled tiles and no pages',function()
  local A,v=setup();for i=1,300 do A.Store.Observe(A.db,{mapID=1,x=.2,y=.5,kind='herb',materialID='node:herb:Custom '..i,name='Custom '..i,source='confirmed'}) end

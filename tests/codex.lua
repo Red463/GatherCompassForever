@@ -6,7 +6,7 @@ local function setup()
 end
 test('Node Codex replaces both old pages with skill-coloured catalogue tiles and no Welcome button',function()
  local A,V=setup();assert(V);eq(A.UI.tabs.atlas,nil);eq(A.UI.tabs.resources,nil);assert(A.UI.tabs.codex);eq(A.UI.controls.resourceWelcome,nil)
- eq(A.UI.sidebar:IsShown(),false);eq(V.frame:GetWidth(),896)
+ eq(A.UI.sidebar:IsShown(),false);eq(V.frame:GetWidth(),A.UI.content:GetWidth()-40)
  V.SetSearch('Earthroot');local tile=V.tiles[1];eq(tile.item.skill.key,'green');near(tile.label.textColor[2],A.Resources.colors.green[2]);tile.scripts.OnEnter(tile);near(tile.label.textColor[2],A.Resources.colors.green[2])
  V.SetSearch('Thorium');eq(V.tiles[1].item.skill.key,'orange');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(#V.item.sources,2)
  eq(A.UI.controls.atlasDetail,nil)

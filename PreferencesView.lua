@@ -28,25 +28,29 @@ function V.New(parent,U)
  v.arrowHelp=label(v.arrow,'Drag the arrow to move it. Click it to reopen the panel.',18,224,380,32,11,S.muted);v.arrowHelp:SetWordWrap(true)
  label(v.panel,'Panel & minimap',18,12,320,24,16,S.gold)
  check(v.panel,'minimapButton','Show minimap button')
- U.panelSizeValue=label(v.panel,'',18,88,380,24,13)
+ label(v.panel,'Panel size',18,82,160,22,13)
+ local sizes={};for _,preset in ipairs(A.PanelWindow.Presets) do sizes[#sizes+1]={value=preset.id,label=preset.label} end
+ U.controls.panelPreset=S.Dropdown(v.panel,sizes,function(id) U.window:SetPreset(id) end)
+ U.panelSizeValue=label(v.panel,'',18,140,380,24,12,S.muted)
  button(v.panel,'resetPanel','Reset panel size',function() U.window:Reset() end)
- v.panelHelp=label(v.panel,'Drag the bottom-right grip to resize. Text stays at its normal size; the map and lists use the extra space.',18,170,380,78,12,S.muted);v.panelHelp:SetWordWrap(true)
+ v.panelHelp=label(v.panel,'Choose a fixed layout. Text and controls keep their normal size.',18,224,380,42,11,S.muted);v.panelHelp:SetWordWrap(true)
  S.Hint(U.controls.arrowProgress,'Arrow progress','Show the waypoint number and current lap. Laps start at 1.')
  S.Hint(U.controls.arrowNodeName,'Next node name','Show the resource at the next gathering stop below the distance.')
  S.Hint(U.controls.minimapButton,'Minimap launcher','Click the compass button to open the panel; drag it around the minimap. Use /gcf when it is hidden.')
  function v.Layout(width,height)
-  local w,h=width-40,height-19;local stacked=w-20<760;local content=stacked and 808 or 530
+  local w,h=width-40,height-19;local stacked=w-20<760;local content=stacked and 828 or 550
   local available=scroll:Layout(w,h,content);v.subtitle:SetWidth(available)
   place(v.navigation,body,0,62,available,192)
   local cw=stacked and available or (available-16)/2
-  place(v.arrow,body,0,270,cw,260);place(v.panel,body,stacked and 0 or cw+16,stacked and 546 or 270,cw,260)
+  place(v.arrow,body,0,270,cw,280);place(v.panel,body,stacked and 0 or cw+16,stacked and 546 or 270,cw,280)
   local sliderWidth=math.min(400,available-160);place(U.controls.arrival,v.navigation,18,82,sliderWidth,18);place(U.arrivalValue,v.navigation,sliderWidth+40,76,110,24)
   v.arrivalHelp:SetWidth(available-36);v.arrivalNote:SetWidth(available-36)
   place(U.controls.arrowScale,v.arrow,18,82,cw-130,18);place(U.arrowScaleValue,v.arrow,cw-92,76,76,24)
   place(U.controls.arrowProgress,v.arrow,16,118,24,24);place(U.controls.arrowNodeName,v.arrow,16,148,24,24)
   place(U.controls.resetArrow,v.arrow,18,190,cw-36,26);v.arrowHelp:SetWidth(cw-36)
   place(U.controls.minimapButton,v.panel,16,46,24,24);U.panelSizeValue:SetWidth(cw-36)
-  place(U.controls.resetPanel,v.panel,18,126,cw-36,26);v.panelHelp:SetWidth(cw-36)
+  place(U.controls.panelPreset,v.panel,18,108,cw-36,26)
+  place(U.controls.resetPanel,v.panel,18,180,cw-36,26);v.panelHelp:SetWidth(cw-36)
  end
  function v.Refresh()
   U.syncingOptions=true;U.controls.arrival:SetValue(A.db.settings.arrival or 15);U.controls.arrowScale:SetValue(tonumber(A.db.settings.arrowScale) or 1);U.syncingOptions=false
@@ -54,7 +58,11 @@ function V.New(parent,U)
   v.arrivalHelp:SetText('At '..arrival..' yards, entering a '..arrival..'-yard radius around the target advances the guide. You do not have to gather the node. Changes apply immediately.')
   U.arrowScaleValue:SetText(math.floor((tonumber(A.db.settings.arrowScale) or 1)*100+.5)..'%')
   U.controls.arrowProgress:SetChecked(A.db.settings.arrowProgress~=false);U.controls.arrowNodeName:SetChecked(A.db.settings.arrowNodeName==true);U.controls.minimapButton:SetChecked(A.db.settings.minimapButton~=false)
-  if U.window.geometry then local g=U.window.geometry;U.panelSizeValue:SetText(math.floor(g.width+.5)..' x '..math.floor(g.height+.5)..' UI units') end
+  if U.window.geometry then
+   local g=U.window.geometry;U.controls.panelPreset:SetValue(g.preset)
+   U.panelSizeValue:SetText(g.label..': '..g.width..' x '..g.height..' UI units')
+   v.panelHelp:SetText(g.preset~=g.effectivePreset and ('Using '..g.label..' to fit your screen. Your chosen size returns when it fits.') or g.scale<1 and 'Scaled to fit your screen. Your chosen size is saved.' or 'Choose a fixed layout. Text and controls keep their normal size.')
+  end
  end
  return v
 end

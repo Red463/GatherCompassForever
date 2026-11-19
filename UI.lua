@@ -69,13 +69,13 @@ function U.DisplayRoute()
  return A.plan and A.plan.review and A.plan.route or nil
 end
 function U.SetTab(tab) if U.routeSketch then U.routeSketch.picker:Close() end;if tab=='atlas' or tab=='resources' then tab='codex' end;if tab=='welcome' or tab=='routes' or tab=='codex' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
-function U.SetCompact(on) S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
+function U.SetCompact(on) if U.window then U.window:Cancel() end;S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
 local function buildHeader()
  U.header=place(CreateFrame('Frame',nil,U.frame),U.frame,12,2,936,60)
  U.header:SetFrameLevel(U.frame:GetFrameLevel()+2)
  U.zone=label(U.header,'',68,34,776,20,12,S.muted)
  U.header:EnableMouse(true); U.header:RegisterForDrag('LeftButton')
- U.header:SetScript('OnDragStart',function() U.frame:StartMoving() end); U.header:SetScript('OnDragStop',function() U.frame:StopMovingOrSizing() end)
+ U.header:SetScript('OnDragStart',function() U.frame:StartMoving() end); U.header:SetScript('OnDragStop',function() U.frame:StopMovingOrSizing();if U.window then U.window:SavePosition() end end)
  button(U.header,'minimize','-',864,2,25,22,'subtle')
  U.controls.close=U.chrome.CloseButton; U.controls.close:SetScript('OnClick',U.actions.close)
  U.controls.close:SetFrameLevel(math.max(U.controls.close:GetFrameLevel(),U.header:GetFrameLevel()+2))
@@ -123,7 +123,7 @@ local function buildFooter()
  button(U.footer,'followReverse','Reverse',551,18,79,32,'quiet',U.actions.reverse)
  button(U.footer,'workReturn','Return to draft',760,18,180,32,'gold'); button(U.footer,'expand','+',914,19,28,30,'quiet')
  U.footer:EnableMouse(true); U.footer:RegisterForDrag('LeftButton')
- U.footer:SetScript('OnDragStart',function() if U.compact then U.frame:StartMoving() end end); U.footer:SetScript('OnDragStop',function() U.frame:StopMovingOrSizing() end)
+ U.footer:SetScript('OnDragStart',function() if U.compact then U.frame:StartMoving() end end); U.footer:SetScript('OnDragStop',function() U.frame:StopMovingOrSizing();if U.window then U.window:SavePosition() end end)
  U.status=label(U.frame,'',18,623,924,25,10,S.muted); U.status:SetWordWrap(true)
  U.statusHover=place(CreateFrame('Frame',nil,U.frame),U.frame,14,621,932,28); U.statusHover:EnableMouse(true)
  S.Hint(U.statusHover,'Gather Compass status',function() return U.status:GetText() end)
@@ -134,7 +134,7 @@ local function buildWindow()
  U.frame=CreateFrame('Frame','GatherCompassForeverWindow',UIParent);U.frame:Hide()
  U.compactBackground=S.Panel(U.frame);U.compactBackground:SetAllPoints()
  U.chrome=S.Window(U.frame);U.chrome:SetAllPoints();U.chrome:SetFrameLevel(U.frame:GetFrameLevel()); U.frame:SetPoint('CENTER',UIParent,'CENTER',0,0)
- U.frame:EnableMouse(true);U.frame:SetFrameStrata('DIALOG'); U.frame:SetClampedToScreen(true); U.frame:SetMovable(true); S.FitWindow(U.frame,W,H); buildHeader()
+ U.frame:EnableMouse(true);U.frame:SetFrameStrata('DIALOG'); U.frame:SetClampedToScreen(true); U.frame:SetMovable(true); U.window=A.PanelWindow.New(U);U.window:Apply(); buildHeader()
  U.body=place(CreateFrame('Frame',nil,U.frame),U.frame,12,100,936,414); buildSidebar()
  U.content=place(CreateFrame('Frame',nil,U.body),U.body,194,0,742,414)
  U.routeView=A.RouteView.New(U.content,U);U.library=U.routeView.frame;buildPreferences(); buildNodeOptions(); buildFooter()
@@ -142,7 +142,7 @@ local function buildWindow()
  U.welcomeView=A.WelcomeView.New(U.content,U)
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherCompassForeverWindow' end
  U.frame:HookScript('OnHide',function() S.CloseDropdown();U.routeSketch.picker:Close() end)
- U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.RefreshMode() end)
+ U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.window:Cancel();U.Refresh() end)
  U.Refresh(); U.frame:Hide()
 end
 function U.Build()
@@ -157,8 +157,7 @@ function U.Build()
  U.built=true;return true
 end
 function U.RefreshMode()
- local compact=U.compact; local width=compact and 730 or W
- S.FitWindow(U.frame,width,compact and 98 or H)
+ local compact=U.compact;local width,height=U.window:Apply()
  show(U.chrome,not compact);show(U.compactBackground,compact);show(U.header,not compact); show(U.nav,not compact); show(U.body,not compact)
  place(U.footer,U.frame,compact and 1 or 12,compact and 1 or 520,width-(compact and 2 or 24),64)
  place(U.status,U.frame,18,compact and 72 or 588,width-36,25); place(U.statusHover,U.frame,14,compact and 70 or 586,width-28,28)

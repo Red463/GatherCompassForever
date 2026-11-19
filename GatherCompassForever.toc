@@ -34,6 +34,8 @@ MiniHeat.lua
 MinimapPins.lua
 Map.lua
 Skin.lua
+PanelWindow.lua
+ScrollPanel.lua
 Dropdown.lua
 Arrow.lua
 Data/MapReveal.lua

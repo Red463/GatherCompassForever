@@ -58,7 +58,7 @@ test('blocked map action explains the active route override rather than changing
 end)
 test('title and runtime version prefer installed metadata over the source fallback',function()
  local A,U=setup();A.version='0.13.0';C_AddOns={GetAddOnMetadata=function() return '0.13.0-test.2' end}
- eq(A.Skin.Window(UIParent).title,'Gather Compass Forever v0.13.0-test.2');module('Core',A);eq(A.version,'0.13.0-test.2');C_AddOns=nil
+ eq(A.Skin.Window(UIParent).title,'Gatherly v0.13.0-test.2');module('Core',A);eq(A.version,'0.13.0-test.2');C_AddOns=nil
 end)
 
 test('Codex disabled-map tooltip gives the same actionable opacity reason as the action',function()

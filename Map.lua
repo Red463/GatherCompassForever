@@ -334,7 +334,7 @@ function M.Refresh(db,route,follower)
   f.icon:SetAlpha(1);f.outline:SetAlpha(1)
   f.editorHandle=not not editing
   if editing then
-   f:SetParent(M.editLayer);f.icon:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\NodeRing');f.outline:Hide();f.icon:Show();f:EnableMouse(true)
+   f:SetParent(M.editLayer);f.icon:SetTexture('Interface\\AddOns\\Gatherly\\Media\\NodeRing');f.outline:Hide();f.icon:Show();f:EnableMouse(true)
    positionHandle(f);f:Show();return
   end
   f.background:Hide();f.number:Hide()
@@ -351,12 +351,12 @@ function M.Refresh(db,route,follower)
    if style.icon then f.icon:Show() else f.icon:Hide() end
    f.outline:SetSize(style.outlineSize,style.outlineSize); f.outline:SetVertexColor(unpack(style.color))
    if style.outline~='none' then
-    f.outline:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\'..(style.outline=='ring' and 'NodeRing' or 'NodeSquare')); f.outline:Show()
+    f.outline:SetTexture('Interface\\AddOns\\Gatherly\\Media\\'..(style.outline=='ring' and 'NodeRing' or 'NodeSquare')); f.outline:Show()
    else f.outline:Hide() end
   elseif mini then
    -- Keep the native tracking dot at the destination visible too.
    f.difficultyLabel=nil; f.icon:Hide(); f.outline:SetSize(22,22)
-   f.outline:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\NodeRing')
+   f.outline:SetTexture('Interface\\AddOns\\Gatherly\\Media\\NodeRing')
    f.outline:SetVertexColor(1,.78,.22); f.outline:Show(); f:SetSize(22,22)
   else
    f.difficultyLabel=nil; f.outline:Hide(); f.icon:SetTexture('Interface\\TargetingFrame\\UI-RaidTargetingIcon_4')

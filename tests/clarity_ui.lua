@@ -11,7 +11,7 @@ test('Preferences explains waypoint radius live and groups resets with their own
  U.window:SetPreset('small');assert(v.scroller.maximum>0);eq(U.controls.arrival:GetHeight(),18)
 end)
 test('expanded title uses runtime version and portrait is centred on the native container',function()
- local A,U=setup();eq(U.chrome.title,'Gather Compass Forever v0.13.0')
+ local A,U=setup();eq(U.chrome.title,'Gatherly v0.13.0')
  local create=CreateFrame;local native
  CreateFrame=function(kind,name,parent,template) local f=create(kind,name,parent,template);if template=='PortraitFrameTemplate' then f.PortraitContainer=create('Frame',nil,f);f.PortraitContainer.portrait=create('Texture',nil,f.PortraitContainer);native=f end;return f end
  local chrome=A.Skin.Window(UIParent);eq(chrome.brandPortrait.point[1],'CENTER');eq(chrome.brandPortrait.point[2],native.PortraitContainer);eq(chrome.brandPortrait.point[3],'TOPLEFT');eq(chrome.brandPortrait.point[4],26);eq(chrome.brandPortrait.point[5],-24)

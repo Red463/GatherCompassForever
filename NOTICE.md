@@ -1,6 +1,6 @@
 # Third-party notices
 
-Original Gather Compass Forever code, documentation and project artwork are
+Original Gatherly code, documentation and project artwork are
 licensed under the MIT License in `LICENSE`. Bundled third-party libraries retain
 their own licenses below; the project license does not replace those terms.
 
@@ -20,7 +20,7 @@ Nevcairiel/HereBeDragons 90a7b2d8c065010dfb866e2b6bd56f5bc930029b HereBeDragons-
 Nevcairiel/HereBeDragons 90a7b2d8c065010dfb866e2b6bd56f5bc930029b HereBeDragons-Pins-2.0.lua
 WoWUIDev/Ace3 ac3d1225037e0dc74e025a72342c0f7824aae147 LibStub and CallbackHandler
 
-Brand artwork supplied by the user on 19 November 2026: Gather Compass Forever Logo.png and Golden Compass Leaf Badge.png. Preserved originals and conversion details are recorded in assets/source and Media/README.txt.
+Brand artwork supplied by the user on 19 November 2026: Gatherly Logo.png and Gatherly Badge.png. Preserved originals and conversion details are recorded in assets/source and Media/README.txt.
 
 NodeRing.tga and NodeSquare.tga are original geometric marker textures produced by tools/build_marker_textures.py. Classic UI backgrounds, borders, buttons, checkboxes and standalone resource icons reference Blizzard client assets; those assets are not redistributed. Installed GatherMate2 resource icons are referenced in place, not copied. Classic difficulty metadata is reference data, not a Forever server export.
 

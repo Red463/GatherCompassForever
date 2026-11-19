@@ -31,7 +31,7 @@ end
 function M.Build()
  if M.frame then M.Refresh();return end
  if not CreateFrame or not Minimap or not A.db then return end
- local b=CreateFrame('Button','GatherCompassForeverMinimapButton',Minimap);M.frame=b
+ local b=CreateFrame('Button','GatherlyMinimapButton',Minimap);M.frame=b
  b:SetSize(32,32);b:SetFrameStrata('MEDIUM');b:SetFrameLevel(Minimap:GetFrameLevel()+8)
  b:EnableMouse(true);b:RegisterForClicks('LeftButtonUp');b:RegisterForDrag('LeftButton')
  b:SetHighlightTexture('Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight','ADD')
@@ -48,7 +48,7 @@ function M.Build()
  b:SetScript('OnDragStop',function(self) M.Drag();self.dragging=false;self:SetScript('OnUpdate',nil) end)
  b:SetScript('OnEnter',function(self)
   if not GameTooltip or self.dragging then return end
-  GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText('Gather Compass Forever',1,.82,.35)
+  GameTooltip:SetOwner(self,'ANCHOR_LEFT');GameTooltip:SetText('Gatherly',1,.82,.35)
   GameTooltip:AddLine('Left-click to open or close the panel.',1,1,1)
   GameTooltip:AddLine('Drag to move around the minimap.',.75,.75,.75)
   GameTooltip:AddLine('Hide or show this button in Preferences.',.75,.75,.75);GameTooltip:Show()

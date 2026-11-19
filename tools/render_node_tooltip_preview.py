@@ -9,7 +9,7 @@ os.chdir(root)
 lua = LuaRuntime(unpack_returned_tuples=True)
 lua.execute(r"""
 dofile('tests/wow.lua');fakeUI();A={}
-for _,name in ipairs({'Store','Client','Resources','Map'}) do assert(loadfile(name..'.lua'))('GatherCompassForever',A) end
+for _,name in ipairs({'Store','Client','Resources','Map'}) do assert(loadfile(name..'.lua'))('Gatherly',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.1,y=.5} end
 A.Client.Size=function() return 1000,500 end;A.Client.Distance=function() return 30 end
 A.Resources.Skills=function() return {herb=109},{herb={maxRank=150,bonus=0}} end

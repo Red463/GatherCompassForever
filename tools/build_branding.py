@@ -1,4 +1,4 @@
-"""Prepare the supplied Gather Compass Forever artwork for WoW."""
+"""Prepare the supplied Gatherly artwork for WoW."""
 from pathlib import Path
 import runpy
 runpy.run_path(str(Path(__file__).with_name('prepare_supplied_assets.py')), run_name='__main__')

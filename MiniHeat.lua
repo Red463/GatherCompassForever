@@ -54,7 +54,7 @@ function H.Draw(pool,parent,field,shape)
  H.Hide(pool);local slot=index[shape];if not slot then return end
  if not pool.mask and type(parent.CreateMaskTexture)=='function' then
   local ok,mask=pcall(parent.CreateMaskTexture,parent,nil,'ARTWORK')
-  if ok and mask then pool.mask=mask;mask:SetAllPoints(parent);mask:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\MinimapMasks') end
+  if ok and mask then pool.mask=mask;mask:SetAllPoints(parent);mask:SetTexture('Interface\\AddOns\\Gatherly\\Media\\MinimapMasks') end
  end
  if pool.mask then local col,row=(slot-1)%4,math.floor((slot-1)/4);pool.mask:SetTexCoord(col/4,(col+1)/4,row/4,(row+1)/4) end
  for i,c in ipairs(field) do

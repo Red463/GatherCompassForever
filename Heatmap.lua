@@ -41,7 +41,7 @@ function H.Draw(pool,parent,route,project,radiusProjection,visible)
   if not visible or visible(x,y,rx,ry) then
    used=used+1;local t=pool[used]
    if not t then t=parent:CreateTexture(nil,'ARTWORK');pool[used]=t end
-   t:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\HeatBlob')
+   t:SetTexture('Interface\\AddOns\\Gatherly\\Media\\HeatBlob')
    local density=math.min(1,math.log(1+p.density)/math.log(20))
    t:SetVertexColor(.60,.18-.12*density,.015,1-math.exp(-(1.8+.2*density)/(p.overlap or 1)))
    t:SetSize(rx*2,ry*2);t:ClearAllPoints();t:SetPoint('CENTER',parent,'TOPLEFT',x,y);t:Show()

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.0
+
+- Rename the addon, folder, TOC, saved-variable namespace, slash command, frame identifiers, repository links and packages to Gatherly. The command is now /gatherly.
+- Replace the project artwork with the supplied Gatherly logo and badge, preserving transparency and whole-image proportions.
+- Refresh current documentation and image examples for Gatherly, with no runtime aliases for former names.
+- Provide an offline saved-data transfer tool that preserves the data payload and source file while refusing to overwrite an existing destination.
+
 ## 0.15.1
 
 - Fix logo framing: remove the 0.17-0.83 UV crop that enlarged the badge and cut into the compass artwork.

@@ -36,7 +36,7 @@ function V.New(parent,U)
  v.panelHelp=label(v.panel,'Choose a fixed layout. Text and controls keep their normal size.',18,224,380,42,11,S.muted);v.panelHelp:SetWordWrap(true)
  S.Hint(U.controls.arrowProgress,'Arrow progress','Show the waypoint number and current lap. Laps start at 1.')
  S.Hint(U.controls.arrowNodeName,'Next node name','Show the resource at the next gathering stop below the distance.')
- S.Hint(U.controls.minimapButton,'Minimap launcher','Click the compass button to open the panel; drag it around the minimap. Use /gcf when it is hidden.')
+ S.Hint(U.controls.minimapButton,'Minimap launcher','Click the compass button to open the panel; drag it around the minimap. Use /gatherly when it is hidden.')
  function v.Layout(width,height)
   local w,h=width-40,height-19;local stacked=w-20<760;local content=stacked and 828 or 550
   local available=scroll:Layout(w,h,content);v.subtitle:SetWidth(available)

@@ -1,6 +1,6 @@
 local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Arrow','MinimapButton','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Core'}
 local function setup(saved,configure)
- dofile('tests/wow.lua'); fakeUI(); local A={}; GatherCompassForeverDB=saved
+ dofile('tests/wow.lua'); fakeUI(); local A={}; GatherlyDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}
  local clock=0; GetTime=function() return clock end; time=function() return 100000 end; GetPlayerFacing=function() return 0 end
  C_Spell={GetSpellName=function(id) return id==2366 and 'Herbalism' or id==2575 and 'Mining' or nil end}
@@ -11,9 +11,14 @@ local function setup(saved,configure)
  GatherMate2=nil; LibStub=nil; GatherMateData2HerbDB=nil; GatherMateData2MineDB=nil; C_AddOns=nil
  for _,name in ipairs(runtime) do module(name,A) end
  if configure then configure(A) end
- A.OnEvent(nil,'ADDON_LOADED','GatherCompassForever'); A.OnEvent(nil,'PLAYER_LOGIN')
+ A.OnEvent(nil,'ADDON_LOADED','Gatherly'); A.OnEvent(nil,'PLAYER_LOGIN')
  return A,function(t) clock=t end
 end
+
+test('Gatherly owns the addon identity saved variable and slash registration',function()
+ local A=setup();eq(SLASH_GATHERLY1,'/gatherly');eq(SlashCmdList.GATHERLY,A.Command);eq(GatherlyDB,A.db)
+ eq(A.MinimapButton.frame.name,'GatherlyMinimapButton');A.Command('');assert(A.UI.frame:IsShown())
+end)
 
 test('real successful gathering events mark a future generated stop without importing pickup progress',function()
  local A,clock=setup();local nodes={}
@@ -99,8 +104,8 @@ test('arrival preference updates an already running route immediately',function(
 end)
 
 test('startup gather generate save follow and shared arrow map target cooperate',function()
- local A,clock=setup(); assert(A.initialized); eq(SLASH_GATHERCOMPASSFOREVER1,'/gcf'); eq(SlashCmdList.GATHERCOMPASSFOREVER,A.Command)
- local saved=A.db; A.OnEvent(nil,'ADDON_LOADED','GatherCompassForever'); eq(A.db,saved)
+ local A,clock=setup(); assert(A.initialized); eq(SLASH_GATHERLY1,'/gatherly'); eq(SlashCmdList.GATHERLY,A.Command)
+ local saved=A.db; A.OnEvent(nil,'ADDON_LOADED','Gatherly'); eq(A.db,saved)
  A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','cast-1',2366)
  clock(1); A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast-1',2366); A.OnEvent(nil,'LOOT_READY'); A.OnEvent(nil,'LOOT_OPENED')
  eq(A.detector.reason,nil)
@@ -140,7 +145,7 @@ test('multi source loot is rejected as a whole before recording any source',func
 end)
 test('unknown schema preserved and absent APIs leave UI usable',function()
  local old={version=77,precious='keep'}; local A=setup(old)
- eq(GatherCompassForeverDB,old); eq(old.precious,'keep'); eq(A.writable,false)
+ eq(GatherlyDB,old); eq(old.precious,'keep'); eq(A.writable,false)
  C_Map=nil; GetPlayerFacing=nil; A.Tick(.5); A.Command(''); eq(A.UI.frame:IsShown(),true)
  assert(A.UI.status:GetText():find('Position unavailable'))
 end)
@@ -217,7 +222,7 @@ end)
 
 test('Forever startup uses supported tabs and registers the slash command',function()
  local A=setup();assert(A.initialized);eq(A.UI.tabs.routes.template,'PanelTopTabButtonTemplate')
- eq(SlashCmdList.GATHERCOMPASSFOREVER,A.Command);A.Command('');eq(A.UI.frame:IsShown(),true)
+ eq(SlashCmdList.GATHERLY,A.Command);A.Command('');eq(A.UI.frame:IsShown(),true)
 end)
 test('missing optional tab template falls back without aborting startup',function()
  local A=setup(nil,function()
@@ -232,10 +237,10 @@ test('missing optional tab template falls back without aborting startup',functio
 end)
 test('a panel construction error keeps slash diagnostics registered and hides the partial window',function()
  local A=setup(nil,function(addon) addon.Skin.Window=function() error('test panel construction failure') end end)
- eq(SlashCmdList.GATHERCOMPASSFOREVER,A.Command);assert(not A.initialized)
+ eq(SlashCmdList.GATHERLY,A.Command);assert(not A.initialized)
  assert(A.uiError:find('test panel construction failure',1,true));eq(A.UI.frame:IsShown(),false)
- local saved=GatherCompassForeverDB;local message;A.Print=function(text) message=text end
- A.Command('status');assert(message:find('test panel construction failure',1,true));eq(GatherCompassForeverDB,saved)
+ local saved=GatherlyDB;local message;A.Print=function(text) message=text end
+ A.Command('status');assert(message:find('test panel construction failure',1,true));eq(GatherlyDB,saved)
  A.Tick(1);eq(A.UI.frame:IsShown(),false)
 end)
 

@@ -10,7 +10,7 @@ function V.New(parent,U)
  local scroller=A.ScrollPanel.New(parent);view.scroller=scroller;view.frame=scroller.frame
  place(view.frame,parent,20,19,896,395);local f=scroller.body;f:SetSize(896,395)
  place(S.Image(f,'Icon',88,88),f,12,4,88,88)
- view.title=label(f,'Welcome to Gather Compass Forever',120,7,760,30,21,S.gold,true)
+ view.title=label(f,'Welcome to Gatherly',120,7,760,30,21,S.gold,true)
  view.subtitle=label(f,'Track gathered nodes, manage map markers, and generate farming routes.',120,43,760,24,13,S.text)
  view.summary=label(f,'',120,73,760,22,11,S.muted)
  local steps={

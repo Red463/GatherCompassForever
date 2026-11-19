@@ -1,11 +1,11 @@
 ## Interface: 16001
-## Title: Gather Compass Forever
-## Notes: Gathering spawn memory, custom farming trails and route guidance. /gcf
+## Title: Gatherly
+## Notes: Gathering spawn memory, custom farming trails and route guidance. /gatherly
 ## Author: Tom
 ## X-License: MIT
-## Version: 0.15.1
-## IconTexture: Interface\AddOns\GatherCompassForever\Media\Icon
-## SavedVariables: GatherCompassForeverDB
+## Version: 0.16.0
+## IconTexture: Interface\AddOns\Gatherly\Media\Icon
+## SavedVariables: GatherlyDB
 ## OptionalDeps: GatherMate2
 
 Libs/LibStub.lua

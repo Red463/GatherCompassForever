@@ -1,20 +1,20 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="Gather Compass Forever" width="560">
+  <img src="docs/images/logo.png" alt="Gatherly" width="560">
 </p>
 
-# Gather Compass Forever
+# Gatherly
 
 A gathering companion for **WoW Forever**: remember herb and ore locations, discover
 where resources grow, build farming routes and follow a clear in-game guide arrow.
 
-[Download the addon](https://github.com/Red463/GatherCompassForever/releases/latest) ?
-[Report a bug](https://github.com/Red463/GatherCompassForever/issues) ?
+[Download the addon](https://github.com/Red463/Gatherly/releases/latest) ?
+[Report a bug](https://github.com/Red463/Gatherly/issues) ?
 [Changelog](CHANGELOG.md) ? [Contributing](CONTRIBUTING.md)
 
-![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
+![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.15.1 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.16.0 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -44,15 +44,15 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.15.1.zip` from
-   [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
+1. Download `Gatherly-0.16.0.zip` from
+   [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
-2. Close WoW and extract the `GatherCompassForever` folder into your Forever
+2. Close WoW and extract the `Gatherly` folder into your Forever
    client's `Interface/AddOns` directory.
 3. Check that the final path is
-   `Interface/AddOns/GatherCompassForever/GatherCompassForever.toc`.
-4. Restart WoW, enable **Gather Compass Forever** in the AddOns list, then type
-   `/gcf` or click the compass badge beside the minimap.
+   `Interface/AddOns/Gatherly/Gatherly.toc`.
+4. Restart WoW, enable **Gatherly** in the AddOns list, then type
+   `/gatherly` or click the compass badge beside the minimap.
 
 Manual route creation, recording and the saved-route list are no longer exposed.
 Existing saved routes remain in your SavedVariables.
@@ -207,14 +207,14 @@ restores its usual display.
 
 | Command | Action |
 | --- | --- |
-| `/gcf` | Open or close the panel |
-| `/gcf import` | Import available herb/ore data across all zones |
-| `/gcf skip` | Skip the current waypoint |
-| `/gcf stop` | Stop route guidance |
-| `/gcf status` | Show current status and capability/storage messages |
-| `/gcf inspect` | Arm a one-shot native herb/vein tooltip capture |
-| `/gcf inspect report` | Show the latest local capture |
-| `/gcf inspect off` | Cancel a pending capture |
+| `/gatherly` | Open or close the panel |
+| `/gatherly import` | Import available herb/ore data across all zones |
+| `/gatherly skip` | Skip the current waypoint |
+| `/gatherly stop` | Stop route guidance |
+| `/gatherly status` | Show current status and capability/storage messages |
+| `/gatherly inspect` | Arm a one-shot native herb/vein tooltip capture |
+| `/gatherly inspect report` | Show the latest local capture |
+| `/gatherly inspect off` | Cancel a pending capture |
 
 **Routes > Route targets** controls new route generation and the review sketch.
 Changing these choices does not change everyday map markers or interrupt the current
@@ -269,7 +269,7 @@ The title bar includes the installed addon version (including prerelease metadat
 The header shows the complete supplied badge inside the native portrait frame.
 The minimap launcher uses the badge's own gold compass border and transparency,
 without an extra ring or a circular crop that cuts its points.
-Use `/gcf` to reopen the panel when its minimap button is hidden.
+Use `/gatherly` to reopen the panel when its minimap button is hidden.
 
 ![Centred minimap launcher using the supplied compass-and-leaf artwork](docs/images/minimap-launcher.png)
 
@@ -349,7 +349,7 @@ requests and needs no external service.
 
 ## License
 
-Gather Compass Forever's original code, documentation and project artwork are
+Gatherly's original code, documentation and project artwork are
 licensed under the [MIT License](LICENSE). The pinned OpenMap reveal metadata is
 also MIT and retains its own notice. Bundled third-party libraries retain
 their original licenses; see [Third-party notices](NOTICE.md).

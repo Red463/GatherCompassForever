@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'.test-deps'))
 from PIL import Image
 source=root/'assets'/'source';source.mkdir(parents=True,exist_ok=True)
-inputs=[('Golden Compass Leaf Badge.png','Icon',(256,256)),('Gather Compass Forever Logo.png','LogoSheet',(2048,1024)),('Golden Compass Leaf Badge.png','EmptyEmblem',(1024,1024))]
+inputs=[('Gatherly Badge.png','Icon',(256,256)),('Gatherly Logo.png','LogoSheet',(2048,1024)),('Gatherly Badge.png','EmptyEmblem',(1024,1024))]
 for filename,name,size in inputs:
     preserved=source/filename
     if not preserved.exists():raise FileNotFoundError(f'Place the original artwork at {preserved} before building textures.')
@@ -19,4 +19,4 @@ for filename,name,size in inputs:
     canvas.paste(resized,((size[0]-resized.width)//2,(size[1]-resized.height)//2))
     canvas.save(root/'Media'/f'{name}.tga',compression=None)
     print(f'{name}.tga: {size[0]}x{size[1]}, RGBA, original transparency retained')
-(root/'Media'/'README.txt').write_text('Gather Compass Forever artwork supplied by the user, 19 November 2026. LogoSheet: complete Gather Compass Forever Logo.png. Icon and EmptyEmblem: Golden Compass Leaf Badge.png. Originals preserved unchanged in assets/source. Conversion uses aspect-preserving resizing, transparent padding and uncompressed RGBA TGA. Header.tga is the existing neutral contour background. NodeRing.tga and NodeSquare.tga are original hollow 64x64 RGBA geometry from build_marker_textures.py. Native Classic textures are referenced from the client, not bundled.\n',encoding='utf-8')
+(root/'Media'/'README.txt').write_text('Gatherly artwork supplied by the user, 19 November 2026. LogoSheet: complete Gatherly Logo.png. Icon and EmptyEmblem: Gatherly Badge.png. Originals preserved unchanged in assets/source. Conversion uses aspect-preserving resizing, transparent padding and uncompressed RGBA TGA. Header.tga is the existing neutral contour background. NodeRing.tga and NodeSquare.tga are original hollow 64x64 RGBA geometry from build_marker_textures.py. Native Classic textures are referenced from the client, not bundled.\n',encoding='utf-8')

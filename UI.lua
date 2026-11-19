@@ -107,13 +107,13 @@ local function buildFooter()
  U.footer:SetScript('OnDragStart',function() if U.compact then U.window:StartMoving() end end); U.footer:SetScript('OnDragStop',function() U.window:StopMoving() end)
  U.status=label(U.frame,'',18,623,924,25,10,S.muted); U.status:SetWordWrap(true)
  U.statusHover=place(CreateFrame('Frame',nil,U.frame),U.frame,14,621,932,28); U.statusHover:EnableMouse(true)
- S.Hint(U.statusHover,'Gather Compass status',function() return U.status:GetText() end)
+ S.Hint(U.statusHover,'Gatherly status',function() return U.status:GetText() end)
 end
 local function buildWindow()
  A.Selection.Init(A.db.settings)
  U.actions=A.UIActions.Bind(U)
  U.tab=A.db.settings.welcomeSeen==true and 'routes' or 'welcome'
- U.frame=CreateFrame('Frame','GatherCompassForeverWindow',UIParent);U.frame:Hide()
+ U.frame=CreateFrame('Frame','GatherlyWindow',UIParent);U.frame:Hide()
  U.compactBackground=S.Panel(U.frame);U.compactBackground:SetAllPoints()
  U.chrome=S.Window(U.frame);U.chrome:SetAllPoints();U.chrome:SetFrameLevel(U.frame:GetFrameLevel()); U.frame:SetPoint('CENTER',UIParent,'CENTER',0,0)
  U.frame:EnableMouse(true);U.frame:SetFrameStrata('DIALOG'); U.frame:SetClampedToScreen(true); U.frame:SetMovable(true); U.window=A.PanelWindow.New(U);U.window:Apply(); buildHeader()
@@ -122,7 +122,7 @@ local function buildWindow()
  U.routeView=A.RouteView.New(U.content,U);U.library=U.routeView.frame;buildPreferences(); buildNodeOptions(); buildFooter()
  U.codexView=A.ResourceLibraryView.New(U.content,U);U.resourceLibraryView=U.codexView
  U.welcomeView=A.WelcomeView.New(U.content,U)
- if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherCompassForeverWindow' end
+ if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherlyWindow' end
  U.frame:HookScript('OnHide',function() S.CloseDropdown();U.routeSketch.picker:Close() end)
  U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.window:Cancel();U.Refresh() end)
  U.Refresh(); U.frame:Hide()

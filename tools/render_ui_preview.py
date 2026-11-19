@@ -35,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={version='0.15.1'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={version='0.16.0'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('Gatherly',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -90,7 +90,7 @@ def render(scene):
         if scene=='marker_override':lua.execute("A.UI.actions.generateStart();A.db.settings.routeMarkerOverride=true;A.UI.OpenRoutes()")
         lua.execute("A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('filters')")
     if scene=='mini_heat':
-        lua.execute("A.UI.actions.generateStart();A.db.settings.routeStyle='heatmap';A.Resources.Settings(A.db.settings).mini=false;Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(240,240);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',520,-240);local terrain=Minimap:CreateTexture(nil,'BACKGROUND');terrain:SetAllPoints();terrain:SetTexture(9001);C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;GetMinimapShape=function() return 'SQUARE' end;A.Map.Refresh(A.db,A.follower.route,A.follower);local player=Minimap:CreateTexture(nil,'OVERLAY');player:SetPoint('CENTER',Minimap,'CENTER');player:SetSize(11,16);player:SetTexture('Interface\\\\AddOns\\\\GatherCompassForever\\\\Media\\\\GuideArrow');for _,n in ipairs(A.db.nodes[1]) do local x,y=A.Map.MiniProject(n,A.Client.Position(),1000,600,200,240,240,0);if x then local dot=Minimap:CreateTexture(nil,'OVERLAY');dot:SetColorTexture(1,.9,.1,1);dot:SetSize(4,4);dot:SetPoint('CENTER',Minimap,'CENTER',x,y) end end;local text=A.Skin.Label(UIParent,'Minimap heat with simulated native tracking dots',15,A.Skin.gold);text:SetPoint('TOPLEFT',UIParent,'TOPLEFT',400,-190);text:SetSize(500,30)")
+        lua.execute("A.UI.actions.generateStart();A.db.settings.routeStyle='heatmap';A.Resources.Settings(A.db.settings).mini=false;Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(240,240);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',520,-240);local terrain=Minimap:CreateTexture(nil,'BACKGROUND');terrain:SetAllPoints();terrain:SetTexture(9001);C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;GetMinimapShape=function() return 'SQUARE' end;A.Map.Refresh(A.db,A.follower.route,A.follower);local player=Minimap:CreateTexture(nil,'OVERLAY');player:SetPoint('CENTER',Minimap,'CENTER');player:SetSize(11,16);player:SetTexture('Interface\\\\AddOns\\\\Gatherly\\\\Media\\\\GuideArrow');for _,n in ipairs(A.db.nodes[1]) do local x,y=A.Map.MiniProject(n,A.Client.Position(),1000,600,200,240,240,0);if x then local dot=Minimap:CreateTexture(nil,'OVERLAY');dot:SetColorTexture(1,.9,.1,1);dot:SetSize(4,4);dot:SetPoint('CENTER',Minimap,'CENTER',x,y) end end;local text=A.Skin.Label(UIParent,'Minimap heat with simulated native tracking dots',15,A.Skin.gold);text:SetPoint('TOPLEFT',UIParent,'TOPLEFT',400,-190);text:SetSize(500,30)")
     if scene=='minimap_button':
         lua.execute("A.UI.frame:Hide();Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(180,180);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',900,-100);Minimap:SetBackdropColor(.12,.16,.09,1);A.MinimapButton.Build()")
     if scene=='material_skills':
@@ -156,7 +156,7 @@ def render(scene):
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHER COMPASS FOREVER 0.15.1 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHERLY 0.16.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)

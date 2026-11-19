@@ -15,7 +15,7 @@ function module(name,A)
  if name=='Map' and not A.MarkerGroups then module('MarkerGroups',A) end
  if name=='Map' and not A.SkillTooltip then module('SkillTooltip',A) end
  if name=='Map' and not A.Selection then module('Selection',A) end
- local f=loadfile(name..'.lua'); assert(f, 'Missing module '..name); f('GatherCompassForever',A)
+ local f=loadfile(name..'.lua'); assert(f, 'Missing module '..name); f('Gatherly',A)
 end
 function moduleUI(A)
  if not A.FarmingSession then module('FarmingSession',A) end

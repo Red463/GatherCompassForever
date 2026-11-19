@@ -8,7 +8,7 @@ from PIL import Image,ImageDraw,ImageFont
 os.chdir(root)
 setup="""
 dofile('tests/wow.lua');fakeUI();A={}
-for _,name in ipairs({'Store','Client','Resources','Selection'}) do assert(loadfile(name..'.lua'))('GatherCompassForever',A) end
+for _,name in ipairs({'Store','Client','Resources','Selection'}) do assert(loadfile(name..'.lua'))('Gatherly',A) end
 """
 scene="""
 A.db=A.Store.Open();A.Resources.Settings(A.db.settings).mini=false
@@ -22,15 +22,15 @@ nativeNodes={{mapID=1,x=.57,y=.51},{mapID=1,x=.5,y=.54},points[2],points[3]}
 for _,p in ipairs(nativeNodes) do p.kind='herb';p.materialID='gm:herb:401';p.name='Peacebloom';p.source='imported';A.Store.Observe(A.db,p) end
 A.Map.Refresh(A.db,{mapID=1,points=points,loop=true},{Snapshot=function() return {status='running',index=2,target=points[2],visited={}} end})
 """
-with zipfile.ZipFile(root/'dist/GatherCompassForever-0.5.0.zip') as archive:
-    before=archive.read('GatherCompassForever/Map.lua').decode()
+with zipfile.ZipFile(root/'dist/Gatherly-0.5.0.zip') as archive:
+    before=archive.read('Gatherly/Map.lua').decode()
 after=(root/'Map.lua').read_text()
 image=Image.new('RGBA',(1000,520),'#141410');d=ImageDraw.Draw(image)
 font=lambda size:ImageFont.truetype('C:/Windows/Fonts/arial.ttf',size)
 d.text((34,18),'Tracking visibility: minimap route geometry',font=font(22),fill='#efd9a0')
 d.text((34,50),'Real Lua line output; simulated terrain and tracking dots. Displayed at 2x scale.',font=font(13),fill='#b4ad98')
 for index,(title,source) in enumerate([('Before: opaque route',before),('After: thin lines with clear gaps',after)]):
-    lua=LuaRuntime(unpack_returned_tuples=True);lua.execute(setup);lua.execute(source,'GatherCompassForever',lua.globals().A);lua.execute(scene)
+    lua=LuaRuntime(unpack_returned_tuples=True);lua.execute(setup);lua.execute(source,'Gatherly',lua.globals().A);lua.execute(scene)
     cx,cy=250+index*500,294
     d.text((cx-190,80),title,font=font(18),fill='#f2cf72')
     d.ellipse((cx-193,cy-193,cx+193,cy+193),fill='#222219',outline='#81764f',width=5)

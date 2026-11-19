@@ -73,7 +73,7 @@ function D.OnTooltip(tooltip,data)
  local report=D.Capture(data);if not report or not A.db then return end
  D.armed=false
  local saved=type(A.db.difficultyProbe)=='table' and A.db.difficultyProbe or {};A.db.difficultyProbe=saved;saved.latest=report
- status('Node report captured: '..report.name..'. Use /gcf inspect report to view it. Colours still use reference data until the native fields are validated.')
+ status('Node report captured: '..report.name..'. Use /gatherly inspect report to view it. Colours still use reference data until the native fields are validated.')
 end
 function D.Arm()
  if not D.registered then
@@ -86,12 +86,12 @@ function D.Arm()
   if not ok then D.armed=false;status('Native node inspection is unavailable on this client. Reference colours remain available.');return nil end
   D.objectType=object;D.registered=true
  end
- D.armed=true;status('Node inspection ready. Hover an actual herb or vein in the game world; map markers do not qualify. /gcf inspect off cancels.');return true
+ D.armed=true;status('Node inspection ready. Hover an actual herb or vein in the game world; map markers do not qualify. /gatherly inspect off cancels.');return true
 end
 function D.Cancel() D.armed=false;status('Node inspection cancelled.') end
 function D.Report()
  local report=A.db and type(A.db.difficultyProbe)=='table' and A.db.difficultyProbe.latest
- if type(report)~='table' or report.version~=1 or type(report.lines)~='table' then message('No node report saved. Use /gcf inspect, then hover an actual herb or vein.');return end
+ if type(report)~='table' or report.version~=1 or type(report.lines)~='table' then message('No node report saved. Use /gatherly inspect, then hover an actual herb or vein.');return end
  local function show(value) return text(value) or (S.Number(value) and tostring(value)) or '?' end
  local build=type(report.build)=='table' and report.build or {}
  message('Native node report: '..show(report.name)..' (object '..show(report.objectID)..'; '..show(report.kind)..').')

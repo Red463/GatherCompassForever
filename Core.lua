@@ -1,7 +1,7 @@
 local addonName, A = ...
-A.version=A.Skin and A.Skin.AddonVersion('0.15.1') or '0.15.1'
+A.version=A.Skin and A.Skin.AddonVersion('0.16.0') or '0.16.0'
 function A.Print(text)
- if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gather Compass:|r '..tostring(text)) end
+ if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gatherly:|r '..tostring(text)) end
 end
 function A.Import()
  if A.importJob then A.status='An import is already running.'; A.UI.Refresh(); return end
@@ -46,8 +46,8 @@ function A.Initialize()
  if A.uiError then return nil,A.uiError end
  if not A.dataReady then
   A.Store.distance=A.Client.Distance
-  A.db,A.writable,A.storageReason=A.Store.Open(GatherCompassForeverDB)
-  if A.writable then GatherCompassForeverDB=A.db end
+  A.db,A.writable,A.storageReason=A.Store.Open(GatherlyDB)
+  if A.writable then GatherlyDB=A.db end
   A.detector=A.Gathering.New(function(o)
    o.time=time and time() or 0
    local n,created=A.Store.Observe(A.db,o)
@@ -68,10 +68,10 @@ function A.Initialize()
   A.uiError=tostring(reason);A.status='Panel unavailable: '..A.uiError
   if A.UI.frame then A.UI.frame:Hide() end
   if A.Arrow.frame then A.Arrow.frame:Hide() end
-  A.Print(A.status..' Use /gcf status to see this error again.');return nil,A.uiError
+  A.Print(A.status..' Use /gatherly status to see this error again.');return nil,A.uiError
  end
  A.initialized=true
- A.Print('Loaded. /gcf opens routes and gathering controls.')
+ A.Print('Loaded. /gatherly opens routes and gathering controls.')
  return true
 end
 function A.Command(text)
@@ -138,11 +138,11 @@ function A.OnEvent(_,event,...)
  elseif event=='PLAYER_LOGOUT' then
   -- Explicitly stopped recordings are saved only through their Save control.
   -- A crash or disconnect cannot overwrite a route with a partial recording.
-  if A.writable then GatherCompassForeverDB=A.db end
+  if A.writable then GatherlyDB=A.db end
  end
 end
 -- Register before native widgets are built, including on partial UI failure.
-if SlashCmdList then SLASH_GATHERCOMPASSFOREVER1='/gcf';SlashCmdList.GATHERCOMPASSFOREVER=A.Command end
+if SlashCmdList then SLASH_GATHERLY1='/gatherly';SlashCmdList.GATHERLY=A.Command end
 if CreateFrame then
  A.frame=CreateFrame('Frame')
  for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_LOGOUT','UNIT_SPELLCAST_SENT','UNIT_SPELLCAST_SUCCEEDED','UNIT_SPELLCAST_FAILED','UNIT_SPELLCAST_INTERRUPTED','LOOT_READY','LOOT_OPENED','SKILL_LINES_CHANGED'}) do A.frame:RegisterEvent(event) end

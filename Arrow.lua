@@ -43,7 +43,7 @@ function R.Animate(elapsed)
 end
 function R.Build()
  if R.frame or not CreateFrame then return end
- local f=CreateFrame('Frame','GatherCompassForeverArrow',UIParent); R.frame=f
+ local f=CreateFrame('Frame','GatherlyArrow',UIParent); R.frame=f
  f:SetSize(156,84); f:SetPoint('CENTER',UIParent,'CENTER',0,140); f:SetMovable(true); f:EnableMouse(true); f:RegisterForDrag('LeftButton'); f:SetClampedToScreen(true)
  f:SetFrameStrata('DIALOG')
  f:SetScript('OnMouseDown',function(self,button) if button=='LeftButton' then self.wasDragged=false end end)
@@ -64,7 +64,7 @@ function R.Build()
  f.label=A.Skin.Label(f,'',20,A.Skin.gold);f.label:SetPoint('TOP',f,'TOP',0,-60);f.label:SetSize(148,24);f.label:SetJustifyH('CENTER')
  f.nodeName=A.Skin.Label(f,'',12,A.Skin.text);f.nodeName:SetPoint('TOP',f,'TOP',0,-86);f.nodeName:SetSize(148,18);f.nodeName:SetJustifyH('CENTER');f.nodeName:Hide()
  f.progress=A.Skin.Label(f,'',11,A.Skin.muted);f.progress:SetPoint('TOP',f,'TOP',0,-86);f.progress:SetSize(148,16);f.progress:SetJustifyH('CENTER');f.progress:Hide()
- A.Skin.Hint(f,'Gather Compass Forever',R.TooltipText)
+ A.Skin.Hint(f,'Gatherly',R.TooltipText)
  f:SetScript('OnUpdate',function(_,elapsed) R.Animate(elapsed) end)
  f:SetScript('OnHide',function(self)
   self.bearing=nil;self.renderAngle=nil
@@ -127,6 +127,6 @@ function R.Update(position,facing,target,distance,snapshot)
  end
  f:Show()
  if GameTooltip and GameTooltip.IsOwned and GameTooltip:IsOwned(f) then
-  GameTooltip:ClearLines();GameTooltip:SetText('Gather Compass Forever');GameTooltip:AddLine(R.TooltipText(),.8,.8,.72,true);GameTooltip:Show()
+  GameTooltip:ClearLines();GameTooltip:SetText('Gatherly');GameTooltip:AddLine(R.TooltipText(),.8,.8,.72,true);GameTooltip:Show()
  end
 end

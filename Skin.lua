@@ -1,5 +1,5 @@
 local addonName, A = ...
-local S={media='Interface\\AddOns\\GatherCompassForever\\Media\\',text={.94,.88,.75},muted={.72,.67,.57},dim={.56,.51,.43},gold={1,.82,.35},green={.35,.8,.35}}
+local S={media='Interface\\AddOns\\Gatherly\\Media\\',text={.94,.88,.75},muted={.72,.67,.57},dim={.56,.51,.43},gold={1,.82,.35},green={.35,.8,.35}}
 -- Opaque warm greys keep inset panels close to the native marble background.
 S.panelColor={.19,.18,.16,1}
 S.fieldColor={.15,.145,.13,1}
@@ -33,10 +33,10 @@ function S.AddonVersion(fallback)
  return fallback
 end
 function S.Window(parent)
- local f=CreateFrame('Frame','GatherCompassForeverPanelChrome',parent,'PortraitFrameTemplate')
+ local f=CreateFrame('Frame','GatherlyPanelChrome',parent,'PortraitFrameTemplate')
  f.opaqueBase=S.Fill(f,{.045,.038,.03,1},'BACKGROUND',-8)
  local version=S.AddonVersion(A.version)
- if f.SetTitle then f:SetTitle('Gather Compass Forever'..(type(version)=='string' and (' v'..version) or ' (development)')) end
+ if f.SetTitle then f:SetTitle('Gatherly'..(type(version)=='string' and (' v'..version) or ' (development)')) end
  -- Tint only the native rock background; inset surfaces keep their own palette.
  if object(f.Bg) and type(f.Bg.SetVertexColor)=='function' then f.Bg:SetVertexColor(.85,.85,.85,1) end
  local portrait=f.portrait
@@ -103,7 +103,7 @@ function S.Button(parent,text,callback,style)
 end
 function S.Tab(parent,text,width,callback,top)
  S.tabCount=(S.tabCount or 0)+1
- local ok,b=pcall(CreateFrame,'Button','GatherCompassForeverTab'..S.tabCount,parent,top and 'PanelTopTabButtonTemplate' or 'PanelTabButtonTemplate')
+ local ok,b=pcall(CreateFrame,'Button','GatherlyTab'..S.tabCount,parent,top and 'PanelTopTabButtonTemplate' or 'PanelTabButtonTemplate')
  local native=ok and object(b)
  for _,key in ipairs({'Text','Left','Middle','Right','LeftActive','MiddleActive','RightActive'}) do
   if not native or not object(b[key]) then native=false;break end
@@ -126,7 +126,7 @@ function S.Tab(parent,text,width,callback,top)
 end
 function S.Check(parent,text,callback)
  S.checkCount=(S.checkCount or 0)+1
- local b=CreateFrame('CheckButton','GatherCompassForeverCheck'..S.checkCount,parent,'UICheckButtonTemplate'); b:SetSize(24,24)
+ local b=CreateFrame('CheckButton','GatherlyCheck'..S.checkCount,parent,'UICheckButtonTemplate'); b:SetSize(24,24)
  b.label=S.Label(b,text,13,S.text); b.label:SetPoint('LEFT',b,'RIGHT',4,0); b.label:SetSize(330,24)
  b:SetScript('OnClick',callback)
  b:HookScript('OnDisable',function(self) self.label:SetTextColor(unpack(S.dim)) end)
@@ -135,7 +135,7 @@ function S.Check(parent,text,callback)
 end
 function S.Slider(parent,lo,hi,step,callback,format)
  S.sliderCount=(S.sliderCount or 0)+1
- local name='GatherCompassForeverSlider'..S.sliderCount
+ local name='GatherlySlider'..S.sliderCount
  -- Use the built-in slider widget with Classic Blizzard art. The legacy
  -- OptionsSliderTemplate is absent/broken on some current clients.
  local f=CreateFrame('Slider',name,parent,'BackdropTemplate');f:SetOrientation('HORIZONTAL');f:SetSize(270,18)

@@ -11,7 +11,7 @@ except ImportError:
 os.chdir(root)
 lua = LuaRuntime(unpack_returned_tuples=True)
 lua.execute((root / 'tests/run.lua').read_text(encoding='utf-8'))
-toc = root / 'GatherCompassForever.toc'
+toc = root / 'Gatherly.toc'
 if toc.exists():
     names = [s.strip() for s in toc.read_text().splitlines() if s.strip() and not s.startswith('#')]
     for name in names:

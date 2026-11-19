@@ -34,11 +34,11 @@ function S.Open(saved)
  saved.nextNode=tonumber(saved.nextNode) or 1; saved.nextRoute=tonumber(saved.nextRoute) or 1
  return saved,true
 end
-function S.Observe(db,o)
+function S.Observe(db,o,candidates)
  if not S.Position(o) or (o.kind~='herb' and o.kind~='ore') or type(o.materialID)~='string' or #o.materialID>100 or (o.source~='confirmed' and o.source~='imported') then return nil end
  local list=db.nodes[o.mapID] or {}; db.nodes[o.mapID]=list
  local match;local created=false
- for _,n in ipairs(list) do
+ for _,n in ipairs(candidates or list) do
   local alias=n.name and o.name and n.name==o.name and (n.materialID:match('^node:') or o.materialID:match('^node:'))
   if n.kind==o.kind and (n.materialID==o.materialID or alias) and not (n.objectID and o.objectID and n.objectID~=o.objectID) then
    local d=S.distance and S.distance(n,o)
@@ -68,6 +68,42 @@ function S.Observe(db,o)
  end
  db.nodeRevision=(S.Number(db.nodeRevision) and db.nodeRevision or 0)+1
  return match,created
+end
+-- An import owns this disposable grid. Ordinary gathers keep the same merge
+-- policy; their revision changes invalidate any grid built before they moved.
+function S.ImportWriter(db,size,checkpoint)
+ local caches,revision={},db.nodeRevision
+ local function insert(cache,n,i)
+  if not S.Position(n) then return end
+  local x,y=math.floor(n.x*cache.width/5),math.floor(n.y*cache.height/5)
+  local key=x..':'..y;local cell=cache.cells[key] or {};cache.cells[key]=cell;cell[#cell+1]=n;cache.order[n]=i
+ end
+ local function build(mapID)
+  local w,h;if size then w,h=size(mapID) end
+  if not S.Number(w) or not S.Number(h) or w<=0 or h<=0 then return {fallback=true} end
+  local before=db.nodeRevision;local cache={width=w,height=h,cells={},order={}}
+  for i,n in ipairs(db.nodes[mapID] or {}) do insert(cache,n,i);if checkpoint then checkpoint() end end
+  if before~=db.nodeRevision then return nil end
+  return cache
+ end
+ return function(o)
+  if not S.Position(o) then return nil end
+  if revision~=db.nodeRevision then caches={} end
+  local cache=caches[o.mapID]
+  while not cache do cache=build(o.mapID);if not cache then caches={} end end
+  caches[o.mapID]=cache
+  local candidates
+  if not cache.fallback then
+   candidates={};local x,y=math.floor(o.x*cache.width/5),math.floor(o.y*cache.height/5)
+   for dx=-1,1 do for dy=-1,1 do
+    for _,n in ipairs(cache.cells[(x+dx)..':'..(y+dy)] or {}) do candidates[#candidates+1]=n end
+   end end
+   table.sort(candidates,function(a,b) return cache.order[a]<cache.order[b] end)
+  end
+  local n,created=S.Observe(db,o,candidates)
+  if created and not cache.fallback then insert(cache,n,#db.nodes[o.mapID]) end
+  revision=db.nodeRevision;return n,created
+ end
 end
 function S.Select(db,mapID,filter)
  local result={}; filter=filter or {}; local source=filter.source or 'combined'

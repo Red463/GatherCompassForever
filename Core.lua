@@ -3,12 +3,27 @@ A.version=A.Skin and A.Skin.AddonVersion('0.16.0') or '0.16.0'
 function A.Print(text)
  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gatherly:|r '..tostring(text)) end
 end
+local function importClock()
+ if type(debugprofilestop)=='function' then local n=debugprofilestop();if A.Store.Number(n) then return n end end
+ local timer=GetTimePreciseSec or GetTime
+ if type(timer)=='function' then local n=timer();if A.Store.Number(n) then return n*1000 end end
+ return 0
+end
 function A.Import()
  if A.importJob then A.status='An import is already running.'; A.UI.Refresh(); return end
  local provider,stats=A.Imports.Provider()
  if not provider then A.status='Enable compatible GatherMate2 and GatherMate2_Data addons to import spawn data. Personal recording still works.'; A.UI.Refresh(); return end
  A.importJob=coroutine.create(function()
   local count,processed=0,0; local zones={}
+  local work,started=0,importClock()
+  local function checkpoint()
+   work=work+1;if work%64~=0 then return end
+   if work>=2048 or importClock()-started>=4 then
+    A.status='Importing all zones: '..count..' locations...';coroutine.yield()
+    work=0;started=importClock()
+   end
+  end
+  local write=A.Store.ImportWriter(A.db,A.Client.Size,checkpoint)
   local ok,err=pcall(function()
    -- The coroutine yields outside pcall below: Lua 5.1 cannot yield across pcall.
    local iter,state,key=provider(); A.importIterator={iter,state,key}
@@ -19,8 +34,8 @@ function A.Import()
    if not good then A.status='Import stopped: '..tostring(k); return end
    if k==nil then break end
    processed=processed+1
-   if type(o)=='table' then o.source='imported'; if A.Store.Observe(A.db,o) then count=count+1; zones[o.mapID]=true end end
-   if processed%40==0 then A.status='Importing all zones: '..count..' locations…'; coroutine.yield() end
+   if type(o)=='table' then o.source='imported'; if write(o) then count=count+1; zones[o.mapID]=true end end
+   checkpoint()
   end
   if count==0 then
    if stats and stats.scanned>0 then
@@ -93,20 +108,21 @@ local fast,slow=0,0
 function A.Tick(elapsed)
  if not A.initialized then return end
  fast=fast+elapsed; slow=slow+elapsed
+ local imported=false
+ if A.importJob then
+  local ok,err=coroutine.resume(A.importJob)
+  if not ok then A.status='Import stopped safely: '..tostring(err) end
+  if not ok or coroutine.status(A.importJob)=='dead' then A.importJob=nil;A.importIterator=nil;imported=true end
+ end
  if fast>=.1 then
   fast=0; local p=A.Client.Position(); local now=A.Client.Now()
-  if A.importJob then
-   local ok,err=coroutine.resume(A.importJob)
-   if not ok then A.status='Import stopped safely: '..tostring(err) end
-   if not ok or coroutine.status(A.importJob)=='dead' then A.importJob=nil; A.importIterator=nil end
-  end
   A.detector:Expire(now)
   if A.recording then A.recording:Sample(p,now) end
   if A.follower then A.follower:Tick(p,now,A.detector:IsGathering(now)) end
   local f=A.follower
   A.Arrow.Update(p,A.Client.Facing(),f and f:Target() or nil,A.Client.Distance,f and f:Snapshot() or nil)
  end
- if slow>=.5 then
+ if imported or slow>=.5 then
   slow=0; A.UI.Refresh(); A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.editor and nil or A.follower)
  end
 end

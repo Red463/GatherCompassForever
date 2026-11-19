@@ -3,8 +3,9 @@ local I={}; A.Imports=I
 function I.Scan(db,provider)
  if not provider then return 0,'GatherMate2 is not available. Personal recording still works.' end
  local count=0
+ local write=A.Store.ImportWriter(db,A.Client and A.Client.Size)
  local ok,err=pcall(function()
-  for _,o in provider() do if type(o)=='table' then o=A.Store.Copy(o); o.source='imported'; if A.Store.Observe(db,o) then count=count+1 end end end
+  for _,o in provider() do if type(o)=='table' then o=A.Store.Copy(o); o.source='imported'; if write(o) then count=count+1 end end end
  end)
  return count,ok and ('Imported '..count..' locations (no personal confirmations).') or ('Importer stopped: '..tostring(err))
 end
@@ -44,7 +45,7 @@ function I.Provider(mapID)
  -- Capture source table references, stream every zone and yield even rejected
  -- rows. The consumer budgets work per update; no global truncation is applied.
  local provider=function()
-  local ji=0; local iter,state,key; local job
+  local ji=0; local iter,state,key; local job;local names={}
   return function()
    while true do
     if not iter then
@@ -55,7 +56,9 @@ function I.Provider(mapID)
     if loc==nil then iter=nil else
      stats.scanned=stats.scanned+1
      if A.Store.Number(loc) and A.Store.Number(id) then
-      local x,y=gm:DecodeLoc(loc); local name=gm:GetNameForNode(job.dbtype,id)
+      local x,y=gm:DecodeLoc(loc);local cache=names[job.dbtype] or {};names[job.dbtype]=cache
+      local name=cache[id]
+      if name==nil then name=gm:GetNameForNode(job.dbtype,id);cache[id]=type(name)=='string' and name or false end
       if type(name)=='string' then
        local source=job.rows and 'direct' or 'fallback'; stats[source]=stats[source]+1
        return stats.scanned,{mapID=job.mapID,x=x,y=y,kind=job.kind,materialID='gm:'..job.kind..':'..id,name=name}

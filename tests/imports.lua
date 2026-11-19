@@ -5,6 +5,16 @@ test('missing importer is independent and malformed rows are skipped',function()
  n=A.Imports.Scan(db,function() return ipairs(rows) end); eq(n,1)
  A.Imports.Scan(db,function() return ipairs(rows) end); eq(#db.nodes[1],1); eq(db.nodes[1][1].confirmed,nil)
 end)
+
+test('provider resolves each resource name once per type for a complete all-zone run',function()
+ local A={};module('Store',A);module('Imports',A);local names=0
+ GatherMateData2HerbDB={[1]={[1000200000]=401,[2000300000]=401},[2]={[3000400000]=401}}
+ GatherMateData2MineDB={[1]={[1000200000]=201}}
+ GatherMate2={gmdbs={},GetNodesForZone=function() return pairs({}) end,DecodeLoc=function() return .2,.3 end,
+  GetNameForNode=function(_,kind) names=names+1;return kind=='Mining' and 'Copper Vein' or 'Peacebloom' end}
+ local provider=A.Imports.Provider();local n=A.Imports.Scan(A.Store.Open(),provider);eq(n,4);eq(names,2)
+ GatherMateData2HerbDB=nil;GatherMateData2MineDB=nil;GatherMate2=nil
+end)
 test('global provider discovers zones in GatherMate storage metadata without mutating them',function()
  local A={}; module('Store',A); module('Imports',A)
  local data={[42]={[2000300000]=401}}

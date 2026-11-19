@@ -20,6 +20,50 @@ test('Gatherly owns the addon identity saved variable and slash registration',fu
  eq(A.MinimapButton.frame.name,'GatherlyMinimapButton');A.Command('');assert(A.UI.frame:IsShown())
 end)
 
+test('import works on each rendered frame with bounded chunks and immediate completion refresh',function()
+ local A=setup();local produced=0;local refreshes=0;local old=A.UI.Refresh;A.UI.Refresh=function() refreshes=refreshes+1;old() end
+ A.Imports.Provider=function() return function() return function()
+  produced=produced+1;if produced>10000 then return end
+  return produced,{mapID=(produced-1)%16+1,x=((math.floor((produced-1)/16)%100)+1)*.009,y=.01+math.floor((produced-1)/1600)*.03,kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+ end end,{direct=10000,fallback=0} end
+ local profile=debugprofilestop;debugprofilestop=function() return 0 end
+ A.Import();A.Tick(1/60);assert(produced>40,'Must not wait for navigation tick');assert(produced<=2048,'Frozen timer still needs work cap')
+ for _=1,119 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);eq(A.importIterator,nil);assert(A.status:find('10000 locations',1,true),tostring(A.status));assert(refreshes>=2,'Completion did not refresh: '..refreshes)
+ debugprofilestop=profile
+end)
+
+test('import time budget yields before the work cap and a failing source can be retried safely',function()
+ local A=setup();local produced=0;local failed=true;local stamps=0;local oldProfile=debugprofilestop
+ debugprofilestop=function() stamps=stamps+2;return stamps end
+ A.Imports.Provider=function() return function() local i=0;return function()
+  i=i+1;produced=produced+1
+  if failed and i==100 then error('source interrupted') end
+  if i>200 then return end
+  return i,{mapID=1,x=i*.004,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+ end end,{direct=200,fallback=0} end
+ A.Import();A.Tick(1/60);assert(produced<=128,'Profiler budget must yield before 2048 records');assert(A.importJob)
+ for _=1,20 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);eq(A.importIterator,nil);assert(A.status:find('source interrupted',1,true))
+ local partial=#A.db.nodes[1];failed=false;A.Import();for _=1,20 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);assert(#A.db.nodes[1]>=partial);assert(A.status:find('200 locations',1,true))
+ for _,n in ipairs(A.db.nodes[1]) do eq(n.confirmed,nil) end
+ debugprofilestop=oldProfile
+end)
+
+test('building a large existing-zone index yields and resumes without Lua 5.1 protected-call errors',function()
+ local A=setup();local list={};for i=1,5000 do list[i]={mapID=1,x=(i%100)*.01,y=math.floor(i/100)*.01,kind='herb',materialID='gm:herb:401',name='Peacebloom',key='seed'..i,imported=true} end
+ A.db.nodes[1]=list;A.db.nextNode=5001
+ A.Imports.Provider=function() return function() local done=false;return function()
+  if done then return end;done=true;return 1,{mapID=1,x=list[1].x,y=list[1].y,kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+ end end,{direct=1,fallback=0} end
+ local oldProfile=debugprofilestop;debugprofilestop=function() return 0 end
+ A.Import();A.Tick(1/60);assert(A.importJob,'Existing index construction must yield')
+ for _=1,10 do if not A.importJob then break end;A.Tick(1/60) end
+ eq(A.importJob,nil);eq(#A.db.nodes[1],5000);assert(A.status:find('Imported 1 locations',1,true))
+ debugprofilestop=oldProfile
+end)
+
 test('real successful gathering events mark a future generated stop without importing pickup progress',function()
  local A,clock=setup();local nodes={}
  for i,x in ipairs({.2,.4,.6}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end

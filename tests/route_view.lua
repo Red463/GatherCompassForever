@@ -9,6 +9,48 @@ test('Routes exposes quick start first and a larger review instead of manual or 
  for _,key in ipairs({'new','record','save','deleteRoute','route1','prevRoute','emptyNew'}) do eq(U.controls[key],nil) end
  assert(U.routeSketch.frame:GetWidth()>=700);assert(U.routeSketch.frame:GetHeight()>=270)
 end)
+
+test('quick start validates its final join before replacing working guidance',function()
+ local A,U=setup();U.actions.generateStart();local f,plan=A.follower,A.plan
+ A.Client.Position=function() return nil end
+ eq(U.ReviewNodes(plan.candidates,point(.1),true),nil);eq(A.follower,f);eq(A.plan,plan)
+end)
+
+test('failed live edits preserve guidance and resume rejoins locally or keeps a pause',function()
+ local A,U=setup();U.actions.generateStart();U.OpenRoutes();local f,plan=A.follower,A.plan
+ U.actions.selectNode(plan.candidates[1].key);A.Client.Position=function() return point(1) end
+ U.actions.removeNode();eq(A.follower,f);eq(plan.route~=nil,true);eq(#plan.undo,0)
+ f:Pause();U.actions.pause();eq(f.status,'paused')
+ A.Client.Position=function() return point(.4) end;U.actions.pause();eq(f.status,'running');assert(distance(point(.4),f:Target())<=450)
+end)
+
+test('stopped or completed plans retain candidates but clear sketch lines and heat',function()
+ local A,U=setup();U.actions.generateStart();U.OpenRoutes();U.actions.routeStyle('heatmap');assert(U.routeSketch.heat[1]:IsShown())
+ U.actions.stop();for _,t in ipairs(U.routeSketch.heat) do eq(t:IsShown(),false) end;assert(A.plan.route and #A.plan.candidates>0)
+ U.actions.start();U.OpenRoutes();A.follower.status='complete';U.Refresh()
+ for _,t in ipairs(U.routeSketch.heat) do eq(t:IsShown(),false) end
+ U.actions.routeStyle('lines');for _,l in ipairs(U.routeSketch.lines) do eq(l:IsShown(),false) end
+end)
+
+test('review edits cannot replace an unrelated nearest-node follower or revive its old review',function()
+ local A,U=setup();U.actions.generateReview();local plan=A.plan
+ U.SetTab('atlas');U.atlasView.Select('herb:401');U.atlasView.Guide();local nearest=A.follower;assert(nearest);eq(plan.review,false)
+ U.OpenRoutes();U.actions.selectNode(plan.candidates[1].key);U.actions.removeNode();eq(A.follower,nearest);eq(plan.review,false)
+ nearest.status='complete';eq(U.DisplayRoute(),nil)
+end)
+
+test('dense map drags skip unchanged positions and bound visible pin scanning',function()
+ local A,U=setup();U.actions.generateReview();local sketch=U.routeSketch;local nodes={}
+ for i=1,20000 do nodes[i]={key='n'..i,mapID=1,x=.3+(i%20)*.001,y=.5+(i%15)*.001,materialID='gm:herb:401',kind='herb'} end
+ local plan={candidates=nodes,excluded={},route=A.plan.route,byKey={}};for _,n in ipairs(nodes) do plan.byKey[n.key]=n end
+ local calls=0;local key=A.FarmingSession.Key
+ A.FarmingSession.Key=function(n) calls=calls+1;return key(n) end
+ sketch:Draw(plan.route,nil,{plan=plan,nodes=nodes});assert(calls<=401,'Pin budget scanned '..calls..' nodes')
+ calls=0;sketch:Draw(plan.route,nil,{plan=plan,nodes=nodes,selected='n19999'});assert(calls<=401,'Selected pin scanned '..calls..' nodes')
+ calls=0;GetCursorPosition=function() return 10,10 end;sketch.viewport.scripts.OnDragStart()
+ for i=1,60 do sketch.viewport.scripts.OnUpdate() end;eq(calls,0)
+ GetCursorPosition=nil
+end)
 test('quick start and review share generation while preserving archived routes and node history',function()
  local A,U=setup();local archived=A.Store.SaveRoute(A.db,{name='Archive',mapID=1,points={point(.7)}})
  local count=#A.db.nodes[1];U.controls.generateStart.scripts.OnClick();assert(A.follower and A.plan);eq(A.plan.review,false);eq(U.frame:IsShown(),false)

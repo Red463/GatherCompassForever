@@ -66,5 +66,19 @@ test('generated loop joins the nearest point toward its shorter outgoing side',f
  local A={};module('Store',A);module('Follower',A)
  local route={mapID=1,generated=true,loop=true,points={point(.1),point(.9),point(.12)}}
  local f=A.Follower.New(route,point(.1),distance);eq(f.index,1);eq(f.direction,-1)
- f:Tick(point(.1),0,false);eq(f.index,3)
+ f:Tick(point(.1),0,false);eq(f.index,3);eq(f.lap,0)
+end)
+
+test('loop laps count a circuit from the join point in either direction',function()
+ local f=setup({point(.1),point(.3),point(.5)},true,point(.3));eq(f.index,2)
+ f:Skip();eq(f.lap,0);f:Skip();eq(f.lap,0);f:Skip();eq(f.lap,1)
+ f:Reverse();f:Skip();eq(f.lap,1);f:Skip();eq(f.lap,1);f:Skip();eq(f.lap,2)
+end)
+
+test('generated guidance recovery rejoins locally and refuses a remote suspended target',function()
+ local A={};module('Store',A);module('Follower',A)
+ local route={mapID=1,maxLink=450,generated=true,loop=true,points={point(.1),point(.4)}}
+ local f=A.Follower.New(route,point(.1),distance);f:Tick(nil,0,false);eq(f.status,'suspended')
+ f:Tick(point(1),1,false);eq(f.status,'suspended')
+ f:Tick(point(.4),2,true);eq(f.status,'running');eq(f.index,2)
 end)

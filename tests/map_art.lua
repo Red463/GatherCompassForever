@@ -11,6 +11,15 @@ test('map art uses UI map IDs and crops partial edge tiles in a shared projectio
  C_Map.GetMapArtLayerTextures=function() return {99} end;art=11;v:Draw(1,bounds,1000,600);eq(v.tiles[1].texture,99);eq(v.tiles[2]:IsShown(),false)
  C_Map.GetMapArtLayers=nil;v:Draw(1,bounds,1000,600);eq(v.available,false);eq(v.tiles[1]:IsShown(),false)
 end)
+
+test('map art retries unavailable textures and clears the previous map aspect',function()
+ local A=setup();local calls=0
+ C_Map={GetMapArtID=function(id) return id end,GetMapArtLayers=function(id) if id==1 then return {{layerWidth=100,layerHeight=50,tileWidth=100,tileHeight=50}} end end,
+ GetMapArtLayerTextures=function() calls=calls+1;if calls>1 then return {7} end;return {} end}
+ local v=A.MapArt.New(UIParent);local b={left=0,top=0,right=1,bottom=1};v:Draw(1,b,400,200);eq(v.available,false)
+ v:Draw(1,b,400,200);eq(v.available,true);eq(v.aspect,2);v:Draw(2,b,400,200);eq(v.aspect,nil)
+ C_Map=nil
+end)
 test('zoomed map art clips tile geometry and UVs at the viewport edges',function()
  local A=setup();C_Map={GetMapArtID=function() return 1 end,GetMapArtLayers=function() return {{layerWidth=100,layerHeight=50,tileWidth=100,tileHeight=50}} end,GetMapArtLayerTextures=function() return {7} end}
  local v=A.MapArt.New(UIParent);v:Draw(1,{left=.25,top=.25,right=.75,bottom=.75},400,200)

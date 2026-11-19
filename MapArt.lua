@@ -10,10 +10,10 @@ function M.New(parent)
  function self:Draw(mapID,bounds,width,height)
   for _,t in ipairs(self.tiles) do t:Hide() end
   self.available=false
-  if not mapID or not C_Map then return end
+  if not mapID or not C_Map then self.aspect=nil;return end
   local artID=query(C_Map.GetMapArtID,mapID)
-  if not artID or self.mapID~=mapID or self.artID~=artID or not self.layer or not C_Map.GetMapArtLayers then
-   self.mapID=mapID;self.artID=artID
+  if not artID or self.mapID~=mapID or self.artID~=artID or not self.layer or type(self.textures)~='table' or not next(self.textures) or not C_Map.GetMapArtLayers then
+   self.mapID=mapID;self.artID=artID;self.aspect=nil
    local layers=query(C_Map.GetMapArtLayers,mapID);self.layer=type(layers)=='table' and layers[1] or nil
    self.textures=self.layer and query(C_Map.GetMapArtLayerTextures,mapID,1) or nil
   end

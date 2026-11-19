@@ -27,6 +27,7 @@ function A.RouteSketch.New(parent)
   self.zoom=clamp(self.zoom*1.25^delta,1,8);if self.last then self:Draw(unpack(self.last,1,3)) end
  end
  function s:Pan(dx,dy)
+  if dx==0 and dy==0 then return end
   local b,w,h=self:Bounds();self.cx=clamp(self.cx-dx/w*(b.right-b.left),0,1);self.cy=clamp(self.cy+dy/h*(b.bottom-b.top),0,1)
   if self.last then self:Draw(unpack(self.last,1,3)) end
  end
@@ -96,8 +97,11 @@ function A.RouteSketch.New(parent)
    f.icon:SetTexture(A.Resources and A.Resources.Icon(n) or 'Interface\\Minimap\\ObjectIcons');f:SetAlpha((not plan or not route or route.includedKeys and route.includedKeys[key]) and 1 or .4)
    if key==options.selected then f:SetAlpha(1);f.halo:Show() else f.halo:Hide() end;f:Show()
   end
-  if plan and options.selected then for _,n in ipairs(nodes) do if A.FarmingSession.Key(n)==options.selected then pin(n);break end end end
-  for _,n in ipairs(nodes) do pin(n) end
+  if plan and options.selected then
+   if plan.byKey then local selected=plan.byKey[options.selected];if selected then pin(selected) end
+   else for _,n in ipairs(nodes) do if A.FarmingSession.Key(n)==options.selected then pin(n);break end end end
+  end
+  for _,n in ipairs(nodes) do if used>=400 then break end;pin(n) end
  end
  return s
 end

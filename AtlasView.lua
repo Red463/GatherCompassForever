@@ -56,6 +56,7 @@ function V.New(parent,U)
   end
   if not nearest then message('Nearest guidance requires a readable known location in your current zone.');return end
   local target={mapID=nearest.mapID,x=nearest.x,y=nearest.y,kind='gather',nodeKey=nearest.key,name=nearest.name or view.group.name}
+  if A.plan then A.plan.review=false end
   A.follower=A.Follower.New({name='Nearest '..view.group.name,mapID=nearest.mapID,loop=false,points={target}},player,A.Client.Distance,{arrival=A.db.settings.arrival})
   A.mapPreviewRoute=nil;if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil) end
   U.frame:Hide();message('Guiding to a known '..view.group.name..' location.')

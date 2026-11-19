@@ -21,13 +21,14 @@ function V.New(parent,U)
   local text=plan and plan.message or 'Tick the materials you want, then generate a nearby route. No save step is needed.'
   if plan and not plan:Matches(U.Filter()) then text='Selections changed. Generate again to use them. '..(text or '') end
   v.info:SetText(text or '')
-  local selected
-  if plan then for _,n in ipairs(plan.candidates) do if A.FarmingSession.Key(n)==plan.selected then selected=n;break end end end
+  local selected=plan and plan.byKey and plan.byKey[plan.selected]
   v.selection:SetText(selected and ((selected.name or 'Node')..string.format('  /  %.1f, %.1f',selected.x*100,selected.y*100)) or 'Select a node to remove it. Scroll to zoom; right-drag to pan.')
   U.controls.removeNode:SetEnabled(selected~=nil);U.controls.undoNode:SetEnabled(plan~=nil and #plan.undo>0)
   U.controls.generateStart:SetEnabled(#nodes>0);U.controls.generateReview:SetEnabled(#nodes>0)
   U.controls.routeStyle:SetValue(A.db.settings.routeStyle=='heatmap' and 'heatmap' or 'lines')
-  v.sketch:Draw(route,nil,{plan=plan,nodes=plan and plan.candidates or nodes,selected=plan and plan.selected,onSelect=U.actions.selectNode,style=A.db.settings.routeStyle,mapID=plan and plan.mapID or (A.Client.Position() or {}).mapID})
+  local f=A.follower;local following=f and f.session==plan and (f.status=='running' or f.status=='paused' or f.status=='suspended')
+  local visible=plan and (plan.review or following)
+  v.sketch:Draw(visible and route or nil,nil,{plan=plan,nodes=plan and plan.candidates or nodes,selected=plan and plan.selected,onSelect=U.actions.selectNode,style=A.db.settings.routeStyle,mapID=plan and plan.mapID or (A.Client.Position() or {}).mapID})
  end
  return v
 end

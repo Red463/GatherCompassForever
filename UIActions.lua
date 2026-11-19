@@ -14,33 +14,46 @@ function A.UIActions.Bind(U)
   if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
  end
  local function clearArrow() if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end end
+ local function prepareFollower(route,p)
+  if not route or not A.Store.Position(p) or route.mapID~=p.mapID or not A.Client.Distance(p,route.points[1]) then return nil,'Generate a route in your current zone with readable position and distance data.' end
+  local f=A.Follower.New(route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
+  if f.status~='running' then return nil,f.reason or 'Move nearer the farming area before starting.' end
+  return f
+ end
  function U.ReviewNodes(nodes,player,startNow)
   player=player or A.Client.Position()
   local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter()})
   if not plan then say(reason);return nil end
-  A.plan=plan;A.follower=nil;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
+  local replacement
+  if startNow then
+   local failure;replacement,failure=prepareFollower(plan.route,A.Client.Position())
+   if not replacement then say(failure);return nil end
+   replacement.session=plan;plan.review=false
+  end
+  A.plan=plan;A.follower=replacement;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
   if A.Map and A.Map.SetEditor then A.Map.SetEditor(nil) end
-  U.tab='routes';U.compact=false;U.frame:Show()
-  if startNow then actions.start() else refreshMap();say(reason) end
-  return true
+  U.tab='routes';U.compact=false
+  if startNow then U.frame:Hide() else U.frame:Show() end
+  refreshMap();say(reason);return true
  end
  function actions.generateStart() return U.ReviewNodes(U.SelectedNodes(),nil,true) end
  function actions.generateReview() return U.ReviewNodes(U.SelectedNodes()) end
  function actions.selectNode(key)
   if not A.plan or A.plan.excluded[key] then return end
-  for _,n in ipairs(A.plan.candidates) do if A.FarmingSession.Key(n)==key then A.plan.selected=key;U.Refresh();return end end
+  if A.plan.byKey[key] then A.plan.selected=key;U.Refresh() end
  end
  local function rebuild(method)
   local plan=A.plan;if not plan then return end
-  local old=A.follower;local ok,reason=plan[method](plan,method=='Remove' and plan.selected or A.Client.Position(),method=='Remove' and A.Client.Position() or nil)
+  local old=A.follower;local ok,reason;local p=A.Client.Position()
+  if method=='Remove' then ok,reason=plan:Remove(plan.selected,p) else ok,reason=plan:Undo(p) end
   if not ok then say(reason);return end
-  if old and old.status~='complete' and old.status~='stopped' then
+  if old and old.session==plan and old.status~='complete' and old.status~='stopped' then
    A.follower=nil
    if plan.route then
-    A.follower=A.Follower.New(plan.route,A.Client.Position(),A.Client.Distance,{arrival=A.db.settings.arrival})
-    A.follower.lap=old.lap;if old.status=='paused' then A.follower:Pause() end
+    A.follower=A.Follower.New(plan.route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
+    A.follower.session=plan;A.follower.lap=old.lap;if old.status=='paused' then A.follower:Pause() end
    else clearArrow();plan.review=true end
-  else plan.review=true end
+  elseif not old then plan.review=true end
   refreshMap();say(plan.message)
  end
  function actions.removeNode() rebuild('Remove') end
@@ -51,18 +64,18 @@ function A.UIActions.Bind(U)
  end
  function actions.reverse() if A.follower then A.follower:Reverse() end;U.Refresh() end
  function actions.start()
-  local r=A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute];local p=position()
-  if not r or not p or r.mapID~=p.mapID or not A.Client.Distance(p,r.points[1]) then say('Generate a route in your current zone with readable position and distance data.');return end
-  local nearest
-  for _,point in ipairs(r.points) do local d=A.Client.Distance(p,point);if d and (not nearest or d<nearest) then nearest=d end end
-  if r.maxLink and (not nearest or nearest>r.maxLink) then say('Move nearer the reviewed area, or generate again from your current position.');return end
-  A.follower=A.Follower.New(r,p,A.Client.Distance,{arrival=A.db.settings.arrival})
-  if A.plan then A.plan.review=false end
-  A.mapPreviewRoute=nil;refreshMap();U.frame:Hide()
+  local r=A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute]
+  local replacement,reason=prepareFollower(r,position());if not replacement then say(reason);return end
+  if A.plan and A.plan.route==r then replacement.session=A.plan;A.plan.review=false end
+  A.follower=replacement;A.mapPreviewRoute=nil;refreshMap();U.frame:Hide()
   say('Following a local farming corridor. Terrain may require a detour.')
  end
  function actions.pause()
-  local f=A.follower; if f then if f.status=='paused' then f:Resume() else f:Pause() end end; U.Refresh()
+  local f=A.follower
+  if f then
+   if f.status=='paused' then local ok,reason=f:Resume(A.Client.Position());if not ok then say(reason);return end else f:Pause() end
+  end
+  U.Refresh()
  end
  function actions.skip() if A.follower then A.follower:Skip() end; U.Refresh() end
  function actions.stop()

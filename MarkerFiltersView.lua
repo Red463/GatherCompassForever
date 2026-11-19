@@ -17,9 +17,7 @@ function V.New(parent,U)
  label('Gathering',0,88,234,20,S.gold)
  check('markerHerb','Herbs',0,114,60,function() A.Selection.ToggleKind(settings(),'herb');changed() end)
  check('markerOre','Ore',110,114,60,function() A.Selection.ToggleKind(settings(),'ore');changed() end)
- check('markerRouteOverride','Use route selections while following',0,158,210,function() A.db.settings.routeMarkerOverride=not A.db.settings.routeMarkerOverride;changed() end)
- U.controls.markerRouteOverride.label:SetWordWrap(true);U.controls.markerRouteOverride.label:SetSize(210,40)
- view.notice=label('',0,204,238,60,S.muted);view.notice:SetWordWrap(true)
+ view.notice=label('',0,158,238,86,S.muted);view.notice:SetWordWrap(true)
  view.heading=label('Materials shown on both maps',260,0,500,20,S.gold)
  local function bulk(mode)
   local ranks,ctx=A.Resources.Skills();local state=A.Selection.BulkState(A.db,ranks,ctx,settings())
@@ -50,10 +48,10 @@ function V.New(parent,U)
  end
  function view.Refresh()
   local filter=A.Selection.Filter(settings());local ranks,ctx=A.Resources.Skills();view.skills=ranks;view.context=ctx;local state=A.Selection.BulkState(A.db,ranks,ctx,settings())
-  for key,value in pairs({markerConfirmed=filter.source=='combined' or filter.source=='confirmed',markerImported=filter.source=='combined' or filter.source=='imported',markerHerb=filter.kind=='both' or filter.kind=='herb',markerOre=filter.kind=='both' or filter.kind=='ore',markerAll=state.all,markerGatherable=state.gatherable,markerSkillups=state.skillups,markerRouteOverride=A.db.settings.routeMarkerOverride}) do U.controls[key]:SetChecked(value) end
+  for key,value in pairs({markerConfirmed=filter.source=='combined' or filter.source=='confirmed',markerImported=filter.source=='combined' or filter.source=='imported',markerHerb=filter.kind=='both' or filter.kind=='herb',markerOre=filter.kind=='both' or filter.kind=='ore',markerAll=state.all,markerGatherable=state.gatherable,markerSkillups=state.skillups}) do U.controls[key]:SetChecked(value) end
   local entries=A.Selection.Materials(A.db,nil,settings());view.list:SetItems(entries,false)
   if #entries==0 then view.empty:Show() else view.empty:Hide() end
-  local _,override=U.MarkerFilter();view.notice:SetText(override and 'Active route selections currently control markers. Stop the route to restore these everyday choices.' or 'Everyday choices control map and minimap markers in every zone. Choose route targets separately in Routes.')
+  local _,override=U.MarkerFilter();view.notice:SetText(override and 'An active route currently limits map markers. Stop the route or turn off the option in Routes to restore these everyday choices.' or 'Everyday choices control map and minimap markers. Choose route targets and the active-route marker option in Routes.')
  end
  return view
 end

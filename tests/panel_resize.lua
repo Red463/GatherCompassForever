@@ -47,8 +47,8 @@ test('every preset keeps Routes controls inside the layout and the map proportio
  local route={mapID=1,width=1000,height=667,points={point(.3),point(.5)}}
  for _,id in ipairs({'small','standard','large'}) do
   U.window:SetPreset(id);local v=U.routeView;local w,h=v.frame:GetWidth(),v.frame:GetHeight()
-  assert(U.routeSketch.frame:GetWidth()>=710);assert(U.routeSketch.frame:GetHeight()>=320)
-  for _,key in ipairs({'generateStart','generateReview','routeStyle','removeNode','undoNode','map'}) do
+  assert(U.routeSketch.frame:GetWidth()>=710);assert(U.routeSketch.frame:GetHeight()>=300)
+  for _,key in ipairs({'generateStart','generateReview','markerRouteOverride','routeStyle','removeNode','undoNode','map'}) do
    local f=U.controls[key];assert(f.point[4]>=0 and f.point[4]+f:GetWidth()<=w);assert(-f.point[5]+f:GetHeight()<=h)
   end
   U.routeSketch:Draw(route);local b,mw,mh=U.routeSketch:Bounds();near((mw/(b.right-b.left))/(mh/(b.bottom-b.top)),1000/667)

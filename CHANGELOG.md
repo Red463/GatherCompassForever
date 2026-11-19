@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.2
+
+- Move the active-route map-marker checkbox from Node display to Routes and rename it to “Only show route target nodes during an active route.”
+- Add a tooltip explaining both-map filtering, saved route selections and restoration of normal markers after Stop/completion. Preserve the saved setting and existing behavior.
+
 ## 0.16.1
 
 - Remove the artificial 40-row/0.1-second import limit. Imports now use their own per-frame coroutine with a soft 4ms budget and a work cap for missing or frozen timers.

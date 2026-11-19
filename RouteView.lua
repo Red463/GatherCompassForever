@@ -10,6 +10,11 @@ function V.New(parent,U)
  v.primary=button('generateStart','Generate & start',374,0,162,nil,'primary')
  button('generateReview','Generate & review',544,0,166,nil,'subtle')
  v.info=label('',0,33,710,32,11,S.muted);v.info:SetWordWrap(true)
+ local markerOption=S.Check(v.frame,'Only show route target nodes during an active route',function()
+  A.db.settings.routeMarkerOverride=not A.db.settings.routeMarkerOverride;U.Refresh()
+  if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
+ end);U.controls.markerRouteOverride=markerOption
+ S.Hint(markerOption,'Map markers during a route','While guidance is active, including paused guidance, both maps show nodes matching the sources, gathering types and materials saved with that route. Your normal map-marker selections return when the route stops or finishes. Route lines and the arrow are unaffected.')
  U.controls.routeStyle=place(S.Dropdown(v.frame,{{value='lines',label='Route lines'},{value='heatmap',label='Heatmap corridor'}},U.actions.routeStyle),538,69,172,26)
  v.selection=label('Select a node on the map to remove it from this route.',0,74,528,20,11,S.muted)
  v.sketch=A.RouteSketch.New(v.frame);U.routeSketch=v.sketch;place(v.sketch.frame,0,102,710,276)
@@ -21,12 +26,15 @@ function V.New(parent,U)
   local function move(f,x,y,fw,fh) f:ClearAllPoints();f:SetPoint('TOPLEFT',v.frame,'TOPLEFT',x,-y);f:SetSize(fw,fh) end
   local top=v.narrow and 36 or 0
   move(U.controls.generateStart,w-336,top,162,26);move(U.controls.generateReview,w-166,top,166,26)
-  move(v.info,0,33+top,w,32);move(U.controls.routeStyle,w-172,69+top,172,26)
-  move(v.selection,0,74+top,w-182,20)
-  move(v.sketch.frame,0,102+top,w,math.max(80,h-134-top))
+  move(v.info,0,33+top,w,32)
+  move(markerOption,0,68+top,24,24);markerOption.label:SetSize(w-36,24);markerOption:SetHitRectInsets(0,-(w-32),0,0)
+  move(U.controls.routeStyle,w-172,97+top,172,26)
+  move(v.selection,0,102+top,w-182,20)
+  move(v.sketch.frame,0,130+top,w,math.max(80,h-162-top))
   for _,e in ipairs({{U.controls.removeNode,0,128},{U.controls.undoNode,136,128},{U.controls.map,w-136,136}}) do move(e[1],e[2],h-26,e[3],26) end
  end
  function v.Refresh()
+  markerOption:SetChecked(A.db.settings.routeMarkerOverride==true)
   local plan=A.plan;local route=plan and plan.route;local nodes=U.SelectedNodes()
   local text=plan and plan.message or 'Tick the materials you want, then generate a nearby route. No save step is needed.'
   if plan and not plan:Matches(U.Filter()) then text='Selections changed. Generate again to use them. '..(text or '') end

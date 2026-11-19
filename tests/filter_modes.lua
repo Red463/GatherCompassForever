@@ -22,6 +22,10 @@ test('route changes leave map filters alone and generated guidance captures its 
  U.SetKind('herb');eq(initial.kind,'both')
  for i=1,5 do A.Store.Observe(A.db,{mapID=1,x=.31+i*.01,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='imported'}) end
  U.actions.generateStart();assert(A.follower);eq(A.follower.markerFilter.kind,'herb');U.SetKind('ore');eq(A.follower.markerFilter.kind,'herb')
+ U.OpenRoutes();local option=U.controls.markerRouteOverride
+ eq(option:GetParent(),U.routeView.frame);assert(option:IsVisible());option.scripts.OnClick(option)
+ eq(A.db.settings.routeMarkerOverride,true);eq(A.Selection.EffectiveMarker(A.db.settings,A.follower).kind,'herb')
+ U.SetTab('nodes');eq(option:IsVisible(),false);U.OpenRoutes();eq(option:GetChecked(),true)
  U.actions.stop();eq(A.Selection.EffectiveMarker(A.db.settings,A.follower).kind,'both')
 end)
 test('missing profession is red but unreadable profession data stays unknown',function()

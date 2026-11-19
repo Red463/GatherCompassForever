@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.16.1 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.16.2 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -47,7 +47,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.16.1.zip` from
+1. Download `Gatherly-0.16.2.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -261,13 +261,14 @@ Existing shared preferences are copied into both sets on upgrade; explicit empty
 selections are retained. Importing canonical GatherMate IDs preserves personal-name
 material selections, independent exclusions and active guidance snapshots.
 
-Optionally enable **Use route selections while following**. Both maps then use the
+In **Routes**, optionally enable **Only show route target nodes during an active route**.
+Both maps then use the
 active guidance's saved filter snapshot, including while paused or suspended.
 Changing the sidebar mid-route does not rewrite that snapshot. Stop/completion
 restores everyday markers without overwriting their preferences. The Visible nodes
 page identifies when the override is active. It is off by default.
 
-![Everyday map-marker choices and the optional temporary route override](docs/images/marker-filters.png)
+![Everyday map-marker choices, with the active-route option located separately in Routes](docs/images/marker-filters.png)
 
 In either set, unticking every source or gathering type gives no matching nodes;
 this does not reset your choices. Marker filters do not hide the route overlay,

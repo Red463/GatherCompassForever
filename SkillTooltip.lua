@@ -1,6 +1,16 @@
 local _,A=...
 local T={};A.SkillTooltip=T
 local function safe(v) return tostring(v or ''):gsub('|','||') end
+function T.ShowGroup(owner,group,footer)
+ if not GameTooltip then return end
+ GameTooltip:SetOwner(owner,'ANCHOR_RIGHT');GameTooltip:SetText(#group.members..' nodes here',1,1,1)
+ local skills,context=A.Resources.Skills()
+ for _,e in ipairs(group.entries or A.MarkerGroups.Summary(group.members)) do
+  local color=A.Resources.SkillDetails(e.node,skills,context).color
+  GameTooltip:AddDoubleLine(safe(e.name),'x'..e.count,color[1],color[2],color[3],1,1,1)
+ end
+ GameTooltip:AddLine(safe(footer or 'Zoom in to see each one.'),.7,.7,.7,true);GameTooltip:Show()
+end
 function T.Show(owner,title,entries,extra)
  if not GameTooltip then return end
  GameTooltip:SetOwner(owner,'ANCHOR_RIGHT');GameTooltip:SetText(safe(title or 'Known resource'),1,.82,.35)
@@ -32,6 +42,15 @@ function T.Entries(nodes)
 end
 function T.Bind(owner,title,getEntries,extra)
  owner:HookScript('OnEnter',function(self) T.Show(self,type(title)=='function' and title() or title,getEntries(),type(extra)=='function' and extra() or extra) end)
+ owner:HookScript('OnLeave',function() if GameTooltip then GameTooltip:Hide() end end)
+ owner:HookScript('OnHide',function() if GameTooltip and GameTooltip.IsOwned and GameTooltip:IsOwned(owner) then GameTooltip:Hide() end end)
+end
+function T.BindGroup(owner,getGroup,footer)
+ owner:HookScript('OnEnter',function(self)
+  local group=getGroup();if not group then return end
+  if #group.members>1 then T.ShowGroup(self,group,footer)
+  else T.Show(self,'Known location',T.Entries(group.members),footer) end
+ end)
  owner:HookScript('OnLeave',function() if GameTooltip then GameTooltip:Hide() end end)
  owner:HookScript('OnHide',function() if GameTooltip and GameTooltip.IsOwned and GameTooltip:IsOwned(owner) then GameTooltip:Hide() end end)
 end

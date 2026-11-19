@@ -256,7 +256,7 @@ local function pin()
   if not GameTooltip then return end
   GameTooltip:SetOwner(self,'ANCHOR_RIGHT'); GameTooltip:SetText(self.label or 'Waypoint',1,1,1)
   if self.group then
-   A.SkillTooltip.Show(self,#self.group.members..' known locations',A.SkillTooltip.Entries(self.group.members),'Possible spawn points, not live availability. Zoom in to separate nearby icons.');return
+   A.SkillTooltip.ShowGroup(self,self.group);return
   end
   if self.node then
    local skills,context=A.Resources.Skills()
@@ -398,7 +398,7 @@ function M.Refresh(db,route,follower)
   if mini then local nearest;for _,n in ipairs(g.members) do local d=distances[n.key];if d and (not nearest or d<nearest) then nearest=d end end;distances[proxy.key]=nearest end
   local f=add(anchor,nil,proxy,mini);if not f then return end
   f.group=g;f.outline:Hide();f:SetSize((mini and settings.iconSize or settings.worldIconSize)+8,(mini and settings.iconSize or settings.worldIconSize)+8)
-  f.icon:SetTexture(g.mixed and 'Interface\\AddOns\\GatherCompassForever\\Media\\Icon' or A.Resources.Icon(anchor))
+  f.icon:SetTexture(A.Resources.Icon(g.representative))
   local showIcon=not mini or settings.icon and not (settings.hideDistance>0 and distances[proxy.key] and distances[proxy.key]<=settings.hideDistance)
   local alpha=mini and settings.miniIconOpacity or settings.worldIconOpacity
   f.number:ClearAllPoints();f.number:SetPoint('CENTER',f,'CENTER',9,8);f.number:SetFont(STANDARD_TEXT_FONT or 'Fonts\\FRIZQT__.TTF',11,'OUTLINE');f.number:SetText(tostring(#g.members));f.number:SetAlpha(alpha)

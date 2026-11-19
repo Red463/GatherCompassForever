@@ -11,10 +11,19 @@ test('overlapping map icons share one mixed badge while minimap outlines keep th
  for _,f in ipairs(A.Map.pins) do if f.key and f.group then if f.mini then mini=mini+1 else world=world+1;badge=f end end end
  eq(world,1);eq(mini,1);eq(badge.number:GetText(),'2');eq(badge.group.mixed,true)
  for _,n in ipairs(nodes) do local f=A.Map.byKey['m:node:'..n.key];assert(f and f.outline:IsShown());eq(f.icon:IsShown(),false);eq(f.signature,n.mapID..':'..n.x..':'..n.y) end
- local text={};GameTooltip.AddLine=function(_,s) text[#text+1]=s end;badge.scripts.OnEnter(badge);assert(table.concat(text):find('Silverleaf',1,true));assert(table.concat(text):find('Peacebloom',1,true))
+ local text={};GameTooltip.AddDoubleLine=function(_,s) text[#text+1]=s end;badge.scripts.OnEnter(badge);assert(table.concat(text):find('Silverleaf',1,true));assert(table.concat(text):find('Peacebloom',1,true))
  A.Selection.MarkerSettings(A.db.settings).materials={['gm:herb:401']=true};A.Map.Refresh(A.db,nil)
  for _,f in ipairs(A.Map.pins) do if f.key and f.group then error('Old mixed badge survived filtering') end end
  LibStub=nil;C_Minimap=nil
+end)
+
+test('world and minimap grouped badges show the dominant resource icon',function()
+ local A,nodes=setup();A.Store.Observe(A.db,{mapID=1,x=.205,y=.5,kind='herb',materialID='gm:herb:402',name='Silverleaf',source='imported'})
+ A.Map.Refresh(A.db,nil);local seen=0
+ for _,f in ipairs(A.Map.pins) do if f.key and f.group then
+  eq(f.icon.texture,A.Resources.Icon(nodes[2]));seen=seen+1
+ end end
+ eq(seen,2);LibStub=nil;C_Minimap=nil
 end)
 test('world-map zoom splits groups and near-player grouped icons hide without hiding outlines',function()
  local A,nodes=setup();A.Map.Refresh(A.db,nil);WorldMapFrame.canvas.GetEffectiveScale=function() return 100 end

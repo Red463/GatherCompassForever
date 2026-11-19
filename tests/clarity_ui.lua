@@ -20,6 +20,7 @@ end)
 test('map-marker preview includes a map-backed labelled appearance example',function()
  local A,U=setup();U.SetTab('nodes');U.nodeDisplayView.SetPage('world');local v=U.nodeDisplayView
  assert(v.previewArt and v.previewCanvas);eq(v.previewCaption:GetText(),'Appearance example')
+ eq(v.worldExamples[1].texture,A.Resources.Icon({kind='herb',materialID='gm:herb:402'}));eq(v.miniIcon.texture,A.Resources.Icon({kind='herb',materialID='gm:herb:402'}))
  A.Resources.Settings(A.db.settings).groupWorld=false;U.Refresh();eq(v.worldCount:IsShown(),false)
  A.Resources.Settings(A.db.settings).worldIconOpacity=.3;U.Refresh();near(v.worldExamples[1].alpha,.3)
 end)

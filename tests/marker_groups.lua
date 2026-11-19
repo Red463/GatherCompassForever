@@ -19,3 +19,18 @@ test('group work is bounded even for a dense twenty-thousand-node cell',function
  local groups=A.MarkerGroups.Build(nodes,function(n) return n.x*1000,0 end,14);eq(#groups,1);eq(#groups[1].members,20000)
  assert(groups.comparisons<100000);eq(#A.MarkerGroups.Build({},function() end,14),0)
 end)
+
+test('group icon represents the most common resource while keeping the geometry anchor',function()
+ local A=setup();local a=node('a',.1,401);local b=node('b',.101,402);local c=node('c',.102,402)
+ local function project(n) return n.x*1000,0 end
+ local g=A.MarkerGroups.Build({c,a,b},project,14)[1]
+ eq(g.anchor,a);eq(g.representative,b);eq(g.entries[1].count,2);eq(g.entries[2].count,1)
+ local tied=A.MarkerGroups.Build({b,a},project,14,{focus='b'})[1];eq(tied.anchor,b);eq(tied.representative,a)
+ eq(A.MarkerGroups.Build({a,b},project,14)[1].representative,a)
+end)
+
+test('group counts merge legacy and catalogue identities of the same resource',function()
+ local A=setup();local a=node('a',.1,401);local b=node('b',.101,402);local old=node('c',.102,402);old.materialID='node:herb:Silverleaf'
+ local g=A.MarkerGroups.Build({a,b,old},function(n) return n.x*1000,0 end,14)[1]
+ eq(#g.entries,2);eq(g.entries[1].count,2);eq(g.representative,b)
+end)

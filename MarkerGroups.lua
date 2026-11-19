@@ -1,5 +1,17 @@
 local _,A=...
 local G={};A.MarkerGroups=G
+function G.Summary(nodes)
+ local entries,byID={},{}
+ for _,n in ipairs(nodes) do
+  local info=A.Resources.Info(n);local id=n.kind..':'..tostring(info and info.id or n.materialID)
+  local e=byID[id]
+  if not e then e={key=id,node=n,name=info and info.name or n.name or n.materialID,count=0};byID[id]=e;entries[#entries+1]=e end
+  e.count=e.count+1
+  if tostring(n.key or '')<tostring(e.node.key or '') then e.node=n end
+ end
+ table.sort(entries,function(a,b) if a.count~=b.count then return a.count>b.count end;return a.key<b.key end)
+ return entries
+end
 function G.Build(nodes,project,radius,options)
  options=options or {};radius=math.max(1,radius or 14)
  local ordered={}
@@ -27,7 +39,10 @@ function G.Build(nodes,project,radius,options)
   local hash=0;for i=1,#p.key do hash=(hash*33+p.key:byte(i))%2147483647 end
   best.hash=(best.hash+hash)%2147483647
  end
- for _,g in ipairs(groups) do g.key=tostring(g.anchor.key)..':'..#g.members..':'..g.hash end
+ for _,g in ipairs(groups) do
+  g.key=tostring(g.anchor.key)..':'..#g.members..':'..g.hash
+  g.entries=G.Summary(g.members);g.representative=g.entries[1].node;g.mixed=#g.entries>1
+ end
  groups.total=#groups;groups.comparisons=comparisons
  if options.limit then while #groups>options.limit do table.remove(groups) end end
  return groups

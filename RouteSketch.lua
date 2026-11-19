@@ -104,10 +104,10 @@ function A.RouteSketch.New(parent)
       if #button.group.members>1 then self.picker:Open(button.group.members,button,button.plan,button.viewKey)
       elseif button.select then button.select(button.nodeKey) end
      end)
-     A.SkillTooltip.Bind(f,function() return f.group and #f.group.members>1 and (#f.group.members..' known locations') or 'Known location' end,function() return f.group and A.SkillTooltip.Entries(f.group.members) or {} end,'Click to choose a location. Removal affects this route only.')
+     A.SkillTooltip.BindGroup(f,function() return f.group end,'Click to choose a location. Removal affects this route only.')
     end
     f.group=g;f.plan=plan;f.viewKey=options.viewKey;f.nodeKey=key;f.node=n;f.select=options.onSelect;f:ClearAllPoints();f:SetPoint('CENTER',self.canvas,'TOPLEFT',x,y)
-    f.icon:SetTexture(g.mixed and S.media..'Icon' or A.Resources.Icon(n))
+    f.icon:SetTexture(A.Resources.Icon(g.representative))
     local included=not plan or not route;local selected=false
     for _,member in ipairs(g.members) do
      if route and route.includedKeys and route.includedKeys[member.key] then included=true end

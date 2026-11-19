@@ -11,7 +11,7 @@ function V.New(parent,U)
  place(view.frame,parent,20,19,896,395);local f=scroller.body;f:SetSize(896,395)
  place(S.Image(f,'Icon',88,88),f,12,4,88,88)
  view.title=label(f,'Welcome to Gather Compass Forever',120,7,760,30,21,S.gold,true)
- view.subtitle=label(f,'Remember your discoveries. Choose what to farm. Follow your next trail.',120,43,760,24,13,S.text)
+ view.subtitle=label(f,'Track gathered nodes, manage map markers, and generate farming routes.',120,43,760,24,13,S.text)
  view.summary=label(f,'',120,73,760,22,11,S.muted)
  local steps={
   {'1. Add node locations','Gather herbs or ore to remember successful discoveries, or import known locations from installed GatherMate2 data. Import covers all zones, wherever you are.'},

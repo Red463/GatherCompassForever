@@ -4,6 +4,16 @@ local function setup(count)
  for i=1,count or 8 do A.Store.Observe(A.db,{mapID=1,x=.1+i*.04,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
  A.UI.Build();A.UI.OpenRoutes();return A,A.UI
 end
+
+test('review group shares dominant resource icons and compact hover without changing node selection',function()
+ local A,U=setup(0)
+ for i,id in ipairs({401,402,402}) do A.Store.Observe(A.db,{mapID=1,x=.2+i*.0001,y=.5,kind='herb',materialID='gm:herb:'..id,name=id==401 and 'Peacebloom' or 'Silverleaf',source='imported'}) end
+ U.actions.generateReview();local pin=U.routeSketch.pins[1];eq(#pin.group.members,3)
+ eq(pin.icon.texture,A.Resources.Icon({kind='herb',materialID='gm:herb:402'}))
+ local title,rows;rows={};GameTooltip.SetText=function(_,s) title=s end;GameTooltip.AddDoubleLine=function(_,name,count) rows[#rows+1]={name,count} end
+ pin.scripts.OnEnter(pin);eq(title,'3 nodes here');eq(rows[1][1],'Silverleaf');eq(rows[1][2],'x2')
+ pin.scripts.OnClick(pin);assert(U.routeSketch.picker.frame:IsShown())
+end)
 test('Routes exposes quick start first and a larger review instead of manual or saved-library controls',function()
  local A,U=setup();assert(U.routeView);eq(U.routeView.primary,U.controls.generateStart)
  for _,key in ipairs({'new','record','save','deleteRoute','route1','prevRoute','emptyNew'}) do eq(U.controls[key],nil) end

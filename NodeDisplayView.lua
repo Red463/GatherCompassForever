@@ -62,7 +62,7 @@ function V.New(parent,U)
  local note=label(guidance,'Choose Lines or Heatmap in Routes. Nearby icons hide; hollow outlines stay at the actual locations.',18,166,236,68,12,S.muted);note:SetWordWrap(true)
  local field=place(S.Panel(guidance),guidance,284,168,136,90)
  v.miniOutline=field:CreateTexture(nil,'OVERLAY');v.miniOutline:SetPoint('CENTER',field,'CENTER');v.miniOutline:SetSize(36,36)
- v.miniIcon=field:CreateTexture(nil,'ARTWORK');v.miniIcon:SetPoint('CENTER',field,'CENTER');v.miniIcon:SetSize(20,20);v.miniIcon:SetTexture(S.media..'Icon')
+ v.miniIcon=field:CreateTexture(nil,'ARTWORK');v.miniIcon:SetPoint('CENTER',field,'CENTER');v.miniIcon:SetSize(20,20);v.miniIcon:SetTexture(A.Resources.Icon({kind='herb',materialID='gm:herb:402'}))
  v.miniCount=label(field,'3',77,17,28,20,12,S.gold)
  S.Hint(U.controls.nodeDistance,'Keep native tracking visible','Hide nearby resource icons and grouped counts. Hollow outlines remain at their real known locations.')
  S.Hint(U.controls.nodeRouteLine,'Minimap route overlay','Applies to both Lines and Heatmap. Node-marker visibility is independent of route guidance.')
@@ -96,7 +96,7 @@ function V.New(parent,U)
    local size=s.worldIconSize+(s.groupWorld and i==1 and 8 or 0);icon:SetSize(size,size);icon:SetAlpha(s.worldIconOpacity)
    if s.world and (i==1 or i==3 or not s.groupWorld) then icon:Show() else icon:Hide() end
   end
-  v.worldExamples[1]:SetTexture(s.groupWorld and S.media..'Icon' or A.Resources.Icon({kind='herb',materialID='gm:herb:402'}))
+  v.worldExamples[1]:SetTexture(A.Resources.Icon({kind='herb',materialID='gm:herb:402'}))
   if s.world and s.groupWorld then v.worldCount:Show();v.worldCount:SetAlpha(s.worldIconOpacity) else v.worldCount:Hide() end
   if U.tab=='nodes' and worldPage then
    local player=A.Client.Position();local aspect=v.previewArt.aspect or 1.5;local half=.25*180/406*aspect

@@ -14,10 +14,10 @@ function G.Build(nodes,project,radius,options)
  local function bucket(map,x,y) return tostring(map)..':'..x..':'..y end
  for _,p in ipairs(ordered) do
   local cx,cy=math.floor(p.x/radius),math.floor(p.y/radius);local best,bestDistance
-  for dx=-1,1 do for dy=-1,1 do for _,g in ipairs(buckets[bucket(p.node.mapID,cx+dx,cy+dy)] or {}) do
+  if not options.disabled then for dx=-1,1 do for dy=-1,1 do for _,g in ipairs(buckets[bucket(p.node.mapID,cx+dx,cy+dy)] or {}) do
    comparisons=comparisons+1;local d=(p.x-g.x)^2+(p.y-g.y)^2
    if d<=radius*radius and (not bestDistance or d<bestDistance) then best,bestDistance=g,d end
-  end end end
+  end end end end
   if not best then
    best={anchor=p.node,x=p.x,y=p.y,members={},mixed=false,hash=0};groups[#groups+1]=best
    local key=bucket(p.node.mapID,cx,cy);buckets[key]=buckets[key] or {};buckets[key][#buckets[key]+1]=best

@@ -255,6 +255,9 @@ local function pin()
   self.hovered=true;if self.editorHandle then paintHandle(self) end
   if not GameTooltip then return end
   GameTooltip:SetOwner(self,'ANCHOR_RIGHT'); GameTooltip:SetText(self.label or 'Waypoint',1,1,1)
+  if self.group then
+   A.SkillTooltip.Show(self,#self.group.members..' known locations',A.SkillTooltip.Entries(self.group.members),'Possible spawn points, not live availability. Zoom in to separate nearby icons.');return
+  end
   if self.node then
    local skills,context=A.Resources.Skills()
    local details=A.Resources.SkillDetails(self.node,skills,context)
@@ -322,7 +325,7 @@ function M.Refresh(db,route,follower)
   if not lib and not editing then return end
   local key=(mini and 'm:' or 'w:')..(node and ('node:'..node.key) or ('point:'..index))
   local f=M.byKey[key] or pin(); M.byKey[key]=f; f.key=key; f.wanted=true; f.mini=mini
-  f.index=index; f.node=node; f.label=index and ('Waypoint '..index) or node and node.name
+  f.index=index; f.node=node;f.group=nil; f.label=index and ('Waypoint '..index) or node and node.name
   f.icon:ClearAllPoints(); f.icon:SetPoint('CENTER',f,'CENTER',0,0)
   -- Pooled node textures may become an editor handle or navigation target.
   f.icon:SetAlpha(1);f.outline:SetAlpha(1)
@@ -377,18 +380,58 @@ function M.Refresh(db,route,follower)
    -- drop below that raised canvas on the next refresh and hide the icon.
    local parent=f:GetParent();if parent then f:SetFrameLevel(math.max(parent:GetFrameLevel()+1,worldLayer and worldLayer:GetFrameLevel()+1 or 0)) end
   end
+  return f
  end
  local selected
  if focus and focus.nodeKey then for _,node in ipairs(nodes) do if node.key==focus.nodeKey then selected=node;break end end end
- if selected then add(selected,nil,selected,false) end
- local worldCount=selected and 1 or 0
- for _,node in ipairs(nodes) do
-  if worldCount>=400 then break end
-  if node~=selected then add(node,nil,node,false);worldCount=worldCount+1 end
+ local function grouped(g,mini)
+  if #g.members==1 then return add(g.anchor,nil,g.anchor,mini) end
+  local anchor=g.anchor;local proxy={key='group:'..g.key,mapID=anchor.mapID,x=anchor.x,y=anchor.y,kind=anchor.kind,materialID=anchor.materialID,name=#g.members..' known locations'}
+  if mini then local nearest;for _,n in ipairs(g.members) do local d=distances[n.key];if d and (not nearest or d<nearest) then nearest=d end end;distances[proxy.key]=nearest end
+  local f=add(anchor,nil,proxy,mini);if not f then return end
+  f.group=g;f.outline:Hide();f:SetSize((mini and settings.iconSize or settings.worldIconSize)+8,(mini and settings.iconSize or settings.worldIconSize)+8)
+  f.icon:SetTexture(g.mixed and 'Interface\\AddOns\\GatherCompassForever\\Media\\Icon' or A.Resources.Icon(anchor))
+  local showIcon=not mini or settings.icon and not (settings.hideDistance>0 and distances[proxy.key] and distances[proxy.key]<=settings.hideDistance)
+  local alpha=mini and settings.miniIconOpacity or settings.worldIconOpacity
+  f.number:ClearAllPoints();f.number:SetPoint('CENTER',f,'CENTER',9,8);f.number:SetFont(STANDARD_TEXT_FONT or 'Fonts\\FRIZQT__.TTF',11,'OUTLINE');f.number:SetText(tostring(#g.members));f.number:SetAlpha(alpha)
+  if showIcon then f.icon:Show();f.number:Show() else f.icon:Hide();f.number:Hide() end
+  f:EnableMouse(not mini and showIcon and alpha>0)
+  if mini and f.EnableMouseMotion then f:EnableMouseMotion(showIcon and alpha>0) end
+  return f
  end
- for i=1,math.min(#miniNodes,400) do add(miniNodes[i],nil,miniNodes[i],true) end
+ local worldGroups
+ if settings.groupWorld and canvas then
+  local scale=canvas.GetEffectiveScale and canvas:GetEffectiveScale() or 1
+  local candidates=nodes;if selected then candidates={};for _,n in ipairs(nodes) do if n~=selected then candidates[#candidates+1]=n end end;add(selected,nil,selected,false) end
+  local keys={};for _,n in ipairs(candidates) do keys[#keys+1]=n.key end
+  local signature=tostring(db)..':'..tostring(db.nodeRevision)..':'..tostring(worldZone)..':'..canvas:GetWidth()..':'..canvas:GetHeight()..':'..scale..':'..settings.worldIconSize..':'..tostring(focus and focus.nodeKey)..':'..table.concat(keys,';')
+  if M.worldGroupSignature~=signature then
+   M.cachedWorldGroups=A.MarkerGroups.Build(candidates,function(n) return n.x*canvas:GetWidth()*scale,n.y*canvas:GetHeight()*scale end,settings.worldIconSize+4,{limit=selected and 399 or 400,focus=focus and focus.nodeKey});M.worldGroupSignature=signature
+  end
+  worldGroups=M.cachedWorldGroups
+  for _,g in ipairs(worldGroups) do grouped(g,false) end
+ else
+  if selected then add(selected,nil,selected,false) end
+  local count=selected and 1 or 0;for _,n in ipairs(nodes) do if count>=400 then break end;if n~=selected then add(n,nil,n,false);count=count+1 end end
+ end
+ local miniRadius=C_Minimap and C_Minimap.GetViewRadius and A.Client.Read(C_Minimap.GetViewRadius())
+ local nodeW,nodeH;if player then nodeW,nodeH=A.Client.Size(player.mapID) end
+ local miniFacing=0;if GetCVar and GetCVar('rotateMinimap')=='1' then miniFacing=A.Client.Facing() end
+ local canGroup=settings.groupMini and player and nodeW and A.Store.Number(miniRadius) and miniRadius>0 and miniFacing~=nil and Minimap
+ local miniGroups
+ if canGroup then
+  miniGroups=A.MarkerGroups.Build(miniNodes,function(n) return M.MiniProject(n,player,nodeW,nodeH,miniRadius,Minimap:GetWidth(),Minimap:GetHeight(),miniFacing) end,settings.iconSize+4,{limit=400,focus=miniNodes[1] and miniNodes[1].key})
+  local outlines=0
+  for _,g in ipairs(miniGroups) do
+   if #g.members>1 then
+    for _,n in ipairs(g.members) do if outlines>=400 then break end;local f=add(n,nil,n,true);if f then f.icon:Hide();f:EnableMouse(false);if f.EnableMouseMotion then f:EnableMouseMotion(settings.outline~='none' and settings.miniOutlineOpacity>0) end end;outlines=outlines+1 end
+   end
+   grouped(g,true)
+  end
+ else for i=1,math.min(#miniNodes,400) do add(miniNodes[i],nil,miniNodes[i],true) end end
+ M.worldGroups=worldGroups;M.miniGroups=miniGroups
  M.RaiseEditor()
- M.limited=#nodes>400 or #miniNodes>400
+ M.limited=(worldGroups and worldGroups.total>400 or not worldGroups and #nodes>400) or #miniNodes>400
  if not route or #route.points==0 then retire(); return end
  local snapshot=follower and follower:Snapshot()
  local active=snapshot and (snapshot.status=='running' or snapshot.status=='paused' or snapshot.status=='suspended')

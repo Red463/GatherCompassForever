@@ -87,3 +87,17 @@ test('review nodes can be selected and removed on a clipped map without resettin
  sketch:Pan(100000,100000);assert(sketch.cx>=0 and sketch.cx<=1 and sketch.cy>=0 and sketch.cy<=1)
  sketch.frame:Hide();eq(sketch.dragging,nil)
 end)
+
+test('a coincident review group chooses and removes just one member with bounded picker rows',function()
+ local A,U=setup(0)
+ for _,id in ipairs({401,402}) do A.Store.Observe(A.db,{mapID=1,x=.2,y=.5,kind='herb',materialID='gm:herb:'..id,name=id==401 and 'Peacebloom' or 'Silverleaf',source='imported'}) end
+ U.actions.generateReview();local sketch=U.routeSketch;local pin=sketch.pins[1];eq(#pin.group.members,2)
+ pin.scripts.OnClick(pin);assert(sketch.picker.frame:IsShown());assert(#sketch.picker.rows<=8)
+ local row=sketch.picker.rows[2];local key=row.nodeKey;row.scripts.OnClick(row);eq(A.plan.selected,key)
+ U.actions.removeNode();eq(A.plan.excluded[key],true);eq(#A.db.nodes[1],2);eq(sketch.picker.frame:IsShown(),false)
+ U.actions.undoNode();eq(A.plan.excluded[key],nil)
+ U.actions.generateReview();pin=sketch.pins[1];pin.scripts.OnClick(pin);U.Refresh()
+ eq(sketch.picker.plan,A.plan);eq(sketch.picker.frame:IsShown(),true)
+ U.SetTab('codex');eq(sketch.picker.frame:IsShown(),false)
+ U.OpenRoutes();sketch.pins[1].scripts.OnClick(sketch.pins[1]);U.frame:Hide();eq(sketch.picker.frame:IsShown(),false)
+end)

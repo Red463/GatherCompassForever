@@ -35,6 +35,7 @@ Skin.lua
 Dropdown.lua
 Arrow.lua
 MapArt.lua
+GroupPicker.lua
 RouteSketch.lua
 RouteView.lua
 ResourceLibraryView.lua

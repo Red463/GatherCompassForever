@@ -16,6 +16,7 @@ function A.RouteSketch.New(parent)
  s.viewport=CreateFrame('Frame',nil,s.frame);s.viewport:SetPoint('TOPLEFT',s.frame,'TOPLEFT',3,-3);s.viewport:SetPoint('BOTTOMRIGHT',s.frame,'BOTTOMRIGHT',-3,3);s.viewport:SetClipsChildren(true)
  s.canvas=CreateFrame('Frame',nil,s.viewport);s.canvas:SetAllPoints();s.canvas:EnableMouse(false)
  s.art=A.MapArt.New(s.canvas)
+ s.picker=A.GroupPicker.New(s.frame,function(key) if s.last and s.last[3].onSelect then s.last[3].onSelect(key) end end)
  s.fallback=S.Label(s.canvas,'Map artwork unavailable - schematic view',11,S.muted);s.fallback:SetPoint('BOTTOMLEFT',s.canvas,'BOTTOMLEFT',8,6);s.fallback:SetSize(500,20)
  function s:Bounds()
   local w,h=self.frame:GetWidth()-6,self.frame:GetHeight()-6
@@ -33,7 +34,7 @@ function A.RouteSketch.New(parent)
  end
  s.viewport:EnableMouse(true);s.viewport:EnableMouseWheel(true);s.viewport:RegisterForDrag('RightButton')
  s.viewport:SetScript('OnMouseWheel',function(_,delta) s:Zoom(delta) end)
- local function cancel() s.dragging=nil;s.viewport:SetScript('OnUpdate',nil) end
+ local function cancel() s.picker:Close();s.dragging=nil;s.viewport:SetScript('OnUpdate',nil) end
  s.viewport:SetScript('OnDragStart',function()
   if not GetCursorPosition then return end
   local x,y=GetCursorPosition();s.dragging={x=x,y=y}
@@ -80,28 +81,44 @@ function A.RouteSketch.New(parent)
    for i=1,#points-1,stride do line(points[i],points[math.min(i+stride,#points)]) end
    if route and route.loop and #points>1 then line(points[#points],points[1]) end
   end
-  local nodes=options.nodes or points;local used=0;local added={};local plan=options.plan
-  local function pin(n)
-   local key=A.FarmingSession and A.FarmingSession.Key(n) or tostring(n)
-   if added[key] or plan and plan.excluded[key] then return end
-   local x,y=project(n);if x<10 or x>w-10 or y> -10 or y< -h+10 or used>=400 then return end
-   added[key]=true;used=used+1;local f=self.pins[used]
-   if not f then
-    f=CreateFrame('Button',nil,self.canvas);f:SetSize(18,18);f:RegisterForClicks('LeftButtonUp');self.pins[used]=f
-    f.icon=f:CreateTexture(nil,'ARTWORK');f.icon:SetAllPoints()
-    f.halo=f:CreateTexture(nil,'OVERLAY');f.halo:SetTexture(S.media..'NodeRing');f.halo:SetSize(28,28);f.halo:SetPoint('CENTER');f.halo:SetVertexColor(1,.82,.35,1)
-    f:SetScript('OnClick',function(button) if button.select then button.select(button.nodeKey) end end)
-    S.Hint(f,'Node',function() return (f.node and f.node.name or 'Known node')..'\nClick to select; Remove node excludes it from this route only.' end)
+  local nodes=options.nodes or points;local plan=options.plan
+  if self.picker.plan~=plan or self.picker.revision~=(plan and plan.revision) then self.picker:Close() end
+  local grouping=not A.db or A.Resources.Settings(A.db.settings).groupWorld
+  local cacheKey=tostring(nodes)..':'..tostring(plan and plan.revision)..':'..tostring(options.selected)..':'..self.zoom..':'..w..':'..h..':'..tostring(self.art.aspect or self.aspect)..':'..tostring(grouping)
+  if self.groupsKey~=cacheKey then
+   local candidates={};for _,n in ipairs(nodes) do if not plan or not plan.excluded[n.key or A.FarmingSession.Key(n)] then candidates[#candidates+1]=n end end
+   self.groups=A.MarkerGroups.Build(candidates,project,grouping and 20 or .000001,{focus=options.selected,disabled=not grouping});self.groupsKey=cacheKey
+  end
+  local used=0
+  for _,g in ipairs(self.groups) do
+   if used>=400 then break end
+   local n=g.anchor;local key=A.FarmingSession and A.FarmingSession.Key(n) or tostring(n);local x,y=project(n)
+   if x>=10 and x<=w-10 and y<= -10 and y>= -h+10 then
+    used=used+1;local f=self.pins[used]
+    if not f then
+     f=CreateFrame('Button',nil,self.canvas);f:SetSize(18,18);f:RegisterForClicks('LeftButtonUp');self.pins[used]=f
+     f.icon=f:CreateTexture(nil,'ARTWORK');f.icon:SetAllPoints()
+     f.halo=f:CreateTexture(nil,'OVERLAY');f.halo:SetTexture(S.media..'NodeRing');f.halo:SetSize(28,28);f.halo:SetPoint('CENTER');f.halo:SetVertexColor(1,.82,.35,1)
+     f.count=S.Label(f,'',11,S.gold);f.count:SetPoint('CENTER',f,'CENTER',10,8);f.count:SetSize(35,20)
+     f:SetScript('OnClick',function(button)
+      if #button.group.members>1 then self.picker:Open(button.group.members,button,button.plan)
+      elseif button.select then button.select(button.nodeKey) end
+     end)
+     A.SkillTooltip.Bind(f,function() return f.group and #f.group.members>1 and (#f.group.members..' known locations') or 'Known location' end,function() return f.group and A.SkillTooltip.Entries(f.group.members) or {} end,'Click to choose a location. Removal affects this route only.')
+    end
+    f.group=g;f.plan=plan;f.nodeKey=key;f.node=n;f.select=options.onSelect;f:ClearAllPoints();f:SetPoint('CENTER',self.canvas,'TOPLEFT',x,y)
+    f.icon:SetTexture(g.mixed and S.media..'Icon' or A.Resources.Icon(n))
+    local included=not plan or not route;local selected=false
+    for _,member in ipairs(g.members) do
+     if route and route.includedKeys and route.includedKeys[member.key] then included=true end
+     if member.key==options.selected then selected=true end
+    end
+    f:SetAlpha((included or selected) and 1 or .4)
+    if #g.members>1 then f.count:SetText(tostring(#g.members));f.count:Show() else f.count:Hide() end
+    if selected then f.halo:Show() else f.halo:Hide() end;f:Show()
    end
-   f.nodeKey=key;f.node=n;f.select=options.onSelect;f:ClearAllPoints();f:SetPoint('CENTER',self.canvas,'TOPLEFT',x,y)
-   f.icon:SetTexture(A.Resources and A.Resources.Icon(n) or 'Interface\\Minimap\\ObjectIcons');f:SetAlpha((not plan or not route or route.includedKeys and route.includedKeys[key]) and 1 or .4)
-   if key==options.selected then f:SetAlpha(1);f.halo:Show() else f.halo:Hide() end;f:Show()
   end
-  if plan and options.selected then
-   if plan.byKey then local selected=plan.byKey[options.selected];if selected then pin(selected) end
-   else for _,n in ipairs(nodes) do if A.FarmingSession.Key(n)==options.selected then pin(n);break end end end
-  end
-  for _,n in ipairs(nodes) do if used>=400 then break end;pin(n) end
+
  end
  return s
 end

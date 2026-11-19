@@ -68,7 +68,7 @@ function U.DisplayRoute()
  if A.follower and A.follower.status~='complete' and A.follower.status~='stopped' then return A.follower.route end
  return A.plan and A.plan.review and A.plan.route or nil
 end
-function U.SetTab(tab) if tab=='atlas' or tab=='resources' then tab='codex' end;if tab=='welcome' or tab=='routes' or tab=='codex' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
+function U.SetTab(tab) if U.routeSketch then U.routeSketch.picker:Close() end;if tab=='atlas' or tab=='resources' then tab='codex' end;if tab=='welcome' or tab=='routes' or tab=='codex' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
 function U.SetCompact(on) S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
 local function buildHeader()
  U.header=place(CreateFrame('Frame',nil,U.frame),U.frame,12,2,936,60)
@@ -141,7 +141,7 @@ local function buildWindow()
  U.codexView=A.ResourceLibraryView.New(U.content,U);U.resourceLibraryView=U.codexView
  U.welcomeView=A.WelcomeView.New(U.content,U)
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherCompassForeverWindow' end
- U.frame:HookScript('OnHide',function() S.CloseDropdown() end)
+ U.frame:HookScript('OnHide',function() S.CloseDropdown();U.routeSketch.picker:Close() end)
  U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.RefreshMode() end)
  U.Refresh(); U.frame:Hide()
 end

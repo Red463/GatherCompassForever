@@ -80,7 +80,7 @@ local function markerSetup()
  A.Client.Position=function() return point(.1) end;A.Client.Distance=distance
  A.Resources.Skills=function() return {herb=25} end
  LibStub=function() return {AddWorldMapIconMap=function() end,AddMinimapIconMap=function() end,RemoveWorldMapIcon=function() end,RemoveMinimapIcon=function() end} end
- A.db=A.Store.Open()
+ A.db=A.Store.Open();local display=A.Resources.Settings(A.db.settings);display.groupWorld=false;display.groupMini=false
  return A
 end
 

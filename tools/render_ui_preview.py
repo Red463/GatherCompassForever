@@ -23,6 +23,11 @@ CreateFrame=function(...)
  f.SetJustifyV=function(self,v) self.justifyV=v end
  f.SetWordWrap=function(self,v) self.wrap=v end
  f.SetClipsChildren=function(self,v) self.clips=v end
+ f.SetFrameStrata=function(self,v) self.strata=v end
+ local makeTexture=f.CreateTexture
+ f.CreateTexture=function(self,name,layer,template,sublevel) local t=makeTexture(self,name,layer,template,sublevel);t.drawLayer=layer;t.sublevel=sublevel;return t end
+ local makeLine=f.CreateLine
+ f.CreateLine=function(self,name,layer) local l=makeLine(self,name,layer);l.drawLayer=layer;return l end
  f.SetTexture=function(self,v) self.texture=v end
  f.SetTexCoord=function(self,...) self.crop={...} end
  f.SetStartPoint=function(self,...) self.lineStart={...} end
@@ -30,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -86,6 +91,8 @@ def render(scene):
     if scene in ('filters_scroll','filters_scroll_end'):
         lua.execute("for i,item in ipairs(A.Resources.Catalog()) do A.Store.Observe(A.db,{mapID=1,x=.1+i*.005,y=.5,kind=item.kind,name=item.name,materialID=item.materialID,source='imported'}) end;A.Resources.Skills=function() return {herb=109,ore=75},{herb={maxRank=150,bonus=0},ore={maxRank=150,bonus=0}} end;A.UI.Refresh()")
         if scene=='filters_scroll_end':lua.execute('A.UI.filterSidebar:SetOffset(A.UI.filterSidebar.maximum)')
+    if scene=='groups':
+        lua.execute("for _,id in ipairs({402,403}) do A.Store.Observe(A.db,{mapID=1,x=.34+(id-402)*.002,y=.3,kind='herb',materialID='gm:herb:'..id,name=id==402 and 'Silverleaf' or 'Earthroot',source='imported'}) end;A.UI.actions.generateReview();for _,pin in ipairs(A.UI.routeSketch.pins) do if pin.group and #pin.group.members>1 then pin.scripts.OnClick(pin);break end end")
     if scene=='route_heatmap':lua.execute("A.UI.controls.routeStyle:SelectValue('heatmap')")
     if scene=='route_selected':lua.execute("A.UI.routeSketch.pins[1].scripts.OnClick(A.UI.routeSketch.pins[1])")
     if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
@@ -136,7 +143,17 @@ def render(scene):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
         if key not in fonts:fonts[key]=ImageFont.truetype('C:/Windows/Fonts/'+family,size)
         return fonts[key]
-    for o in objects:
+    strata_order={'BACKGROUND':0,'LOW':1,'MEDIUM':2,'HIGH':3,'DIALOG':4,'FULLSCREEN':5,'FULLSCREEN_DIALOG':6,'TOOLTIP':7}
+    def draw_order(o):
+        p=o;strata='MEDIUM'
+        while p is not None:
+            if p['strata'] is not None:strata=p['strata'];break
+            p=p['parent']
+        region=o['kind'] in ('Texture','Line','FontString')
+        level=o['parent'].GetFrameLevel(o['parent']) if region and o['parent'] is not None else o.GetFrameLevel(o)
+        layer=o['drawLayer'] or ('OVERLAY' if o['kind']=='FontString' else 'ARTWORK')
+        return strata_order.get(strata,2),level,({'BACKGROUND':0,'BORDER':1,'ARTWORK':2,'OVERLAY':3,'HIGHLIGHT':4}.get(layer,0) if region else -1),o['sublevel'] or 0,ident(o)
+    for o in sorted(objects,key=draw_order):
         if not visible(o):continue
         x,y,w,h=box(o)
         if o['kind']=='Line' and o['lineStart'] is not None:
@@ -170,11 +187,6 @@ def render(scene):
             d.line([(x+2,y+h-2),(x+w-2,y+h-2)],fill='#2c100b',width=2)
         if template in ('PanelTabButtonTemplate','PanelTopTabButtonTemplate'):
             d.polygon([(x+7,y+2),(x+w-7,y+2),(x+w-1,y+8),(x+w-3,y+h-2),(x+3,y+h-2),(x+1,y+8)],fill='#51422a' if o['selected'] else '#29241a',outline='#968366')
-            # Native template children precede their parent in the capture; draw
-            # the stock label here so its parent's approximation cannot cover it.
-            tabfont=ImageFont.truetype('C:/Windows/Fonts/georgia.ttf',12)
-            tabtext=str(o['text'] or '');tw=d.textlength(tabtext,font=tabfont)
-            d.text((x+(w-tw)/2,y+8),tabtext,font=tabfont,fill='#f4dfb3' if o['selected'] else '#ffd472')
         if template=='UIPanelCloseButton':
             d.rectangle((x+5,y+5,x+w-5,y+h-5),fill='#7e1c14',outline='#a18b66',width=2)
             d.line([(x+11,y+10),(x+w-11,y+h-10)],fill='#ead3a0',width=2)
@@ -264,4 +276,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

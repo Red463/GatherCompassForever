@@ -6,6 +6,7 @@ test('marker groups are stable mixed-resource screen clusters without changing s
  local groups=A.MarkerGroups.Build({c,b,a},project,14);eq(#groups,2);eq(#groups[1].members,2);eq(groups[1].mixed,true);eq(groups[1].anchor,a)
  eq(A.MarkerGroups.Build({a,b,c},project,14)[1].key,groups[1].key);eq(a.x,.1);eq(b.x,.105)
  eq(#A.MarkerGroups.Build({a,b,c},function(n) return n.x*10000,n.y*5000 end,14),3)
+ eq(#A.MarkerGroups.Build({a,b},project,14,{disabled=true}),2)
 end)
 test('groups are radius bounded and preserve a focused member before applying the display cap',function()
  local A=setup();local nodes={};for i=1,100 do nodes[i]=node(string.format('%03d',i),i*.01) end

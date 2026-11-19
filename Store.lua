@@ -37,7 +37,7 @@ end
 function S.Observe(db,o)
  if not S.Position(o) or (o.kind~='herb' and o.kind~='ore') or type(o.materialID)~='string' or #o.materialID>100 or (o.source~='confirmed' and o.source~='imported') then return nil end
  local list=db.nodes[o.mapID] or {}; db.nodes[o.mapID]=list
- local match
+ local match;local created=false
  for _,n in ipairs(list) do
   local alias=n.name and o.name and n.name==o.name and (n.materialID:match('^node:') or o.materialID:match('^node:'))
   if n.kind==o.kind and (n.materialID==o.materialID or alias) and not (n.objectID and o.objectID and n.objectID~=o.objectID) then
@@ -46,6 +46,7 @@ function S.Observe(db,o)
   end
  end
  if not match then
+  created=true
   match={mapID=o.mapID,x=o.x,y=o.y,kind=o.kind,materialID=o.materialID,name=o.name or o.materialID,key='n'..db.nextNode,count=0}
   db.nextNode=db.nextNode+1; list[#list+1]=match
  end
@@ -66,7 +67,7 @@ function S.Observe(db,o)
   match.x,match.y=o.x,o.y
  end
  db.nodeRevision=(S.Number(db.nodeRevision) and db.nodeRevision or 0)+1
- return match
+ return match,created
 end
 function S.Select(db,mapID,filter)
  local result={}; filter=filter or {}; local source=filter.source or 'combined'

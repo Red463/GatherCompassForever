@@ -5,6 +5,7 @@
 - Remember confirmed detour pickups for the current lap and skip their matching later gather stops in both Lines and Heatmap mode. Reset next lap or on a fresh route start.
 - Match resource identity, object identity where available and the nearest planned stop within 15 yards. Reject ambiguous matches and duplicate object loot; retain explicit and necessary travel connections.
 - Preserve pickup memory through pause, rejoin, reverse and in-session node removal/undo without deleting node history or changing marker selections.
+- Bind gather confirmation to its originating route and lap, prefer an existing spawn's identity, and retain lap coverage through rejoin/reverse so pickups reset after the circuit is accounted for.
 - Use the most common resource's icon for grouped world-map, minimap and route-review markers, with stable ties and unchanged marker positions.
 - Simplify grouped hover details to skill-coloured resource names and right-aligned counts. Keep detailed single-node tooltips.
 - Replace the Welcome subtitle with functional instructions and update marker previews to match the new group style.

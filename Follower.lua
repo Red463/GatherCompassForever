@@ -1,7 +1,9 @@
 local _, A = ...
 A.Follower={}
+local runID=0
 function A.Follower.New(route,start,distance,options)
- local f={route=A.Store.Copy(route),index=1,direction=1,lap=0,status='running',distance=distance,visited={},collected={},gatherRecords={}}
+ runID=runID+1
+ local f={runID=runID,route=A.Store.Copy(route),index=1,direction=1,lap=0,status='running',distance=distance,visited={},collected={},gatherRecords={}}
  local function identity(p)
   if p.kind~='gather' then return nil end
   if p.resourceKind and p.materialID then return {kind=p.resourceKind,materialID=p.materialID,name=p.name,objectID=p.objectID} end
@@ -34,7 +36,7 @@ function A.Follower.New(route,start,distance,options)
    self.direction=back and forward and back<forward and -1 or 1
   end
   self.arrivedAt=nil;self.armed=nil;self.needsDeparture=nil;self.initialDistance=nil;self.transit=nil
-  self.lapStart=self.index;self.lapSeen={};self.lapCount=0;self.visited={};return true
+  self.lapStart=self.lapStart or self.index;self.lapSeen=self.lapSeen or {};self.lapCount=self.lapCount or 0;return true
  end
  f:Rejoin(start)
  if #f.route.points==0 then f.status='complete'
@@ -58,8 +60,10 @@ function A.Follower.New(route,start,distance,options)
    if not self.route.loop then self.status='complete'; return end
    nextIndex=nextIndex<1 and #self.route.points or 1
   end
-  if self.route.loop and nextIndex==self.lapStart and self.lapCount>=#self.route.points then
-   self.lap=self.lap+1;self.visited={};self.lapSeen={};self.lapCount=0;self.collected={};self.gatherRecords={}
+  -- Coverage survives rejoining and reversing: each accounted stop completes
+  -- this lap once, without requiring a second circuit to the old join point.
+  if self.route.loop and self.lapCount>=#self.route.points then
+   self.lap=self.lap+1;self.lapStart=nextIndex;self.visited={};self.lapSeen={};self.lapCount=0;self.collected={};self.gatherRecords={}
   end
   self.index=nextIndex;self.transit=nil; self.arrivedAt=position and A.Store.Copy(position) or nil
   self.initialDistance=position and self.distance(position,self:Target()) or nil
@@ -88,13 +92,14 @@ function A.Follower.New(route,start,distance,options)
  function f:Advance(now,position)
   local previous=self:Target();step(self,now,position);self:SkipCollected(position or previous)
  end
- function f:ConfirmGather(o,recordOnly)
+ function f:ConfirmGather(o,knownNode)
   if self.status=='complete' or self.status=='stopped' or not A.Store.Position(o) or o.source~='confirmed' or type(o.materialID)~='string' then return nil end
+  if o.routeRun and (o.routeRun~=self.runID or o.routeLap~=self.lap) then return nil end
   for _,record in ipairs(self.gatherRecords) do
    if o.sourceGUID and o.sourceGUID==record.sourceGUID or o.castGUID and o.castGUID==record.castGUID then return nil end
   end
   local best,index,ambiguous
-  for i,p in ipairs(self.route.points) do if compatible(identity(p),o) then
+  for i,p in ipairs(self.route.points) do if (not knownNode or p.nodeKey==knownNode.key) and compatible(identity(p),o) then
    local d=self.distance(o,p)
    if A.Store.Number(d) and d>=0 and d<=15 then
     if not best or d<best then best,index,ambiguous=d,i,false
@@ -104,10 +109,26 @@ function A.Follower.New(route,start,distance,options)
   if not index or ambiguous or self.collected[index] then return nil end
   self.collected[index]=true;self.visited[index]=true
   local record=A.Store.Copy(o);record.routeNodeKey=self.route.points[index].nodeKey;self.gatherRecords[#self.gatherRecords+1]=record
-  if not recordOnly then self:SkipCollected(o) end
+  self:SkipCollected(o)
   return true
  end
  function f:RestoreGathers(previous)
+  self.runID=previous.runID
+  local function key(p) return p and string.format('%s:%s:%.17g:%.17g:%s',p.mapID,p.kind,p.x,p.y,p.nodeKey or '') end
+  local seen,visited={},{};local anchor=key(previous.route.points[previous.lapStart])
+  for i,p in ipairs(previous.route.points) do
+   local id=key(p)
+   if previous.lapSeen[i] then seen[id]=(seen[id] or 0)+1 end
+   if previous.visited[i] then visited[id]=(visited[id] or 0)+1 end
+  end
+  self.lapSeen={};self.lapCount=0
+  local anchored=false
+  for i,p in ipairs(self.route.points) do
+   local id=key(p)
+   if not anchored and id==anchor then self.lapStart=i;anchored=true end
+   if seen[id] and seen[id]>0 then self.lapSeen[i]=true;self.lapCount=self.lapCount+1;seen[id]=seen[id]-1 end
+   if visited[id] and visited[id]>0 then self.visited[i]=true;visited[id]=visited[id]-1 end
+  end
   self.gatherRecords=A.Store.Copy(previous.gatherRecords or {})
   for _,o in ipairs(self.gatherRecords) do for i,p in ipairs(self.route.points) do
    if o.routeNodeKey and p.nodeKey==o.routeNodeKey and compatible(identity(p),o) then
@@ -117,7 +138,7 @@ function A.Follower.New(route,start,distance,options)
   self:SkipCollected(start)
  end
  function f:Skip() if self:Target() then self:Advance(nil,nil) end end
- function f:Reverse() self.direction=-self.direction;self.lapStart=self.index;self.lapSeen={};self.lapCount=0 end
+ function f:Reverse() self.direction=-self.direction;self.transit=nil end
  function f:Tick(position,now,gathering)
   if self.status=='complete' or self.status=='paused' or self.status=='stopped' then return end
   local p=self:Target(); local d=self.distance(position,p)

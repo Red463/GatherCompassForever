@@ -50,9 +50,10 @@ function A.Initialize()
   if A.writable then GatherCompassForeverDB=A.db end
   A.detector=A.Gathering.New(function(o)
    o.time=time and time() or 0
-   local n=A.Store.Observe(A.db,o)
+   local n,created=A.Store.Observe(A.db,o)
    if n then
-    if A.follower then A.follower:ConfirmGather(o) end
+    local f=A.follower
+    if f and o.routeRun==f.runID and o.routeLap==f.lap then f:ConfirmGather(o,not created and n or nil) end
     A.status='Confirmed '..(n.name or n.materialID)..'.'; A.UI.Refresh()
    end
   end)
@@ -117,7 +118,11 @@ function A.OnEvent(_,event,...)
   local unit,target,guid,id=...
   if A.Client.Read(unit)=='player' then
    local attempt=A.Client.Attempt(target,guid,id)
-   if attempt then A.detector:Sent(attempt) else A.detector:Cancel(A.Client.Now()) end
+   if attempt then
+    local f=A.follower
+    if f and f.status~='complete' and f.status~='stopped' then attempt.routeRun=f.runID;attempt.routeLap=f.lap end
+    A.detector:Sent(attempt)
+   else A.detector:Cancel(A.Client.Now()) end
   end
  elseif event=='UNIT_SPELLCAST_SUCCEEDED' or event=='UNIT_SPELLCAST_FAILED' or event=='UNIT_SPELLCAST_INTERRUPTED' then
   local unit,guid=...; unit=A.Client.Read(unit); guid=A.Client.Read(guid)

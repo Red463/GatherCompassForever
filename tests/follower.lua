@@ -46,6 +46,23 @@ test('pickup memory survives pause rejoin reverse and route rebuild but a fresh 
  local rebuilt=setup(points,true);rebuilt:RestoreGathers(f);rebuilt:Skip();eq(rebuilt.index,3)
  local fresh=setup(points,true);fresh:Skip();eq(fresh.index,2)
 end)
+test('pause rejoin and reverse preserve lap coverage so detour pickups reset on the completed circuit',function()
+ for _,recovery in ipairs({'rejoin','reverse'}) do
+  local f=setup({gatherPoint(.1,'a'),gatherPoint(.3,'b'),gatherPoint(.5,'c'),gatherPoint(.7,'d')},true,point(.1))
+  f.route.maxLink=450;f:ConfirmGather(pickup(.7));f:Skip();f:Skip();eq(f.index,3);eq(f.lapCount,2)
+  if recovery=='rejoin' then f:Pause();f:Resume(point(.5));eq(f.lapCount,2);f:Skip();eq(f.index,1);eq(f.lap,1)
+  else
+   f:Reverse();eq(f.lapCount,2);f:Skip();f:Skip();f:Skip();eq(f.index,3);eq(f.lap,1)
+  end
+  eq(next(f.collected),nil)
+ end
+end)
+test('rebuilding the same circuit preserves its accounted stops and resets pickups at lap completion',function()
+ local points={gatherPoint(.1,'a'),gatherPoint(.3,'b'),gatherPoint(.5,'c'),gatherPoint(.7,'d')}
+ local old=setup(points,true);old:ConfirmGather(pickup(.7));old:Skip();old:Skip();eq(old.lapCount,2)
+ local restored=setup(points,true,point(.5));restored:RestoreGathers(old);eq(restored.lapCount,2)
+ restored:Skip();eq(restored.lap,1);eq(restored.index,1);eq(next(restored.collected),nil)
+end)
 test('all-collected loops terminate skip scanning and become eligible on a later lap',function()
  local f=setup({gatherPoint(.1,'a'),gatherPoint(.3,'b')},true);f:Pause()
  f:ConfirmGather(pickup(.1));f:ConfirmGather(pickup(.3));f:Resume();f:Tick(point(.1),0,false)

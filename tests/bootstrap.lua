@@ -29,6 +29,35 @@ test('real successful gathering events mark a future generated stop without impo
  A.UI.actions.stop();eq(A.follower,nil)
 end)
 
+test('a confirmed known spawn outside the representative stops does not consume its neighbour',function()
+ local A,clock=setup();local nodes={}
+ for i,x in ipairs({.2,.21,.4}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
+ A.UI.actions.generateStart();local f=A.follower;eq(f.route.points[1].nodeKey,nodes[1].key)
+ A.Client.Position=function() return point(.21) end;A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','adjacent',2366)
+ clock(1);A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','adjacent',2366);A.OnEvent(nil,'LOOT_READY')
+ eq(nodes[2].confirmed,true);eq(next(f.collected),nil);eq(f.index,1)
+end)
+
+test('loot delayed across a lap boundary never consumes a stop on the next lap',function()
+ local A,clock=setup();for _,x in ipairs({.2,.4,.6}) do A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
+ A.UI.actions.generateStart();local f=A.follower;f.index=3;f.lapSeen={[1]=true,[2]=true};f.lapCount=2
+ A.Client.Position=function() return point(.6) end
+ A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','lap-end',2366);clock(1);A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','lap-end',2366)
+ clock(1.1);A.Tick(.1);eq(f.lap,1);clock(1.2);A.OnEvent(nil,'LOOT_READY');eq(next(f.collected),nil)
+ f:Skip();f:Skip();eq(f.index,3);eq(f.lap,1)
+end)
+
+test('a pending gather from an old route cannot consume a fresh route but survives an in-session edit',function()
+ for _,replace in ipairs({true,false}) do
+  local A,clock=setup();local nodes={};for i,x in ipairs({.2,.4,.6}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
+  A.UI.actions.generateStart();A.Client.Position=function() return point(.4) end
+  A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','pending',2366)
+  if replace then A.UI.actions.generateStart() else A.plan.selected=nodes[3].key;A.UI.actions.removeNode() end
+  A.follower:Pause();clock(1);A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','pending',2366);A.OnEvent(nil,'LOOT_READY')
+  if replace then eq(next(A.follower.collected),nil) else assert(next(A.follower.collected)) end
+ end
+end)
+
 
 
 

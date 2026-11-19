@@ -47,9 +47,11 @@ function P.New(U)
    self.geometry=P.Resolve(A.db.settings,UIParent:GetWidth(),UIParent:GetHeight(),U.compact)
   end
  end
- function self:Resize(w,h)
+ function self:Resize(w,h,axes)
   if not A.Store.Number(w) or not A.Store.Number(h) then return end
-  local p=preference(A.db.settings);p.width=math.floor(math.max(860,w)+.5);p.height=math.floor(math.max(600,h)+.5)
+  local p=preference(A.db.settings)
+  if not axes or axes.width then p.width=math.floor(math.max(860,w)+.5) end
+  if not axes or axes.height then p.height=math.floor(math.max(600,h)+.5) end
   if self.drag then
    local g=P.Resolve(A.db.settings,UIParent:GetWidth(),UIParent:GetHeight(),false)
    p.x=(self.drag.left+g.width*g.scale/2)/g.screenWidth;p.y=(self.drag.top-g.height*g.scale/2)/g.screenHeight
@@ -69,15 +71,23 @@ function P.New(U)
   if not self.drag then return end
   self.elapsed=(self.elapsed or 0)+elapsed;if self.elapsed<.05 then return end;self.elapsed=0
   local x,y=GetCursorPosition();if not A.Store.Number(x) or not A.Store.Number(y) then self:Cancel();return end
-  local d=self.drag;self:Resize(d.width+(x-d.x)/d.scale,d.height-(y-d.y)/d.scale)
+  local d=self.drag
+  local maxW=math.max(860,math.floor((UIParent:GetWidth()-12-d.left)/d.windowScale))
+  local maxH=math.max(600,math.floor((d.top-12)/d.windowScale))
+  local w=math.max(860,math.min(maxW,math.floor(d.width+(x-d.x)/d.scale+.5)))
+  local h=math.max(600,math.min(maxH,math.floor(d.height-(y-d.y)/d.scale+.5)))
+  if w~=d.width then d.changedWidth=true end;if h~=d.height then d.changedHeight=true end
+  if (d.changedWidth and w~=self.geometry.width) or (d.changedHeight and h~=self.geometry.height) then
+   self:Resize(w,h,{width=d.changedWidth,height=d.changedHeight})
+  end
   if type(IsMouseButtonDown)=='function' and not IsMouseButtonDown('LeftButton') then self:Cancel() end
  end
  grip:SetScript('OnMouseDown',function(_,button)
   if button~='LeftButton' or U.compact or type(GetCursorPosition)~='function' then return end
   local x,y=GetCursorPosition();if not A.Store.Number(x) or not A.Store.Number(y) then return end
-  U.frame:StopMovingOrSizing();self:SavePosition();A.Skin.CloseDropdown()
+  U.frame:StopMovingOrSizing();A.Skin.CloseDropdown()
   if U.routeSketch then U.routeSketch.picker:Close() end
-  local g=self.geometry;self.drag={x=x,y=y,width=g.width,height=g.height,left=g.left,top=g.top,scale=U.frame:GetEffectiveScale()};self.elapsed=0
+  local g=self.geometry;self.drag={x=x,y=y,width=g.width,height=g.height,left=g.left,top=g.top,windowScale=g.scale,scale=U.frame:GetEffectiveScale()};self.elapsed=0
   self.driver:SetScript('OnUpdate',update)
  end)
  grip:SetScript('OnMouseUp',function() if self.drag then update(nil,.05);self:Cancel() end end)

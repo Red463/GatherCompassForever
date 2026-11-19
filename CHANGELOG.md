@@ -7,6 +7,7 @@
 - Reflow Node Codex filters and adjust resource/zone page capacity to available space.
 - Keep Welcome, Node display and full-width Preferences accessible through interior scrolling when needed.
 - Add the current dimensions and Reset panel size in Preferences. Default size is 960 x 624, minimum layout 860 x 600 UI units, with screen fitting below that minimum.
+- Preserve untouched size/position preferences on fitted grip clicks, keep the opposite corner fixed at screen edges, and retain custom Codex resources across responsive pages.
 - Preserve preferred size through resolution changes and minimise/expand, close stale popups on resize, and keep route state and map zoom/pan intact.
 
 ## 0.11.0

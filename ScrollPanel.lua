@@ -7,7 +7,12 @@ function P.New(parent)
  local bar=A.Skin.Slider(self.frame,0,0,1,function(_,value) if not self.syncing then self:SetOffset(value) end end)
  self.bar=bar;bar:SetOrientation('VERTICAL');bar:SetThumbTexture('Interface\\Buttons\\UI-ScrollBar-Knob');bar.lowLabel:Hide();bar.highLabel:Hide()
  function self:SetOffset(value)
-  self.offset=math.max(0,math.min(self.maximum,value));scroll:SetVerticalScroll(self.offset)
+  local offset=math.max(0,math.min(self.maximum,value))
+  if offset~=self.offset then
+   local owner=A.Skin.dropdownOwner
+   while owner do if owner==self.frame then A.Skin.CloseDropdown();break end;owner=owner:GetParent() end
+  end
+  self.offset=offset;scroll:SetVerticalScroll(self.offset)
   self.syncing=true;bar:SetValue(self.offset);self.syncing=false
  end
  function self:Layout(w,h,contentHeight)

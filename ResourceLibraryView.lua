@@ -170,8 +170,8 @@ function V.New(parent,U)
   local top=view.filterRows==2 and 136 or 100
   move(view.info,grid,0,top-27,w,18)
   local columns=math.max(1,math.floor((w+12)/100));local rows=math.max(1,math.floor((h-top-26)/90))
-  local capacity=columns*rows;if capacity~=view.capacity then view.page=1 end;view.capacity=capacity
-  for i=1,math.min(capacity,#A.Resources.Catalog()) do local b=view.tiles[i] or tile(i);move(b.cell,grid,((i-1)%columns)*100,top+math.floor((i-1)/columns)*90,88,88) end
+  local capacity=math.min(256,columns*rows);if view.mode=='grid' then if capacity~=view.capacity then view.page=1 end;view.capacity=capacity end
+  for i=1,capacity do local b=view.tiles[i] or tile(i);move(b.cell,grid,((i-1)%columns)*100,top+math.floor((i-1)/columns)*90,88,88) end
   move(U.controls.resourcePrev,grid,0,h-23,106,23);move(U.controls.resourceNext,grid,w-106,h-23,106,23)
   move(view.pageLabel,grid,120,h-22,w-240,22);move(view.empty,grid,50,top,w-100,math.max(50,h-top-30))
   move(view.name,detail,234,0,w-234,25);move(view.profession,detail,234,29,w-234,18);view.localInfo:SetWidth(w)

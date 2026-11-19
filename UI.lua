@@ -173,12 +173,13 @@ function U.RefreshMode()
  end
  place(U.body,U.frame,12,100,width-24,math.max(1,height-210))
  local full=U.tab~='routes';place(U.content,U.body,full and 0 or 194,0,width-24-(full and 0 or 194),math.max(1,height-210))
- if not compact then
+ local layoutKey=width..':'..height..':'..U.codexView.mode
+ if not compact and U.layoutsKey~=layoutKey then
   U.filterSidebar:Layout(194,height-210)
-  U.routeView.Layout(U.content:GetWidth(),U.content:GetHeight())
+  U.routeView.Layout(width-218,height-210)
   U.codexView.Layout(width-24,height-210);U.nodeDisplayView.Layout(width-24,height-210);U.welcomeView.Layout(width-24,height-210)
   U.preferencesScroll:Layout(math.min(896,width-64),height-229,508)
-  U.panelSizeValue:SetText(math.floor(width+.5)..' x '..math.floor(height+.5)..' UI units')
+  U.panelSizeValue:SetText(math.floor(width+.5)..' x '..math.floor(height+.5)..' UI units');U.layoutsKey=layoutKey
  end
  show(U.chrome,not compact);show(U.compactBackground,compact);show(U.header,not compact); show(U.nav,not compact); show(U.body,not compact)
  place(U.footer,U.frame,compact and 1 or 12,compact and 1 or height-104,width-(compact and 2 or 24),64)
@@ -229,7 +230,7 @@ function U.Refresh()
  show(U.library,U.tab=='routes'); show(U.preferencesViewport,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
  show(U.resourceLibraryView.frame,resource)
  show(U.welcomeView.frame,welcome)
- if not full then refreshSidebar(p) end
+ if not full then refreshSidebar(p) elseif U.tab=='settings' then U.zone:SetText('Preferences  -  Panel and guide options') end
  if U.tab=='routes' then U.routeView.Refresh() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
  refreshFooter(p); refreshStatus(p)
  U.nodeDisplayView.Refresh()

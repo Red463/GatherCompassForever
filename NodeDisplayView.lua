@@ -63,7 +63,7 @@ function V.New(parent,U)
  S.Hint(U.controls.nodeDistance,'Keep native tracking visible','Hide nearby resource icons and grouped counts. Hollow outlines remain at their real known locations.')
  S.Hint(U.controls.nodeRouteLine,'Minimap route overlay','Applies to both Lines and Heatmap. Node-marker visibility is independent of route guidance.')
  function v.Layout(width,height)
-  local w,h=width-40,height-19;v.stacked=w<896
+  local w,h=width-40,height-19;v.stacked=w-(h<395 and 20 or 0)<896
   local content=v.stacked and 682 or 395;local available=scroller:Layout(w,h,content)
   v.world:SetSize(available,content-106);v.mini:SetSize(available,content-106)
   local left=v.stacked and math.max(0,(available-442)/2) or math.max(0,(available-896)/2)

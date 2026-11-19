@@ -51,3 +51,12 @@ test('ignored minimap rotation places resource and destination rings in the same
  ignored=false;A.Map.Refresh(A.db,route,follower);assert(sdkAdds>0)
  LibStub=nil;C_Minimap=nil;GetCVar=nil
 end)
+
+test('minimap heat no longer punches a hole around every possible spawn',function()
+ local A,nodes=setup();module('Follower',A)
+ local route={mapID=1,width=1000,height=500,points={point(.2),point(.4)}};local f=A.Follower.New(route,point(.1),distance)
+ A.db.settings.routeStyle='heatmap';local holes;local field=A.MiniHeat.Field
+ A.MiniHeat.Field=function(r,p,w,h,s,input,...) holes=input;return field(r,p,w,h,s,input,...) end
+ A.Map.Refresh(A.db,route,f);assert(holes and #holes<=2);assert(holes[1].r<=4)
+ LibStub=nil;C_Minimap=nil
+end)

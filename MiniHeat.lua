@@ -12,16 +12,17 @@ end
 function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
  local field={};if not index[shape] or not A.Store.Number(w) or not A.Store.Number(h) or math.min(w,h)<=0 or not A.Store.Number(opacity) or opacity<=0 then return field end
  local cols,rows=math.min(40,math.max(1,math.ceil(w/5))),math.min(40,math.max(1,math.ceil(h/5)))
- local cw,ch=w/cols,h/rows;local density,blocked={},{};local samples=A.Heatmap.Samples(route);local rx,ry=radiusProjection(samples.radius)
+ local cw,ch=w/cols,h/rows;local density,fade={},{};local samples=A.Heatmap.Samples(route);local rx,ry=radiusProjection(samples.radius)
  if not A.Store.Number(rx) or not A.Store.Number(ry) or math.min(rx,ry)<=0 then return field end
  local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
  for _,hole in ipairs(holes or {}) do
-  local left,right=clamp(math.floor((hole.x-hole.r+w/2)/cw),0,cols-1),clamp(math.floor((hole.x+hole.r+w/2)/cw),0,cols-1)
-  local top,bottom=clamp(math.floor((h/2-hole.y-hole.r)/ch),0,rows-1),clamp(math.floor((h/2-hole.y+hole.r)/ch),0,rows-1)
+  local left,right=clamp(math.floor((hole.x-hole.r-(hole.feather or 4)+w/2)/cw),0,cols-1),clamp(math.floor((hole.x+hole.r+(hole.feather or 4)+w/2)/cw),0,cols-1)
+  local top,bottom=clamp(math.floor((h/2-hole.y-hole.r-(hole.feather or 4))/ch),0,rows-1),clamp(math.floor((h/2-hole.y+hole.r+(hole.feather or 4))/ch),0,rows-1)
   for row=top,bottom do for col=left,right do
    local x,y=-w/2+col*cw,h/2-row*ch
    local dx=math.max(x-hole.x,0,hole.x-x-cw);local dy=math.max(y-ch-hole.y,0,hole.y-y)
-   if dx*dx+dy*dy<=(hole.r+1)^2 then blocked[row*cols+col+1]=true end
+   local key=row*cols+col+1;local amount=clamp((math.sqrt(dx*dx+dy*dy)-hole.r)/(hole.feather or 4),0,1)
+   amount=amount*amount*(3-2*amount);fade[key]=math.min(fade[key] or 1,amount)
   end end
  end
  for _,p in ipairs(samples) do
@@ -32,7 +33,7 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
    local weight=.35+math.min(1,math.log(1+(p.density or 1))/math.log(20))
    for row=top,bottom do for col=left,right do
     local key=row*cols+col+1
-    if not blocked[key] then
+    if fade[key]~=0 then
      local dx=(-w/2+(col+.5)*cw-px)/rx;local dy=(h/2-(row+.5)*ch-py)/ry;local q=dx*dx+dy*dy
      if q<1 then density[key]=(density[key] or 0)+weight*(math.exp(-q*4)-math.exp(-4)) end
     end
@@ -43,7 +44,7 @@ function H.Field(route,project,w,h,shape,holes,opacity,radiusProjection)
   local d=density[row*cols+col+1];local x,y=-w/2+col*cw,h/2-row*ch
   if d and d>.005 and H.InShape(x,y,w,h,shape) and H.InShape(x+cw,y,w,h,shape) and H.InShape(x,y-ch,w,h,shape) and H.InShape(x+cw,y-ch,w,h,shape) then
    local intensity=1-math.exp(-d*.8)
-   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=intensity*.45*math.min(1,opacity),green=.72-.45*intensity}
+   field[#field+1]={x=x,y=y,width=cw,height=ch,alpha=intensity*.72*math.min(1,opacity)*(fade[row*cols+col+1] or 1),green=.37-.22*intensity}
   end
  end end
  return field
@@ -59,6 +60,6 @@ function H.Draw(pool,parent,field,shape)
  for i,c in ipairs(field) do
   local t=pool[i]
   if not t then t=parent:CreateTexture(nil,'BACKGROUND',nil,1);pool[i]=t;if pool.mask and t.AddMaskTexture then t:AddMaskTexture(pool.mask) end end
-  t:SetColorTexture(1,c.green,.04,c.alpha);t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
+  t:SetColorTexture(.82,c.green,.025,c.alpha);t:ClearAllPoints();t:SetPoint('TOPLEFT',parent,'CENTER',c.x,c.y);t:SetSize(c.width,c.height);t:Show()
  end
 end

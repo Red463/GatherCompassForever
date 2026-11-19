@@ -479,7 +479,9 @@ function M.Refresh(db,route,follower)
   if M.miniHeatLayer:GetParent()~=Minimap then M.miniHeatLayer:SetParent(Minimap);M.miniHeatLayer:ClearAllPoints();M.miniHeatLayer:SetAllPoints(Minimap) end
   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
   local function project(p) return miniRaw(p,player,w,h,radius,mw,mh,facing) end
-  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,holes,settings.routeOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
+  local heatHoles={{x=0,y=0,r=4,feather=5}}
+  if snapshot and snapshot.target then local x,y=project(snapshot.target);heatHoles[#heatHoles+1]={x=x,y=y,r=3,feather=4} end
+  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.routeOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
   A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape)
  end
  local wi,mi=0,0

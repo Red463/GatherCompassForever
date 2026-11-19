@@ -27,6 +27,10 @@ function H.Samples(route)
   for i=0,steps do local t=i/steps;add(e.a.x+(e.b.x-e.a.x)*t,e.a.y+(e.b.y-e.a.y)*t,(e.a.density or 1)*(1-t)+(e.b.density or 1)*t) end
  end
  if #edges==0 and points[1] then add(points[1].x,points[1].y,points[1].density) end
+ for _,p in ipairs(samples) do
+  local neighbours=0;for _,q in ipairs(samples) do if ((p.x-q.x)*w)^2+((p.y-q.y)*h)^2<=(radius*2)^2 then neighbours=neighbours+1 end end
+  p.overlap=math.max(1,neighbours)
+ end
  cache[route]=samples;return samples
 end
 function H.Hide(pool) for _,t in ipairs(pool) do t:Hide() end end
@@ -39,7 +43,7 @@ function H.Draw(pool,parent,route,project,radiusProjection,visible)
    if not t then t=parent:CreateTexture(nil,'ARTWORK');pool[used]=t end
    t:SetTexture('Interface\\AddOns\\GatherCompassForever\\Media\\HeatBlob')
    local density=math.min(1,math.log(1+p.density)/math.log(20))
-   t:SetVertexColor(1,.64-.43*density,.08,.14+.07*density)
+   t:SetVertexColor(.82,.37-.20*density,.035,(.78+.14*density)/(p.overlap or 1))
    t:SetSize(rx*2,ry*2);t:ClearAllPoints();t:SetPoint('CENTER',parent,'TOPLEFT',x,y);t:Show()
   end
  end

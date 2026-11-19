@@ -17,3 +17,13 @@ test('minimap shape quadrants and ignored rotation match their native projection
  eq(A.Client.MinimapFacing(),0);eq(A.Client.MinimapRadius(),nil);C_Minimap.IsRotateMinimapIgnored=function() return false end;near(A.Client.MinimapFacing(),1.2)
  A.Client.Facing=function() return nil end;eq(A.Client.MinimapFacing(),nil);C_Minimap=nil;GetCVar=nil
 end)
+
+test('minimap heat keeps a continuous dense corridor with soft player clearance',function()
+ local A=setup();local route={width=1000,height=500,points={point(.3),point(.7)}}
+ local field=A.MiniHeat.Field(route,function(p) return (p.x-.5)*500,0 end,200,200,'SQUARE',{{x=0,y=0,r=4,feather=5}},1,function(r) return r*.5,r*.5 end)
+ local plain=A.MiniHeat.Field(route,function(p) return (p.x-.5)*500,0 end,200,200,'SQUARE',{},1,function(r) return r*.5,r*.5 end)
+ local original={};for _,c in ipairs(plain) do original[c.x..':'..c.y]=c.alpha end
+ local soft=false;local centre=false
+ for _,c in ipairs(field) do if math.abs(c.y)<10 and math.abs(c.x)<90 then centre=true end;if c.alpha>0 and c.alpha<(original[c.x..':'..c.y] or 0) then soft=true end;assert(c.alpha<=.72) end
+ assert(centre);assert(soft,'Player clearance has no feathered edge')
+end)

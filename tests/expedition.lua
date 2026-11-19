@@ -21,7 +21,7 @@ test('node opacity sliders update markers live without changing unrelated opacit
 end)
 
 test('changing Gathering immediately refreshes both maps and clears an older resource focus',function()
- local A=setup();module('Map',A);local U=A.UI;local count=0
+ local A=setup();module('Map',A);local U=A.UI;local count=0;A.Client.Position=function() return point(.3) end;C_Minimap={GetViewRadius=function() return 200 end}
  local herb=A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='herb',source='imported'})
  local ore=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind='ore',materialID='ore',source='imported'})
  LibStub=function() return {AddWorldMapIconMap=function() end,AddMinimapIconMap=function() end,RemoveWorldMapIcon=function() end,RemoveMinimapIcon=function() end} end

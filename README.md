@@ -85,8 +85,10 @@ aliases for previous addon identities. To retain existing nodes, routes and sett
 5. Remove the superseded addon folder from `Interface/AddOns`, install the `Gatherly`
    folder, restart WoW and verify your nodes and preferences.
 
-The tool changes only the root variable name. It never executes Lua or changes the
-input file; stored data and its formatting are preserved. Transfers are optional:
+The tool validates serialized table data, then changes only the root variable name.
+It rejects malformed fields and executable expressions before creating output. It
+never executes Lua or changes the input file; stored data, comments, encoding marker
+and formatting are preserved. Transfers are optional:
 Gatherly can also start with an empty database and import node locations normally.
 
 ### Optional node data

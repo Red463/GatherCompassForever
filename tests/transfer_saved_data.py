@@ -26,12 +26,12 @@ class TransferTests(unittest.TestCase):
         self.source.write_bytes(original)
         self.module.transfer(self.source, self.destination)
         self.assertEqual(self.source.read_bytes(), original)
-        self.assertEqual(self.destination.read_bytes(), ('GatherlyDB' + payload).encode('utf-8'))
+        self.assertEqual(self.destination.read_bytes(), ('-- saved data\r\nGatherlyDB' + payload).encode('utf-8'))
 
     def test_accepts_bom_and_long_comments_without_parsing_them_as_tables(self):
         self.source.write_bytes(b'\xef\xbb\xbf--[=[ } ignored ]=]\nSourceDB = { ["nodes"] = {} }\n')
         self.module.transfer(self.source, self.destination)
-        self.assertEqual(self.destination.read_text(), 'GatherlyDB = { ["nodes"] = {} }\n')
+        self.assertEqual(self.destination.read_bytes(), b'\xef\xbb\xbf--[=[ } ignored ]=]\nGatherlyDB = { ["nodes"] = {} }\n')
 
     def test_refuses_existing_destination(self):
         self.source.write_text('SourceDB = {}')
@@ -47,7 +47,9 @@ class TransferTests(unittest.TestCase):
         self.assertEqual(self.source.read_text(), 'SourceDB = {}')
 
     def test_rejects_invalid_or_multiple_roots_without_output(self):
-        for content in ['return {}', 'SourceDB = 1', 'SourceDB = {', 'SourceDB = {}\nOtherDB = {}', 'SourceDB = { "unterminated }', 'SourceDB = { --[[ unfinished']:
+        for content in ['return {}', 'SourceDB = 1', 'SourceDB = {', 'SourceDB = {}\nOtherDB = {}', 'SourceDB = { "unterminated }', 'SourceDB = { --[[ unfinished',
+                        "SourceDB = { ['nodes'] = , ['settings'] = {} }", 'SourceDB = {a = true false}', 'SourceDB = {a = 1e}',
+                        "SourceDB = {a = 'newline\nbad'}", 'SourceDB = {a = not true}', 'end = {}', 'SourceDB = {a = 3+4}']:
             with self.subTest(content=content):
                 self.source.write_text(content)
                 with self.assertRaises(ValueError):
@@ -56,8 +58,15 @@ class TransferTests(unittest.TestCase):
 
     def test_never_executes_lua_payload(self):
         self.source.write_text('SourceDB = { ["text"] = (function() error("must not execute") end)() }')
+        with self.assertRaises(ValueError):
+            self.module.transfer(self.source, self.destination)
+        self.assertFalse(self.destination.exists())
+
+    def test_accepts_serialized_array_keys_numbers_and_trailing_separator(self):
+        text = ' \nSourceDB = { 1, 2; [true]="flag", key=false, [-5] = { [0xAf] = -1.25e-3, nested=nil }, [=[long {text}]=] }; -- end\n'
+        self.source.write_text(text)
         self.module.transfer(self.source, self.destination)
-        self.assertIn('error("must not execute")', self.destination.read_text())
+        self.assertEqual(self.destination.read_text(), text.replace('SourceDB', 'GatherlyDB', 1))
 
     def test_transferred_trusted_fixture_opens_with_existing_store_schema(self):
         try:

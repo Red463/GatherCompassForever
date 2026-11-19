@@ -12,6 +12,8 @@ function fakeUI()
  function methods:SetTextColor(r,g,b,a) self.textColor={r,g,b,a or 1} end
  function methods:SetFont(path,size,flags) self.fontPath=path;self.fontSize=size;self.fontFlags=flags end
  function methods:SetScale(v) self.scale=v end
+ function methods:GetZoom() return self.zoom or 0 end
+ function methods:SetZoom(v) self.zoom=v end
  function methods:SetOrientation(v) self.orientation=v end
  function methods:SetAlpha(v) self.alpha=v end
  function methods:GetAlpha() return self.alpha or 1 end

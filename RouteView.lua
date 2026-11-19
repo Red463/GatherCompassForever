@@ -38,6 +38,10 @@ function V.New(parent,U)
   local plan=A.plan;local route=plan and plan.route;local nodes=U.SelectedNodes()
   local text=plan and plan.message or 'Tick the materials you want, then generate a nearby route. No save step is needed.'
   if plan and not plan:Matches(U.Filter()) then text='Selections changed. Generate again to use them. '..(text or '') end
+  if route and route.corridor then
+   local zoom=A.Client.MinimapZoom()
+   text=text..'\n'..(zoom and zoom>0 and 'Zoom minimap fully out. ' or 'Use a fully zoomed-out minimap. ')..string.format('Nodes within %.0f yards of the path count as covered.',route.coverageRadius)
+  elseif not plan then text=text..'\nZoom your minimap fully out before generating a corridor.' end
   v.info:SetText(text or '')
   local selected=plan and plan.byKey and plan.byKey[plan.selected]
   local filter=U.Filter();local viewKey=A.FarmingSession.Signature(filter)..':'..tostring(plan and plan.revision)

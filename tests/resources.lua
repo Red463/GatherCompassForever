@@ -14,6 +14,34 @@ test('node opacity defaults validate independently and survive saved-data reload
  s.worldIconOpacity=-1;s.miniIconOpacity=2;s.miniOutlineOpacity=0/0;s=A.Resources.Settings({nodeDisplay=s})
  eq(s.worldIconOpacity,0);eq(s.miniIconOpacity,1);eq(s.miniOutlineOpacity,1)
 end)
+test('route opacity defaults retain each map\'s previous overlay strength',function()
+ local R=resources().Resources
+ local fresh=R.Settings({})
+ eq(fresh.worldLineOpacity,1);eq(fresh.worldHeatOpacity,1)
+ eq(fresh.miniLineOpacity,.65);eq(fresh.miniHeatOpacity,.65)
+ for _,legacy in ipairs({.35,0}) do
+  local s=R.Settings({nodeDisplay={routeOpacity=legacy}})
+  eq(s.worldLineOpacity,1);eq(s.worldHeatOpacity,1)
+  eq(s.miniLineOpacity,legacy);eq(s.miniHeatOpacity,legacy);eq(s.routeOpacity,legacy)
+ end
+end)
+test('persisted style opacities survive reload and take priority over legacy opacity',function()
+ local A=resources();local saved=A.Store.Open()
+ saved.settings.nodeDisplay={routeOpacity=.35,worldLineOpacity=0,worldHeatOpacity=.75,miniLineOpacity=0}
+ local s=A.Resources.Settings(saved.settings)
+ eq(s.worldLineOpacity,0);eq(s.worldHeatOpacity,.75);eq(s.miniLineOpacity,0);eq(s.miniHeatOpacity,.35)
+ s.routeOpacity=.85
+ s=A.Resources.Settings(A.Store.Open(A.Store.Copy(saved)).settings)
+ eq(s.worldLineOpacity,0);eq(s.worldHeatOpacity,.75);eq(s.miniLineOpacity,0);eq(s.miniHeatOpacity,.35)
+ eq(s.routeOpacity,.85)
+end)
+test('each route opacity clamps finite values and replaces malformed values',function()
+ local R=resources().Resources
+ local s=R.Settings({nodeDisplay={routeOpacity=.35,worldLineOpacity=-1,worldHeatOpacity=math.huge,miniLineOpacity=2,miniHeatOpacity=0/0}})
+ eq(s.worldLineOpacity,0);eq(s.worldHeatOpacity,1);eq(s.miniLineOpacity,1);eq(s.miniHeatOpacity,.65)
+ s=R.Settings({nodeDisplay={routeOpacity='0'}})
+ eq(s.miniLineOpacity,.65);eq(s.miniHeatOpacity,.65)
+end)
 test('Classic difficulty colours use boundaries and never guess unknown resources',function()
  local A=resources(); local R=A.Resources
  for _,case in ipairs({{1,'orange'},{24,'orange'},{25,'yellow'},{49,'yellow'},{50,'green'},{99,'green'},{100,'grey'}}) do

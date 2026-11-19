@@ -455,7 +455,7 @@ function M.Refresh(db,route,follower)
  -- Editing draws only on the world map; minimap paths require navigation.
  local mini=active and player and player.mapID==route.mapID and w and A.Store.Number(radius) and radius>0 and facing~=nil and Minimap and Minimap:IsShown()
  local holes={}
- if mini and not heat and settings.routeLines and settings.routeOpacity>0 then
+ if mini and not heat and settings.routeLines and settings.miniLineOpacity>0 then
   holes[1]={x=0,y=0,r=8} -- Native player arrow.
   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
   local function protect(p)
@@ -469,11 +469,11 @@ function M.Refresh(db,route,follower)
   for _,node in ipairs(clearanceNodes) do protect(node) end
   if snapshot and snapshot.target then protect(snapshot.target) end
  end
- if world and heat then
+ if world and heat and settings.worldHeatOpacity>0 then
   local zw,zh=w or route.width or 1000,h or route.height or 1000
-  A.Heatmap.Draw(M.worldHeat,worldLayer,route,function(p) return M.Project(p,canvas:GetWidth(),canvas:GetHeight()) end,function(radius) return radius/zw*canvas:GetWidth(),radius/zh*canvas:GetHeight() end)
+  A.Heatmap.Draw(M.worldHeat,worldLayer,route,function(p) return M.Project(p,canvas:GetWidth(),canvas:GetHeight()) end,function(radius) return radius/zw*canvas:GetWidth(),radius/zh*canvas:GetHeight() end,nil,settings.worldHeatOpacity)
  end
- if mini and heat and settings.routeLines and settings.routeOpacity>0 then
+ if mini and heat and settings.routeLines and settings.miniHeatOpacity>0 then
   local shape=markerShape
   if not M.miniHeatLayer then M.miniHeatLayer=CreateFrame('Frame',nil,Minimap);M.miniHeatLayer:EnableMouse(false);M.miniHeatLayer:SetAllPoints(Minimap) end
   if M.miniHeatLayer:GetParent()~=Minimap then M.miniHeatLayer:SetParent(Minimap);M.miniHeatLayer:ClearAllPoints();M.miniHeatLayer:SetAllPoints(Minimap) end
@@ -481,7 +481,7 @@ function M.Refresh(db,route,follower)
   local function project(p) return miniRaw(p,player,w,h,radius,mw,mh,facing) end
   local heatHoles={{x=0,y=0,r=4,feather=5}}
   if snapshot and snapshot.target then local x,y=project(snapshot.target);heatHoles[#heatHoles+1]={x=x,y=y,r=3,feather=4} end
-  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.routeOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
+  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.miniHeatOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
   A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape)
  end
  local wi,mi=0,0
@@ -491,20 +491,20 @@ function M.Refresh(db,route,follower)
   local x1,y1=M.Project(a,canvas:GetWidth(),canvas:GetHeight());local x2,y2=M.Project(b,canvas:GetWidth(),canvas:GetHeight())
   local current=color==gold;local visited=color==done
   local width=(current and 2 or 1.5)/zoom
-  local tint=current and {1,.82,.35,.95,width} or visited and {.56,.52,.42,.5,width} or {.92,.72,.30,.85,width}
-  line(M.worldShadows,index,worldLayer,x1,y1,x2,y2,{.10,.07,.025,current and .35 or .25,width+1/zoom},false,'BACKGROUND')
+  local tint=current and {1,.82,.35,.95*settings.worldLineOpacity,width} or visited and {.56,.52,.42,.5*settings.worldLineOpacity,width} or {.92,.72,.30,.85*settings.worldLineOpacity,width}
+  line(M.worldShadows,index,worldLayer,x1,y1,x2,y2,{.10,.07,.025,(current and .35 or .25)*settings.worldLineOpacity,width+1/zoom},false,'BACKGROUND')
   line(M.worldLines,index,worldLayer,x1,y1,x2,y2,tint)
   local stroke=M.worldLines[index];stroke.fromPoint=a;stroke.toPoint=b;stroke.shadow=M.worldShadows[index]
  end
  local function segment(a,b,color)
-  if world and not heat and wi<600 then wi=wi+1;drawWorld(wi,a,b,color) end
-  if mini and not heat and settings.routeLines and settings.routeOpacity>0 and mi<200 then
+  if world and not heat and settings.worldLineOpacity>0 and wi<600 then wi=wi+1;drawWorld(wi,a,b,color) end
+  if mini and not heat and settings.routeLines and settings.miniLineOpacity>0 and mi<200 then
    local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
    local x1,y1=miniRaw(a,player,w,h,radius,mw,mh,facing); local x2,y2=miniRaw(b,player,w,h,radius,mw,mh,facing)
    x1,y1,x2,y2=M.Clip(x1,y1,x2,y2,mw,mh)
    if x1 then
     local thickness=color==gold and 1.5 or 1
-    local miniColor={color[1],color[2],color[3],math.min(color[4] or 1,.55)*settings.routeOpacity,thickness}
+    local miniColor={color[1],color[2],color[3],math.min(color[4] or 1,.55)*settings.miniLineOpacity,thickness}
     for _,piece in ipairs(M.GapSegments(x1,y1,x2,y2,holes,thickness/2)) do
      if mi>=200 then break end
      mi=mi+1; line(M.miniLines,mi,Minimap,piece[1],piece[2],piece[3],piece[4],miniColor,true)

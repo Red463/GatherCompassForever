@@ -21,7 +21,9 @@ end
 local function layout(frame)
  local named=frame.nodeName:IsShown()
  frame.progress:ClearAllPoints();frame.progress:SetPoint('TOP',frame,'TOP',0,named and -106 or -86)
- frame:SetHeight(84+(named and 20 or 0)+(frame.progress:IsShown() and 20 or 0))
+ local height=84+(named and 20 or 0)+(frame.progress:IsShown() and 20 or 0)
+ if frame.zoomHint then frame.zoomHint:ClearAllPoints();frame.zoomHint:SetPoint('TOP',frame,'TOP',0,-height-2) end
+ frame:SetHeight(height+(frame.zoomHint and frame.zoomHint:IsShown() and 20 or 0))
 end
 local tau=2*math.pi
 local function normalize(angle) return (angle+math.pi)%tau-math.pi end
@@ -64,6 +66,7 @@ function R.Build()
  f.label=A.Skin.Label(f,'',20,A.Skin.gold);f.label:SetPoint('TOP',f,'TOP',0,-60);f.label:SetSize(148,24);f.label:SetJustifyH('CENTER')
  f.nodeName=A.Skin.Label(f,'',12,A.Skin.text);f.nodeName:SetPoint('TOP',f,'TOP',0,-86);f.nodeName:SetSize(148,18);f.nodeName:SetJustifyH('CENTER');f.nodeName:Hide()
  f.progress=A.Skin.Label(f,'',11,A.Skin.muted);f.progress:SetPoint('TOP',f,'TOP',0,-86);f.progress:SetSize(148,16);f.progress:SetJustifyH('CENTER');f.progress:Hide()
+ f.zoomHint=A.Skin.Label(f,'Zoom minimap fully out',11,A.Skin.gold);f.zoomHint:SetSize(148,16);f.zoomHint:SetJustifyH('CENTER');f.zoomHint:Hide()
  A.Skin.Hint(f,'Gatherly',R.TooltipText)
  f:SetScript('OnUpdate',function(_,elapsed) R.Animate(elapsed) end)
  f:SetScript('OnHide',function(self)
@@ -77,6 +80,10 @@ function R.TooltipText()
  if f and f.destination then lines[#lines+1]=tostring(f.destination):gsub('|','||') end
  if f and f.progress and f.progress:GetText()~='' then lines[#lines+1]=f.progress:GetText() end
  if f and f.stateReason then lines[#lines+1]=f.stateReason end
+ if f and f.coverageRadius then
+  lines[#lines+1]=string.format('Known locations within %.0f yards of the route are covered.',f.coverageRadius)
+  lines[#lines+1]='Designed for a fully zoomed-out minimap.'
+ end
  lines[#lines+1]='';lines[#lines+1]='Left-click to open routes. Drag to move the guide.'
  return table.concat(lines,'\n')
 end
@@ -103,12 +110,19 @@ function R.UpdateProgress(snapshot)
  if text then f.progress:Show() else f.progress:Hide() end
  layout(f)
 end
+function R.UpdateZoom(snapshot)
+ local f=R.frame;if not f then return end
+ f.coverageRadius=snapshot and snapshot.corridor and A.Store.Number(snapshot.coverageRadius) and snapshot.coverageRadius or nil
+ local zoom=f.coverageRadius and A.Client.MinimapZoom and A.Client.MinimapZoom()
+ if zoom and zoom>0 then f.zoomHint:Show() else f.zoomHint:Hide() end
+ layout(f)
+end
 function R.Update(position,facing,target,distance,snapshot)
  R.Build(); local f=R.frame; if not f then return end
  local d=target and distance(position,target); local w,h
  if position then w,h=A.Client.Size(position.mapID) end
- if not target or snapshot and (snapshot.status=='complete' or snapshot.status=='stopped') then R.UpdateName(nil);f:Hide();return end
- R.UpdateName(target);R.UpdateProgress(snapshot)
+ if not target or snapshot and (snapshot.status=='complete' or snapshot.status=='stopped') then R.UpdateName(nil);R.UpdateZoom(nil);f:Hide();return end
+ R.UpdateName(target);R.UpdateProgress(snapshot);R.UpdateZoom(snapshot)
  f:SetScale(math.max(.6,math.min(2,tonumber(A.db and A.db.settings.arrowScale) or 1)))
  local paused=snapshot and snapshot.status=='paused'
  local valid=A.Store.Number(d) and A.Store.Number(facing) and w and position

@@ -36,6 +36,19 @@ function C.MinimapRadius()
   local ok,r=pcall(C_Minimap.GetViewRadius);if ok and S.Number(r) and r>0 then return r end
  end
 end
+function C.MinimapZoom()
+ if not Minimap or type(Minimap.GetZoom)~='function' then return end
+ local ok,z=pcall(Minimap.GetZoom,Minimap)
+ if ok and S.Number(z) and z>=0 and z%1==0 then return z end
+end
+function C.CorridorRange()
+ local zoom=C.MinimapZoom()
+ if zoom==nil then return nil,'Minimap zoom is unavailable. Use a minimap with readable zoom data.' end
+ if zoom~=0 then return nil,'Zoom your minimap fully out before generating a corridor.' end
+ local radius=C.MinimapRadius()
+ if not radius then return nil,'Minimap range is unavailable. A readable zoomed-out range is required for corridor coverage.' end
+ return {viewRadius=radius,coverageRadius=radius*.9}
+end
 function C.MinimapRotationIgnored()
  if not C_Minimap or type(C_Minimap.IsRotateMinimapIgnored)~='function' then return false end
  local ok,value=pcall(C_Minimap.IsRotateMinimapIgnored);if ok then value=C.Read(value);if type(value)=='boolean' then return value end end

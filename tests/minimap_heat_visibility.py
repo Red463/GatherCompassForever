@@ -13,7 +13,7 @@ lua.execute("""
 dofile('tests/wow.lua');fakeUI();A={}
 for _,name in ipairs({'Store','Resources','Heatmap','MiniHeat'}) do assert(loadfile(name..'.lua'))('Gatherly',A) end
 local route={width=1000,height=500,points={{x=.3,y=.5},{x=.7,y=.5}}}
-local opacity=A.Resources.Settings({}).routeOpacity
+local opacity=A.Resources.Settings({}).miniHeatOpacity
 local field=A.MiniHeat.Field(route,function(p) return (p.x-.5)*500,0 end,200,200,'ROUND',{{x=0,y=0,r=4,feather=5}},opacity,function(r) return r*.5,r*.5 end)
 pool={};A.MiniHeat.Draw(pool,Minimap,field,'ROUND')
 """)

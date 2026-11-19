@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.17.0 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.18.0 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -47,7 +47,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.17.0.zip` from
+1. Download `Gatherly-0.18.0.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -140,10 +140,24 @@ is required.
 ![Large map-backed route review with node selection, removal and undo](docs/images/routes.png)
 
 The generator optimizes the order of the current farming areas to reduce crossings
-and repeated travel. It keeps the same included areas, nearest starting node and
-450-yard connection limit, including the closing leg. Lines, Heatmap and the guide
-arrow all follow that same plan. Regenerate a route to use the improved ordering;
-an existing active route is preserved until you replace it.
+and repeated travel, then simplifies the centre path while keeping those locations
+within its coverage distance. Zoom the minimap fully out before generating a new
+route. Coverage is 90% of the actual radius reported by the client at that zoom,
+shown in yards in Routes. It is measured on either side of the whole path, including
+between waypoints and around the closing leg.
+
+A covered known location can sit outside the narrower painted heat band. Coverage
+does not imply a live spawn or a successful gather. The arrow follows the centre
+path; detour when you find a resource. Lines and Heatmap share the same path and
+coverage. The nearest starting anchor and 450-yard connection limit remain.
+
+Changing minimap zoom later does not change the plan or counts. Routes and the
+arrow remind you to zoom fully out. Removal/undo keeps the captured coverage range;
+a new generation measures it again. Existing active routes are preserved until
+you replace them. Direct **Guide nearest** in Node Codex still targets that resource
+location and does not require corridor calibration.
+
+![The same corridor in Lines and Heatmap, with a covered spawn outside the painted band](docs/images/corridor-coverage.png)
 
 Some return trips remain necessary where a farming branch has only one short
 connection. Routes use map distances and cannot identify mountains, bridges or
@@ -161,6 +175,13 @@ the other members and stored history stay intact. Grouping can be disabled per m
 Exactly coincident review nodes still open the chooser so every member remains selectable.
 
 ### Detour pickups
+
+New corridor routes guide through travel points and do not require harvesting at
+each covered location. Passing one never records a gather. Successful gathers
+still update personal history normally, and optional detours do not become later
+mandatory resource stops.
+
+For existing gather-stop routes, the following pickup memory is retained:
 
 Successful gathers with matching loot mark the nearest compatible planned stop
 within 15 yards of your interaction position as collected for this lap. The guide
@@ -201,7 +222,7 @@ Items without location data remain in the default full catalogue.
 ### Heatmap corridor
 
 Select **Heatmap corridor** above the route sketch to replace the lines with a darker,
-soft burgundy band through the generated farming areas. It is a route view, rather than a
+soft red band through the generated farming areas. It is a route view, rather than a
 live resource scanner. The arrow follows the same points; switching views does not
 regenerate the route. Heat also appears on the minimap in brighter amber/gold to stand
 out over dark terrain, replacing its route lines,
@@ -221,7 +242,9 @@ destination aligned with the heat without modifying the shared pin library.
 ### Guide arrow
 
 The gold arrow rotates smoothly. Enable **Show next node name** and **Show route
-step and lap** in Preferences when useful. Click the arrow to reopen the route panel;
+step and lap** in Preferences when useful. New centre-path guidance displays
+**Farming corridor** when the name option is enabled; direct resource guidance and
+legacy gather stops retain their resource names. Click the arrow to reopen the route panel;
 dragging it moves the guide instead. Starting a route closes the panel automatically.
 
 The waypoint arrival distance in Preferences applies immediately to the current
@@ -297,9 +320,12 @@ The selected materials do not change automatically when your profession skill ri
 **Node display** has **Visible nodes**, **World map** and **Minimap** pages. Configure icon
 sizes/opacities and grouping on each map; minimap outlines have their own size and
 opacity. The nearby-hide distance affects icons/counts, while hollow outlines stay
-at their real known positions. **Show route overlay** and its strength slider apply
-to both Lines and Heatmap, independently of node-marker visibility. Heat uses a
-bounded strength to keep it transparent. Existing appearance values are preserved.
+at their real known positions. Each map has separate **Line opacity** and
+**Heatmap opacity** sliders; the Routes sketch follows the world-map values.
+The minimap's **Show route overlay** switch enables either style independently
+of node-marker visibility. Zero opacity hides that overlay without changing
+coverage, guidance or markers. Existing minimap opacity seeds both new minimap
+values; world values begin at their previous full strength.
 
 ![World-map marker controls and preview](docs/images/node-display.png)
 

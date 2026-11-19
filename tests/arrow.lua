@@ -79,3 +79,15 @@ test('arrow resolves old node-key-only gather points and uses honest unnamed way
  follower:Pause();A.Arrow.Update(nil,nil,follower:Target(),distance,follower:Snapshot());eq(f.nodeName:IsShown(),true);eq(f.label:GetText(),'Paused')
  follower:Stop();draw();eq(f:IsShown(),false);eq(f.nodeName:IsShown(),false)
 end)
+
+test('corridor arrow reminds about zoom without changing coverage or legacy arrows',function()
+ local A=arrowSetup();module('Follower',A)
+ local route={mapID=1,loop=true,corridor=true,coverageRadius=180,points={point(.3),point(.6)}}
+ local f=A.Follower.New(route,point(.1),distance);local zoom=0;A.Client.MinimapZoom=function() return zoom end
+ local function draw() A.Arrow.Update(point(.1),0,f:Target(),distance,f:Snapshot()) end
+ draw();local arrow=A.Arrow.frame;assert(arrow.zoomHint);eq(arrow.zoomHint:IsShown(),false)
+ local height=arrow:GetHeight();zoom=2;draw();eq(arrow.zoomHint:IsShown(),true);assert(arrow:GetHeight()>height)
+ assert(A.Arrow.TooltipText():find('180',1,true));near(f.route.coverageRadius,180);eq(f.index,1)
+ zoom=0;draw();eq(arrow.zoomHint:IsShown(),false);eq(arrow:GetHeight(),height)
+ f.route.corridor=nil;zoom=2;draw();eq(arrow.zoomHint:IsShown(),false)
+end)

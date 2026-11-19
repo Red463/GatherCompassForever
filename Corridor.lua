@@ -36,6 +36,8 @@ local function optimize(trace,edges)
 end
 function C.Generate(nodes,start,distance,options)
  options=options or {}
+ local radius=options.coverageRadius
+ if radius~=nil and (not S.Number(radius) or radius<=0) then return nil,'A readable corridor coverage radius is required.' end
  if not S.Position(start) then return nil,'A readable player position is required.' end
  if #nodes>20000 then return nil,'Too many candidates in this zone. Narrow the material filters.' end
  local maxLink=450;local cell=120;local valid={}
@@ -105,6 +107,16 @@ function C.Generate(nodes,start,distance,options)
  walk(1)
  if #trace>1 then table.remove(trace) end
  optimize(trace,edges)
+ if radius then
+  local plan,reason=A.Coverage.Plan(valid,groups,queue,trace,width,height,radius,maxLink)
+  if not plan then return nil,reason end
+  local count=#plan.nodes
+  local route={name=options.name or A.Planner.Name(plan.nodes,start.mapID,options),mapID=start.mapID,loop=true,generated=true,
+   corridor=true,coverageRadius=radius,minimapViewRadius=options.viewRadius,heatRadius=.65*radius,heatSpacing=plan.heatSpacing,
+   points=plan.points,includedKeys=plan.keys,includedCount=count,omittedCount=#valid-count,
+   areaCount=#queue,maxLink=maxLink,width=width,height=height}
+  return route,'Local corridor: '..count..' of '..#valid..' selected locations covered.'
+ end
  local points,included,includedNodes={},0,{}
  for _,g in ipairs(queue) do for _,n in ipairs(groups[g].members) do included=included+1;includedNodes[#includedNodes+1]=n end end
  for _,step in ipairs(trace) do local g=groups[step.index];local n=g.point

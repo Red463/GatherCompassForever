@@ -43,7 +43,7 @@ function A.Follower.New(route,start,distance,options)
  elseif route.maxLink and f.reason then f.status='suspended' end
  f.lapStart=f.lapStart or f.index;f.lapSeen=f.lapSeen or {};f.lapCount=f.lapCount or 0
  function f:Target() if self.status=='complete' or self.status=='stopped' then return nil end; return self.transit or self.route.points[self.index] end
- function f:Snapshot() return {status=self.status,index=self.index,total=#self.route.points,loop=self.route.loop,lap=self.lap,target=self:Target(),direction=self.direction,reason=self.reason,visited=self.visited} end
+ function f:Snapshot() return {status=self.status,index=self.index,total=#self.route.points,loop=self.route.loop,lap=self.lap,target=self:Target(),direction=self.direction,reason=self.reason,visited=self.visited,corridor=self.route.corridor,coverageRadius=self.route.coverageRadius} end
  function f:Pause() if self.status~='complete' and self.status~='stopped' then self.status='paused'; self.reason='Paused by you.' end end
  function f:Resume(position)
   if self.status~='paused' and self.status~='suspended' then return end

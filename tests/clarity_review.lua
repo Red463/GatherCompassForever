@@ -7,9 +7,9 @@ local function node(A,id,x,source,map)
  return A.Store.Observe(A.db,{mapID=map or 1,x=x,y=.5,kind=id<400 and 'ore' or 'herb',materialID='gm:'..(id<400 and 'ore' or 'herb')..':'..id,name=id==214 and 'Small Thorium Vein' or id==215 and 'Rich Thorium Vein' or id==201 and 'Copper Vein' or 'Silverleaf',source=source or 'imported'})
 end
 
-test('route removal and undo preserve confirmed pickup memory while new generation resets it',function()
+test('legacy route removal and undo preserve confirmed pickup memory while new corridor generation resets it',function()
  local A,U=setup();for _,x in ipairs({.3,.5,.7}) do node(A,402,x) end
- U.actions.generateStart();local f=A.follower;local p=f.route.points[2]
+ A.plan=assert(A.FarmingSession.New(U.SelectedNodes(),A.Client.Position(),A.Client.Distance,{filter=U.Filter()}));U.actions.start();local f=A.follower;local p=f.route.points[2]
  local o={mapID=1,x=p.x,y=p.y,kind='herb',materialID='gm:herb:402',source='confirmed'}
  assert(f:ConfirmGather(o));local gatheredKey=p.nodeKey
  A.plan.selected=gatheredKey;U.actions.removeNode();assert(A.follower~=f);eq(#A.follower.gatherRecords,1)

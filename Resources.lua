@@ -75,6 +75,11 @@ function R.Settings(settings)
  if type(s.groupWorld)~='boolean' then s.groupWorld=true end;if type(s.groupMini)~='boolean' then s.groupMini=true end
  s.worldIconSize=finite(s.worldIconSize,s.iconSize,10,24);s.routeOpacity=finite(s.routeOpacity,.65,0,1)
  s.worldIconOpacity=finite(s.worldIconOpacity,1,0,1);s.miniIconOpacity=finite(s.miniIconOpacity,1,0,1);s.miniOutlineOpacity=finite(s.miniOutlineOpacity,1,0,1)
+ s.worldLineOpacity=finite(s.worldLineOpacity,1,0,1)
+ s.worldHeatOpacity=finite(s.worldHeatOpacity,1,0,1)
+ -- Seed each minimap style only when its own saved value is missing.
+ s.miniLineOpacity=finite(s.miniLineOpacity,s.miniLineOpacity==nil and s.routeOpacity or .65,0,1)
+ s.miniHeatOpacity=finite(s.miniHeatOpacity,s.miniHeatOpacity==nil and s.routeOpacity or .65,0,1)
  return s
 end
 local function call(fn,...)

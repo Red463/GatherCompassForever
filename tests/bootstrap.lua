@@ -1,4 +1,4 @@
-local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Arrow','MinimapButton','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Core'}
+local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Coverage','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Arrow','MinimapButton','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Core'}
 local function setup(saved,configure)
  dofile('tests/wow.lua'); fakeUI(); local A={}; GatherlyDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}
@@ -105,10 +105,16 @@ test('import resume tokens revalidate metrics when the game clock is frozen',fun
  debugprofilestop=oldProfile
 end)
 
-test('real successful gathering events mark a future generated stop without importing pickup progress',function()
+local function startLegacy(A)
+ local U=A.UI;local p=A.Client.Position()
+ A.plan=assert(A.FarmingSession.New(U.SelectedNodes(),p,A.Client.Distance,{filter=U.Filter(),markerFilter=U.Filter()}))
+ U.actions.start();assert(A.follower);return A.follower
+end
+
+test('real successful gathering events mark a future legacy gather stop without importing pickup progress',function()
  local A,clock=setup();local nodes={}
  for i,x in ipairs({.2,.4,.6}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
- A.UI.actions.generateStart();local follower=A.follower;assert(follower)
+ local follower=startLegacy(A)
  local future=follower.route.points[2];local initial=follower.index
  local observation={mapID=1,x=future.x,y=future.y,kind='herb',materialID='gm:herb:401',source='imported'}
  A.Store.Observe(A.db,observation);eq(next(follower.collected),nil)
@@ -119,7 +125,7 @@ test('real successful gathering events mark a future generated stop without impo
  A.UI.actions.stop();eq(A.follower,nil)
 end)
 
-test('a confirmed known spawn outside the representative stops does not consume its neighbour',function()
+test('a corridor detour records a confirmed gather without consuming a centre-path stop',function()
  local A,clock=setup();local nodes={}
  for i,x in ipairs({.2,.21,.4}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
  A.UI.actions.generateStart();local f=A.follower;eq(f.route.points[1].nodeKey,nodes[1].key)
@@ -128,21 +134,21 @@ test('a confirmed known spawn outside the representative stops does not consume 
  eq(nodes[2].confirmed,true);eq(next(f.collected),nil);eq(f.index,1)
 end)
 
-test('loot delayed across a lap boundary never consumes a stop on the next lap',function()
+test('legacy loot delayed across a lap boundary never consumes a stop on the next lap',function()
  local A,clock=setup();for _,x in ipairs({.2,.4,.6}) do A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
- A.UI.actions.generateStart();local f=A.follower;f.index=3;f.lapSeen={[1]=true,[2]=true};f.lapCount=2
+ local f=startLegacy(A);f.index=3;f.lapSeen={[1]=true,[2]=true};f.lapCount=2
  A.Client.Position=function() return point(.6) end
  A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','lap-end',2366);clock(1);A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','lap-end',2366)
  clock(1.1);A.Tick(.1);eq(f.lap,1);clock(1.2);A.OnEvent(nil,'LOOT_READY');eq(next(f.collected),nil)
  f:Skip();f:Skip();eq(f.index,3);eq(f.lap,1)
 end)
 
-test('a pending gather from an old route cannot consume a fresh route but survives an in-session edit',function()
+test('a pending legacy gather cannot consume a fresh route but survives an in-session edit',function()
  for _,replace in ipairs({true,false}) do
   local A,clock=setup();local nodes={};for i,x in ipairs({.2,.4,.6}) do nodes[i]=A.Store.Observe(A.db,{mapID=1,x=x,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'}) end
-  A.UI.actions.generateStart();A.Client.Position=function() return point(.4) end
+  startLegacy(A);A.Client.Position=function() return point(.4) end
   A.OnEvent(nil,'UNIT_SPELLCAST_SENT','player','Peacebloom','pending',2366)
-  if replace then A.UI.actions.generateStart() else A.plan.selected=nodes[3].key;A.UI.actions.removeNode() end
+  if replace then startLegacy(A) else A.plan.selected=nodes[3].key;A.UI.actions.removeNode() end
   A.follower:Pause();clock(1);A.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','pending',2366);A.OnEvent(nil,'LOOT_READY')
   if replace then eq(next(A.follower.collected),nil) else assert(next(A.follower.collected)) end
  end

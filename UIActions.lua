@@ -23,7 +23,9 @@ function A.UIActions.Bind(U)
  end
  function U.ReviewNodes(nodes,player,startNow,markerFilter)
   player=player or A.Client.Position()
-  local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter(),markerFilter=markerFilter or U.Filter()})
+  local range,rangeReason=A.Client.CorridorRange()
+  if not range then say(rangeReason);return nil end
+  local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter(),markerFilter=markerFilter or U.Filter(),coverageRadius=range.coverageRadius,viewRadius=range.viewRadius})
   if not plan then say(reason);return nil end
   local replacement
   if startNow then
@@ -141,7 +143,10 @@ function A.UIActions.Bind(U)
   if U.syncingOptions or not A.Store.Number(value) then return end
   markerChange(key,math.floor(math.max(0,math.min(100,value))/5+.5)*.05)
  end
- function actions.nodeRouteOpacity(_,value) opacity('routeOpacity',value) end
+ function actions.nodeWorldLineOpacity(_,value) opacity('worldLineOpacity',value) end
+ function actions.nodeWorldHeatOpacity(_,value) opacity('worldHeatOpacity',value) end
+ function actions.nodeMiniLineOpacity(_,value) opacity('miniLineOpacity',value) end
+ function actions.nodeMiniHeatOpacity(_,value) opacity('miniHeatOpacity',value) end
  function actions.nodeWorldOpacity(_,value) opacity('worldIconOpacity',value) end
  function actions.nodeMiniIconOpacity(_,value) opacity('miniIconOpacity',value) end
  function actions.nodeOutlineOpacity(_,value) opacity('miniOutlineOpacity',value) end

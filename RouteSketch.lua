@@ -67,15 +67,19 @@ function A.RouteSketch.New(parent)
   local points=route and route.points or {};local geometry={}
   for _,p in ipairs(points) do geometry[#geometry+1]=string.format('%.17g,%.17g',p.x,p.y) end
   self.key=table.concat(geometry,';')..tostring(selectedIndex)..tostring(route and route.loop)..self.zoom..self.cx..self.cy
+  local appearance=A.db and A.Resources.Settings(A.db.settings)
+  local lineOpacity=appearance and appearance.worldLineOpacity or 1
+  local heatOpacity=appearance and appearance.worldHeatOpacity or 1
   if options.style=='heatmap' and route then
    local zw,zh=route.width or 1000,route.height or 1000
-   A.Heatmap.Draw(self.heat,self.canvas,route,project,function(radius) return radius/zw/(b.right-b.left)*w,radius/zh/(b.bottom-b.top)*h end,function(x,y,rx,ry) return x+rx>=0 and x-rx<=w and y+ry>=-h and y-ry<=0 end)
+   A.Heatmap.Draw(self.heat,self.canvas,route,project,function(radius) return radius/zw/(b.right-b.left)*w,radius/zh/(b.bottom-b.top)*h end,function(x,y,rx,ry) return x+rx>=0 and x-rx<=w and y+ry>=-h and y-ry<=0 end,heatOpacity)
   else
    local used=0
    local function line(a,c)
+    if lineOpacity<=0 then return end
     local x1,y1=project(a);local x2,y2=project(c);x1,y1,x2,y2=clip(x1,-y1,x2,-y2,w,h);if not x1 then return end
     used=used+1;local l=self.lines[used];if not l then l=self.canvas:CreateLine(nil,'ARTWORK');self.lines[used]=l end
-    l:SetColorTexture(1,.78,.28,.9);l:SetThickness(1.5);l:SetStartPoint('TOPLEFT',self.canvas,x1,-y1);l:SetEndPoint('TOPLEFT',self.canvas,x2,-y2);l:Show()
+    l:SetColorTexture(1,.78,.28,.9*lineOpacity);l:SetThickness(1.5);l:SetStartPoint('TOPLEFT',self.canvas,x1,-y1);l:SetEndPoint('TOPLEFT',self.canvas,x2,-y2);l:Show()
    end
    local stride=math.max(1,math.ceil((#points-1)/255))
    for i=1,#points-1,stride do line(points[i],points[math.min(i+stride,#points)]) end

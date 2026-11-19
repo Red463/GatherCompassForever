@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.18.0
+
+- Generate a shared centre-path corridor for Lines and Heatmap. Count selected known locations within 90% of the client-measured fully zoomed-out minimap radius, including locations outside the narrower painted band. Preserve coverage of the previously included local nodes and the 450-yard connection/closure limit.
+- Require readable zoomed-out range for new corridor generation. Keep the captured range through zoom changes and removal/undo; show it in Routes and add an arrow reminder when zoomed in. Failed generation leaves existing guidance intact.
+- Use travel-only corridor guidance with optional resource detours; confirmed gathers continue updating personal history. Preserve legacy gather-stop behavior and direct Node Codex nearest-resource guidance.
+- Add independent Line and Heatmap opacity on World map and Minimap, including the Routes sketch. Migrate prior minimap opacity, preserve explicit zero, and keep marker opacity independent.
+- Strengthen red corridor heat with continuous bounded sampling and soft edges; retain amber minimap heat, shape masks and tracking clearance. Reject excessive geometry before publishing an incomplete overlay.
+
 ## 0.17.0
 
 - Optimize generated route order with a bounded 2-opt pass and remove redundant travel-only stops. Reduce avoidable crossings and backtracking while keeping every currently included farming area, its gather identity and the nearest start.

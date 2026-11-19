@@ -3,7 +3,7 @@
 ## Notes: Gathering spawn memory, custom farming trails and route guidance. /gatherly
 ## Author: Tom
 ## X-License: MIT
-## Version: 0.17.0
+## Version: 0.18.0
 ## IconTexture: Interface\AddOns\Gatherly\Media\Icon
 ## SavedVariables: GatherlyDB
 ## OptionalDeps: GatherMate2
@@ -25,6 +25,7 @@ Gathering.lua
 Imports.lua
 Editor.lua
 Recorder.lua
+Coverage.lua
 Corridor.lua
 Planner.lua
 FarmingSession.lua

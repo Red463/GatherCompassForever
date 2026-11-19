@@ -1,6 +1,7 @@
 local _,A=...
 local H={};A.Heatmap=H
 local cache=setmetatable({},{__mode='k'})
+local edgeAlpha=math.exp(-4)
 local function key(p) return string.format('%.8f,%.8f',p.x,p.y) end
 function H.Samples(route)
  if cache[route] then return cache[route] end
@@ -28,8 +29,14 @@ function H.Samples(route)
  end
  if #edges==0 and points[1] then add(points[1].x,points[1].y,points[1].density) end
  for _,p in ipairs(samples) do
-  local neighbours=0;for _,q in ipairs(samples) do if ((p.x-q.x)*w)^2+((p.y-q.y)*h)^2<=(radius*2)^2 then neighbours=neighbours+1 end end
-  p.overlap=math.max(1,neighbours)
+  -- Normalize by the visible HeatBlob kernel, not every nearby stamp. Counting
+  -- transparent edges used to dilute the world corridor until it disappeared.
+  local overlap=0
+  for _,q in ipairs(samples) do
+   local d=(((p.x-q.x)*w)^2+((p.y-q.y)*h)^2)/(radius*radius)
+   if d<1 then overlap=overlap+(math.exp(-4*d)-edgeAlpha)/(1-edgeAlpha) end
+  end
+  p.overlap=math.max(1,overlap)
  end
  cache[route]=samples;return samples
 end

@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.16.2 ? **Client interface:** 16001 ? **Command:** `/gatherly`
+**Current version:** 0.16.3 ? **Client interface:** 16001 ? **Command:** `/gatherly`
 
 ## What it does
 
@@ -47,7 +47,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-0.16.2.zip` from
+1. Download `Gatherly-0.16.3.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.3
+
+- Make the world-map heat corridor clearer by accounting for the actual faded heat texture when balancing overlapping patches. Keep soft edges and readable terrain at crossings; apply the same correction to the Routes preview.
+- Preserve minimap heat appearance. Add visibility checks that compose the shipped texture with the Lua renderer across straight sections, bends and dense crossings.
+
 ## 0.16.2
 
 - Move the active-route map-marker checkbox from Node display to Routes and rename it to “Only show route target nodes during an active route.”

@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import runpy
 import sys
 
 root = Path(__file__).resolve().parents[1]
@@ -18,3 +19,5 @@ if toc.exists():
         assert (root / name).is_file(), name
         lua.execute('assert(loadfile(...))', str(root / name))
     print(f'TOC: {len(names)} files compile under Lua 5.1')
+
+runpy.run_path(str(root / 'tests/heatmap_visibility.py'), run_name='__main__')

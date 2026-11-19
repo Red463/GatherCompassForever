@@ -30,7 +30,7 @@ function U.ZoneName(id)
  local info=id and C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(id)
  return info and info.name or (id and 'Zone '..id or 'Position unavailable')
 end
-function U.Filter() local s=A.db.settings; return {source=s.source or 'combined',kind=s.kind or 'both',materials=s.materials} end
+function U.Filter() return A.Selection.Filter(A.db.settings) end
 function U.SelectedNodes() local p=A.Client.Position(); return A.Store.Select(A.db,p and p.mapID,U.Filter()) end
 function U.MaterialNodes(p)
  local scope=U.tab=='atlas' and U.atlasView and U.atlasView.scope or 'current'
@@ -42,20 +42,24 @@ function U.MaterialNodes(p)
  end
  return result
 end
-function U.SetSource(v) if v=='combined' or v=='confirmed' or v=='imported' then A.db.settings.source=v end; U.Refresh() end
-function U.SetKind(v)
- if v~='both' and v~='herb' and v~='ore' then return end
- A.db.settings.kind=v;U.Refresh()
+function U.FiltersChanged()
+ U.Refresh()
  if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.editor and nil or A.follower) end
 end
-function U.ToggleMaterial(id)
- local settings=A.db.settings
- if not settings.materials then
-  settings.materials={}
-  for _,entry in ipairs(A.Atlas.Index(A.db).resources) do for _,n in ipairs(entry.nodes) do settings.materials[n.materialID]=true end end
- end
- settings.materials[id]=not settings.materials[id]; U.Refresh()
+function U.SetSource(v)
+ if v~='combined' and v~='confirmed' and v~='imported' and v~='none' then return end
+ A.db.settings.source=v;U.FiltersChanged()
 end
+function U.SetKind(v)
+ if v~='both' and v~='herb' and v~='ore' and v~='none' then return end
+ A.db.settings.kind=v;U.FiltersChanged()
+end
+function U.ToggleSource(key) A.Selection.ToggleSource(A.db.settings,key);U.FiltersChanged() end
+function U.ToggleKind(key) A.Selection.ToggleKind(A.db.settings,key);U.FiltersChanged() end
+function U.ToggleMaterial(id)
+ A.Selection.ToggleMaterial(A.db,id);U.FiltersChanged()
+end
+function U.BulkMaterials(mode,on) local skills,context=A.Resources.Skills();A.Selection.Bulk(A.db,mode,on,skills,context);U.FiltersChanged() end
 function U.Edit(route)
  A.editor=A.Editor.New(route); A.editIndex=1; U.name:SetText(route.name or 'New route')
  A.mapPreviewRoute=nil

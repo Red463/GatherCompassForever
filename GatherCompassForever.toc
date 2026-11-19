@@ -15,6 +15,7 @@ Libs/HereBeDragons-Pins-2.0.lua
 Store.lua
 Client.lua
 Resources.lua
+Selection.lua
 Atlas.lua
 ResourceLibrary.lua
 DifficultyProbe.lua

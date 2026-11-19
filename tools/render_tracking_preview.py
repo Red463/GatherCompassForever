@@ -8,7 +8,7 @@ from PIL import Image,ImageDraw,ImageFont
 os.chdir(root)
 setup="""
 dofile('tests/wow.lua');fakeUI();A={}
-for _,name in ipairs({'Store','Client','Resources'}) do assert(loadfile(name..'.lua'))('GatherCompassForever',A) end
+for _,name in ipairs({'Store','Client','Resources','Selection'}) do assert(loadfile(name..'.lua'))('GatherCompassForever',A) end
 """
 scene="""
 A.db=A.Store.Open();A.Resources.Settings(A.db.settings).mini=false

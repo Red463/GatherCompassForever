@@ -302,11 +302,13 @@ function M.Refresh(db,route,follower)
  M.UpdateEditorHelp()
  local zone=route and route.mapID or player and player.mapID
  local settings=A.Resources.Settings(db.settings);local skills,skillContext=A.Resources.Skills()
- local filter={source='combined',kind=db.settings.kind or 'both'}
+ local filter=A.Selection.Filter(db.settings)
  local worldZone=map and map:IsShown() and map:GetMapID() or zone
  local focus=map and map:IsShown() and M.nodeFocus and M.nodeFocus.mapID==worldZone and M.nodeFocus or nil
- local worldFilter=focus and {source=focus.source,materials=focus.materials,kind=filter.kind} or filter
- local nodes=(settings.world or focus) and A.Store.Select(db,worldZone,worldFilter) or {}
+ local nodes=(settings.world or focus) and A.Store.Select(db,worldZone,filter) or {}
+ if focus then
+  local focused={};for _,node in ipairs(nodes) do if A.Selection.Matches(node,focus) then focused[#focused+1]=node end end;nodes=focused
+ end
  local knownMiniNodes=A.Store.Select(db,player and player.mapID,filter)
  local miniNodes=settings.mini and knownMiniNodes or {}
  local distances={}
@@ -409,7 +411,8 @@ function M.Refresh(db,route,follower)
   end
   -- Native tracking dots can still show kinds hidden by our marker filter.
   -- Clearance also stays independent of marker toggles and the pin cap.
-  local clearanceNodes=filter.kind=='both' and knownMiniNodes or A.Store.Select(db,player.mapID,{source='combined'})
+  local unfiltered=filter.kind=='both' and filter.source=='combined' and not filter.materials
+  local clearanceNodes=unfiltered and knownMiniNodes or A.Store.Select(db,player.mapID,{source='combined'})
   for _,node in ipairs(clearanceNodes) do protect(node) end
   if snapshot and snapshot.target then protect(snapshot.target) end
  end

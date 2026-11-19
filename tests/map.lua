@@ -66,7 +66,7 @@ local function markerSetup()
  A.Client.Position=function() return point(.1) end;A.Client.Distance=distance
  A.Resources.Skills=function() return {herb=25} end
  LibStub=function() return {AddWorldMapIconMap=function() end,AddMinimapIconMap=function() end,RemoveWorldMapIcon=function() end,RemoveMinimapIcon=function() end} end
- A.db=A.Store.Open();A.db.settings.materials={unrelated=true};A.db.settings.source='confirmed'
+ A.db=A.Store.Open()
  return A
 end
 
@@ -76,6 +76,21 @@ test('idle route selection never draws lines and known resource markers remain v
  A.Map.Refresh(A.db,route,nil)
  for _,pool in ipairs({A.Map.worldLines,A.Map.worldShadows,A.Map.miniLines}) do for _,line in ipairs(pool) do eq(line:IsShown(),false) end end
  assert(A.Map.byKey['w:node:'..node.key],'Idle world-map resources disappeared')
+ LibStub=nil
+end)
+
+test('shared map filters intersect provenance materials type and resource focus in different zones',function()
+ local A=markerSetup();local nodes={}
+ for _,zone in ipairs({1,2}) do
+  nodes[zone]={}
+  for i,kind in ipairs({'herb','ore'}) do nodes[zone][kind]=A.Store.Observe(A.db,{mapID=zone,x=.2+i*.1,y=.5,kind=kind,materialID=kind,source='imported'}) end
+ end
+ WorldMapFrame.GetMapID=function() return 2 end
+ A.db.settings.source='confirmed';A.Map.Refresh(A.db,nil);eq(next(A.Map.byKey),nil)
+ A.db.settings.source='combined';A.db.settings.materials={herb=true};A.Map.Refresh(A.db,nil)
+ assert(A.Map.byKey['w:node:'..nodes[2].herb.key]);assert(A.Map.byKey['m:node:'..nodes[1].herb.key]);eq(A.Map.byKey['w:node:'..nodes[2].ore.key],nil)
+ A.Map.SetNodeFocus(2,{ore=true},nodes[2].ore.key);A.Map.Refresh(A.db,nil);eq(A.Map.byKey['w:node:'..nodes[2].ore.key],nil)
+ A.Map.SetNodeFocus(nil);A.db.settings.source='none';A.Map.Refresh(A.db,nil);eq(next(A.Map.byKey),nil)
  LibStub=nil
 end)
 
@@ -534,7 +549,7 @@ test('atlas map focus filters only world icons preserves minimap guidance and cl
  local shown=0;for _,line in ipairs(A.Map.miniLines) do if line:IsShown() then shown=shown+1 end end;assert(shown>0)
  WorldMapFrame:Hide();eq(A.Map.nodeFocus,nil);WorldMapFrame:Show();A.Map.Refresh(A.db,route,follower)
  assert(A.Map.byKey['w:node:'..silver.key]);eq(A.Map.byKey['w:node:'..earth.key].icon:GetWidth(),14)
- assert(A.Map.worldLines[1]:IsShown());eq(A.db.settings.materials.unrelated,true)
+ assert(A.Map.worldLines[1]:IsShown());eq(A.db.settings.source,'combined')
  C_Minimap=nil;GetCVar=nil;LibStub=nil
 end)
 

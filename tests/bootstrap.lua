@@ -96,6 +96,15 @@ test('starting or explicitly opening a route restores its world line after resou
  assert(A.Map.SetNodeFocus(1,{['gm:herb:401']=true}));A.UI.OpenRoutes();A.UI.actions.map();eq(A.Map.nodeFocus,nil)
  A.Tick(.5);assert(A.Map.worldLines[1]:IsShown())
 end)
+test('arrival preference updates an already running route immediately',function()
+ local A,clock=setup();A.db.settings.arrival=5
+ A.selectedRoute=A.Store.SaveRoute(A.db,{name='Live arrival',mapID=1,points={point(.3)}})
+ A.UI.actions.start();eq(A.follower.arrival,5)
+ A.UI.controls.arrival.scripts.OnValueChanged(A.UI.controls.arrival,15)
+ eq(A.db.settings.arrival,15);eq(A.follower.arrival,15)
+ A.Client.Position=function() return point(.29) end;clock(1);A.Tick(.1);eq(A.follower.status,'complete')
+end)
+
 test('startup gather generate save follow and shared arrow map target cooperate',function()
  local A,clock=setup(); assert(A.initialized); eq(SLASH_GATHERCOMPASSFOREVER1,'/gcf'); eq(SlashCmdList.GATHERCOMPASSFOREVER,A.Command)
  local saved=A.db; A.OnEvent(nil,'ADDON_LOADED','GatherCompassForever'); eq(A.db,saved)

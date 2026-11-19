@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.8.5 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.8.6 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -37,7 +37,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.8.5.zip` from
+1. Download `GatherCompassForever-0.8.6.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -96,6 +96,10 @@ route stays unchanged until you save. Numbers appear on selected or hovered hand
 The gold arrow rotates smoothly. Enable **Show next node name** and **Show route
 step and lap** in Preferences when useful. Click the arrow to reopen the route panel;
 dragging it moves the guide instead. Starting a route closes the panel automatically.
+
+The waypoint arrival distance in Preferences applies immediately to the current
+route. Guidance waits during gathering; nearby overlapping stops retain movement
+protection so a stationary player cannot repeatedly advance through a loop.
 
 ![Gold guide arrow with distance, optional next resource and waypoint/lap progress](docs/images/guide-arrow.png)
 

@@ -127,11 +127,15 @@ function A.UIActions.Bind(U)
   if A.Map then A.Map.Refresh(A.db,U.DisplayRoute(),nil) end
   U.Refresh()
  end
- function actions.arrival() A.db.settings.arrival=(tonumber(A.db.settings.arrival) or 15)+5; if A.db.settings.arrival>40 then A.db.settings.arrival=5 end; U.Refresh() end
+ function actions.arrival()
+  local value=(tonumber(A.db.settings.arrival) or 15)+5;actions.arrivalValue(nil,value>40 and 5 or value)
+ end
  function actions.arrowScale() A.db.settings.arrowScale=(tonumber(A.db.settings.arrowScale) or 1)+.2; if A.db.settings.arrowScale>1.81 then A.db.settings.arrowScale=.8 end; U.Refresh() end
  function actions.arrivalValue(_,value)
   if U.syncingOptions or not A.Store.Number(value) then return end
-  A.db.settings.arrival=math.max(5,math.min(40,math.floor(value/5+.5)*5));U.Refresh()
+  A.db.settings.arrival=math.max(5,math.min(40,math.floor(value/5+.5)*5))
+  if A.follower then A.follower:SetArrival(A.db.settings.arrival) end
+  U.Refresh()
  end
  function actions.arrowScaleValue(_,value)
   if U.syncingOptions or not A.Store.Number(value) then return end

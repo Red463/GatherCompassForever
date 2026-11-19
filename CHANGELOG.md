@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.6
+
+- Apply arrival-distance changes immediately to the current route.
+- Remove the fixed advancement delay and extra five-yard approach requirement for nearby distinct waypoints.
+- Preserve gathering pauses and protect against stationary overlapping-point loops.
+- Rearm coincident stops after leaving their arrival radius rather than travelling from the previous arrival position.
+
 ## 0.8.5
 
 - Show world-map route lines only during active navigation or path editing.

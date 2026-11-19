@@ -96,7 +96,7 @@ test('node display controls persist settings and keep at least one marker layer'
  U.controls.nodeIcon.scripts.OnClick();eq(s.icon,true)
  U.controls.nodeDistance:SelectValue(30);eq(s.hideDistance,30)
  U.controls.nodeRouteLine.scripts.OnClick();eq(s.routeLines,false);eq(U.controls.nodeRouteLine:GetChecked(),false)
- U.controls.nodeOutlineSize:SelectValue(28);eq(s.outlineSize,28)
+ U.controls.nodeOutline:SelectValue('ring');U.controls.nodeOutlineSize:SelectValue(28);eq(s.outlineSize,28)
  U.controls.nodeIconSize:SelectValue(16);eq(s.iconSize,16)
 end)
 test('material choices include an icon and checkbox while preserving material identity',function()

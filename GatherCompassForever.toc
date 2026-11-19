@@ -41,6 +41,7 @@ ResourceLibraryView.lua
 UIActions.lua
 FilterSidebar.lua
 WelcomeView.lua
+NodeDisplayView.lua
 UI.lua
 MinimapButton.lua
 Core.lua

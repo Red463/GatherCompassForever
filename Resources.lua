@@ -72,6 +72,8 @@ function R.Settings(settings)
  if type(s.world)~='boolean' then s.world=true end; if type(s.mini)~='boolean' then s.mini=true end
  if type(s.routeLines)~='boolean' then s.routeLines=true end
  s.outlineSize=finite(s.outlineSize,24,20,40); s.iconSize=finite(s.iconSize,14,10,24); s.hideDistance=finite(s.hideDistance,20,0,100)
+ if type(s.groupWorld)~='boolean' then s.groupWorld=true end;if type(s.groupMini)~='boolean' then s.groupMini=true end
+ s.worldIconSize=finite(s.worldIconSize,s.iconSize,10,24);s.routeOpacity=finite(s.routeOpacity,.35,0,1)
  s.worldIconOpacity=finite(s.worldIconOpacity,1,0,1);s.miniIconOpacity=finite(s.miniIconOpacity,1,0,1);s.miniOutlineOpacity=finite(s.miniOutlineOpacity,1,0,1)
  return s
 end
@@ -187,6 +189,6 @@ end
 function R.Presentation(node,settings,mini,distance,skills,context)
  local s=R.Settings(settings);local color,label,key,source=R.Difficulty(node,skills,context)
  return {outline=mini and s.outline or 'none',icon=not mini or (s.icon and not (s.hideDistance>0 and S.Number(distance) and distance<=s.hideDistance)),
-  outlineSize=s.outlineSize,iconSize=s.iconSize,iconOpacity=mini and s.miniIconOpacity or s.worldIconOpacity,outlineOpacity=s.miniOutlineOpacity,
+  outlineSize=s.outlineSize,iconSize=mini and s.iconSize or s.worldIconSize,iconOpacity=mini and s.miniIconOpacity or s.worldIconOpacity,outlineOpacity=s.miniOutlineOpacity,
   color=color,label=label,difficulty=key,difficultySource=source,texture=R.Icon(node)}
 end

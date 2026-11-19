@@ -113,47 +113,7 @@ local function buildPreferences()
  S.Hint(U.controls.minimapButton,'Minimap launcher','Show the compass button beside your minimap. Click it to toggle this panel; drag it to reposition. Use /gcf to reopen the panel when the button is hidden.')
  local hint=label(U.preferences,'Drag the guide arrow to move it. Click it to reopen this window.',20,350,670,20,12,S.muted);hint:SetWordWrap(true)
 end
-local function buildNodeOptions()
- U.nodeOptions=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,395)
- label(U.nodeOptions,'Known node locations',0,0,710,26,18,S.gold,true)
- label(U.nodeOptions,'Source, gathering and material selections filter both maps and new routes.',0,33,710,20,12,S.muted)
- local display=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,0,66,344,260)
- local tracking=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,360,66,350,260)
- label(display,'Marker appearance',16,14,310,23,17,S.gold,true)
- check(display,'nodeWorld','World map',14,46,110);check(display,'nodeMini','Minimap',176,46,120)
- label(display,'Minimap outline',16,85,124,26,13,S.text)
- dropdown(display,'nodeOutline',{{value='ring',label='Ring'},{value='square',label='Square'},{value='none',label='None (icon only)'}},154,85,172)
- check(display,'nodeIcon','Show minimap icons',14,124,260)
- S.Hint(U.controls.nodeIcon,'Minimap resource icons','World-map nodes always use icons. On the minimap, an icon stays enabled when there is no outline, so at least one marker layer remains visible.')
- label(display,'Outline size',16,163,126,26,13,S.text)
- dropdown(display,'nodeOutlineSize',choices({20,24,28,32,36,40},' px'),154,163,172,nil,function(v) return v..' px' end)
- label(display,'Icon size',16,202,126,26,13,S.text)
- dropdown(display,'nodeIconSize',choices({10,12,14,16,18,20,24},' px'),154,202,172,nil,function(v) return v..' px' end)
- label(tracking,'Minimap tracking',16,14,318,23,17,S.gold,true)
- label(tracking,'Hide icon within',16,46,160,26,13,S.text)
- local distances=choices({0,5,10,15,20,30,40,60,80,100},' yards');distances[1].label='Never'
- dropdown(tracking,'nodeDistance',distances,184,46,150,nil,function(v) return v==0 and 'Never' or (v..' yards') end)
- check(tracking,'nodeRouteLine','Show minimap route line',14,85,282)
- S.Hint(U.controls.nodeRouteLine,'Minimap route line','Thin lines leave gaps around known spawns. Hide them to remove route-line obstruction; the guide arrow and world-map route remain available.')
- local help=label(tracking,'World map uses icons only. Nearby minimap icons hide; outlines remain. Routes avoid known spawns.',16,124,316,44,12,S.muted); help:SetWordWrap(true)
- U.professionRanks=label(tracking,'',16,176,316,30,12,S.text); U.professionRanks:SetWordWrap(true)
- local sourceNote=label(tracking,'Colours use Classic reference data. Missing data stays neutral.',16,213,316,30,11,S.muted);sourceNote:SetWordWrap(true)
- button(tracking,'inspectNode','Inspect next node',16,246,200,24,'subtle',function() if A.DifficultyProbe and A.DifficultyProbe.Arm() then U.frame:Hide() end end)
- S.Hint(U.controls.inspectNode,'Inspect a native node','Capture the next herb or vein tooltip in the game world. Then use /gcf inspect report. Captures stay local and do not change difficulty colours.')
- for i,entry in ipairs({{'orange','Orange'},{'yellow','Yellow'},{'green','Green'},{'grey','Grey'},{'red','Too difficult'},{'unknown','Unknown'}}) do
-  local x=(i-1)*118
-  local swatch=S.Fill(U.nodeOptions,A.Resources.colors[entry[1]],'ARTWORK');place(swatch,U.nodeOptions,x,58,10,10)
-  label(U.nodeOptions,entry[2],x+16,52,102,23,11,S.muted)
- end
- label(U.nodeOptions,'Marker opacity',16,310,310,20,13,S.gold)
- U.nodeOpacityLabels={}
- for i,entry in ipairs({{'nodeWorldOpacity','World-map icons'},{'nodeMiniIconOpacity','Minimap icons'},{'nodeOutlineOpacity','Minimap outlines'}}) do
-  local key,title=entry[1],entry[2];local x=16+(i-1)*236
-  U.nodeOpacityLabels[key]=label(U.nodeOptions,title,x,337,220,20,12,S.text)
-  U.controls[key]=place(S.Slider(U.nodeOptions,0,100,5,U.actions[key],function(v) return v..'%' end),U.nodeOptions,x,365,188,12)
-  S.Hint(U.controls[key],title..' opacity','Adjust Gather Compass node markers from 0% (transparent) to 100% (solid). Navigation markers and native tracking dots keep their own appearance.')
- end
-end
+local function buildNodeOptions() U.nodeDisplayView=A.NodeDisplayView.New(U.content,U);U.nodeOptions=U.nodeDisplayView.frame end
 local function buildFooter()
  U.footer=place(S.Panel(U.frame,{.075,.125,.085,1},{.27,.34,.24,1}),U.frame,1,552,958,68)
  local icon=S.Image(U.footer,'Icon',42,42); place(icon,U.footer,14,13,42,42)
@@ -240,7 +200,7 @@ function U.Refresh()
  if not U.frame:IsShown() then return end
  local p=A.Client.Position(); local work=A.editor or A.recording or A.recordedDraft
  if U.compact then U.RefreshMode(); refreshFooter(p); refreshStatus(p); return end
- local resource=U.tab=='codex';local welcome=U.tab=='welcome';local full=resource or welcome;local nodes=full and {} or U.SelectedNodes()
+ local resource=U.tab=='codex';local welcome=U.tab=='welcome';local full=resource or welcome or U.tab=='nodes';local nodes=full and {} or U.SelectedNodes()
  show(U.sidebar,not full);place(U.content,U.body,full and 0 or 194,0,full and 936 or 742,414)
  U.RefreshMode(); for id,b in pairs(U.tabs) do S.Selected(b,id==U.tab) end
  show(U.library,U.tab=='routes'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
@@ -249,23 +209,7 @@ function U.Refresh()
  if not full then refreshSidebar(p) end
  if U.tab=='routes' then U.routeView.Refresh() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
  refreshFooter(p); refreshStatus(p)
- local marker=A.Resources.Settings(A.db.settings)
- U.controls.nodeWorld:SetChecked(marker.world);U.controls.nodeMini:SetChecked(marker.mini)
- U.controls.nodeRouteLine:SetChecked(marker.routeLines)
- U.controls.nodeOutline:SetValue(marker.outline)
- U.controls.nodeIcon:SetEnabled(marker.outline~='none');U.controls.nodeIcon:SetChecked(marker.icon)
- U.controls.nodeOutlineSize:SetValue(marker.outlineSize);U.controls.nodeIconSize:SetValue(marker.iconSize)
- U.controls.nodeDistance:SetValue(marker.hideDistance)
- U.syncingOptions=true
- for _,entry in ipairs({{'nodeWorldOpacity','worldIconOpacity','World-map icons'},{'nodeMiniIconOpacity','miniIconOpacity','Minimap icons'},{'nodeOutlineOpacity','miniOutlineOpacity','Minimap outlines'}}) do
-  local value=math.floor(marker[entry[2]]*100+.5)
-  U.controls[entry[1]]:SetValue(value);U.nodeOpacityLabels[entry[1]]:SetText(entry[3]..': '..value..'%')
- end
- U.syncingOptions=false
- if U.tab=='nodes' then
-  local ranks=A.Resources.Skills()
-  U.professionRanks:SetText('Base Herbalism: '..(ranks.herb or 'unavailable')..'\nBase Mining: '..(ranks.ore or 'unavailable'))
- end
+ U.nodeDisplayView.Refresh()
  U.syncingOptions=true
  U.controls.arrival:SetValue(A.db.settings.arrival or 15);U.controls.arrowScale:SetValue(tonumber(A.db.settings.arrowScale) or 1)
  U.syncingOptions=false

@@ -1,4 +1,4 @@
-local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Arrow','MinimapButton','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
+local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Arrow','MinimapButton','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI','Core'}
 local function setup(saved,configure)
  dofile('tests/wow.lua'); fakeUI(); local A={}; GatherCompassForeverDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}
@@ -231,11 +231,10 @@ test('completed navigation retires minimap route without removing the saved rout
 end)
 
 
-test('inspect commands and node display button invoke the native probe without opening another panel',function()
+test('inspect commands retain the native probe without a diagnostic button on the normal panel',function()
  local A=setup();local arm,report,cancel=0,0,0
  A.DifficultyProbe={Arm=function() arm=arm+1;return true end,Report=function() report=report+1 end,Cancel=function() cancel=cancel+1 end}
  A.UI.frame:Hide();A.Command('inspect');eq(arm,1);eq(A.UI.frame:IsShown(),false)
  A.Command('inspect report');eq(report,1);A.Command('inspect off');eq(cancel,1)
- A.UI.OpenRoutes();A.UI.SetTab('nodes');assert(A.UI.controls.inspectNode)
- A.UI.controls.inspectNode.scripts.OnClick();eq(arm,2);eq(A.UI.frame:IsShown(),false)
+ A.UI.OpenRoutes();A.UI.SetTab('nodes');eq(A.UI.controls.inspectNode,nil);eq(arm,1)
 end)

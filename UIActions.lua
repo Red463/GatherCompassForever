@@ -123,6 +123,9 @@ function A.UIActions.Bind(U)
   local s=A.Resources.Settings(A.db.settings);s[key]=value;A.Resources.Settings(A.db.settings)
   U.Refresh();if A.Map then A.Map.Refresh(A.db,U.DisplayRoute(),A.editor and nil or A.follower) end
  end
+ function actions.nodeGroupWorld() local s=A.Resources.Settings(A.db.settings);markerChange('groupWorld',not s.groupWorld) end
+ function actions.nodeGroupMini() local s=A.Resources.Settings(A.db.settings);markerChange('groupMini',not s.groupMini) end
+ function actions.nodeWorldIconSize(value) if A.Store.Number(value) then markerChange('worldIconSize',value) end end
  function actions.nodeWorld() local s=A.Resources.Settings(A.db.settings);markerChange('world',not s.world) end
  function actions.nodeMini() local s=A.Resources.Settings(A.db.settings);markerChange('mini',not s.mini) end
  function actions.nodeRouteLine() local s=A.Resources.Settings(A.db.settings);markerChange('routeLines',not s.routeLines) end
@@ -135,6 +138,7 @@ function A.UIActions.Bind(U)
   if U.syncingOptions or not A.Store.Number(value) then return end
   markerChange(key,math.floor(math.max(0,math.min(100,value))/5+.5)*.05)
  end
+ function actions.nodeRouteOpacity(_,value) opacity('routeOpacity',value) end
  function actions.nodeWorldOpacity(_,value) opacity('worldIconOpacity',value) end
  function actions.nodeMiniIconOpacity(_,value) opacity('miniIconOpacity',value) end
  function actions.nodeOutlineOpacity(_,value) opacity('miniOutlineOpacity',value) end

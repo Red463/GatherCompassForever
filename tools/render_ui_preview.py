@@ -30,7 +30,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','MapArt','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -93,7 +93,8 @@ def render(scene):
     if scene in ('welcome','welcome_importing'):
         lua.execute("A.UI.SetTab('welcome')")
         if scene=='welcome_importing':lua.execute("A.importJob=coroutine.create(function() end);A.status='Importing all zones: 1240 locations...';A.UI.Refresh()")
-    if scene in ('nodes','dropdown'):lua.execute("A.UI.SetTab('nodes')")
+    if scene in ('nodes','nodes_mini','dropdown'):lua.execute("A.UI.SetTab('nodes')")
+    if scene in ('nodes_mini','dropdown'):lua.execute("A.UI.nodeDisplayView.SetPage('mini')")
     if scene=='dropdown':lua.execute("A.UI.controls.nodeDistance.scripts.OnClick(A.UI.controls.nodeDistance)")
     if scene in ('arrow_hidden_progress','arrow_paused','arrow_no_direction'):
         lua.execute("A.UI.controls.start.scripts.OnClick()")
@@ -263,4 +264,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

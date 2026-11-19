@@ -133,6 +133,7 @@ protection so a stationary player cannot repeatedly advance through a loop.
 4. In review, select unwanted nodes and use **Remove node** or **Undo removal**.
    Choose **Route lines** or **Heatmap corridor**, then **Start route**.
 5. Follow the arrow. Pause, skip or stop through the panel; click the arrow to reopen it.
+   Resume rejoins nearby and leaves guidance paused if the farming area is too far away.
 
 Path overlays appear while following (including when paused) or reviewing the current
 plan. Stopping or completing guidance clears them. Generation starts at the nearest
@@ -202,7 +203,8 @@ areas are omitted rather than joined across the zone.
 This is **not terrain pathfinding**: short connections can still cross cliffs, water,
 walls or caves. Move around obstacles, skip a difficult destination, remove an
 unwanted node, or regenerate from a better position. No third-party terrain engine
-or navigation data is bundled. Routes are single-zone and their inputs/visuals are
+or navigation data is bundled. Return connectors can still show the resource name
+at that coordinate in the optional next-node label. Routes are single-zone and their inputs/visuals are
 bounded for performance. Entering a waypoint's arrival radius
 can advance the route without a harvest. The addon does not move your character or
 gather automatically, and it does not replace your native waypoint.

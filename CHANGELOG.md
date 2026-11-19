@@ -9,6 +9,8 @@
 - Generate a bounded nearby farming corridor through representative spawn locations, with included/omitted counts and no long closing jump.
 - Fix the reproduced nearest-start then distant-next-leg transition; orient generated loops toward the nearer outgoing side.
 - Preserve pause state and lap display when a node removal rebuilds active guidance. Filter changes leave the active plan intact until regeneration.
+- Validate local joins on resume and coordinate recovery, keep failed edits intact, and count laps from the joined waypoint in either direction.
+- Clear all path views on Stop/completion, keep Atlas guidance independent, and bound dense-map drag work.
 - Keep Welcome as the sole import page and update its introduction for the new workflow.
 - Keep MIT licensing and no new dependency. Geometry does not establish terrain passability; mountains, caves and walls may still need detours.
 

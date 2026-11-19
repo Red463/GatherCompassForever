@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version=A.Skin and A.Skin.AddonVersion('0.15.0') or '0.15.0'
+A.version=A.Skin and A.Skin.AddonVersion('0.15.1') or '0.15.1'
 function A.Print(text)
  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gather Compass:|r '..tostring(text)) end
 end

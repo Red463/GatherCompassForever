@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.15.1
+
+- Fix logo framing: remove the 0.17-0.83 UV crop that enlarged the badge and cut into the compass artwork.
+- Fit the complete supplied badge inside the panel's native portrait frame.
+- Show the complete 32px minimap badge using its own transparent silhouette and gold compass border; remove the extra node ring, circular clipping mask and background disc.
+- Preserve supplied source artwork, panel sizing, launcher clicks and dragging.
+
 ## 0.15.0
 
 - Replace free panel resizing with Small (960 x 680), Standard (1100 x 780) and Large (1240 x 880) layouts selected in Preferences. Remove the corner resize grip.

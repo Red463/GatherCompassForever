@@ -23,7 +23,9 @@ function S.Panel(parent,color,edge,name)
 end
 local function object(value) return type(value)=='table' or type(value)=='userdata' end
 function S.BrandBadge(texture)
- texture:SetTexture(S.media..'EmptyEmblem');texture:SetTexCoord(.17,.83,.17,.83);texture:SetVertexColor(1,1,1,1)
+ -- The supplied compass already has a border and transparent padding. Cropping
+ -- its centre enlarges the leaf and cuts the compass points against the frame.
+ texture:SetTexture(S.media..'EmptyEmblem');texture:SetTexCoord(0,1,0,1);texture:SetVertexColor(1,1,1,1)
 end
 function S.AddonVersion(fallback)
  local query=C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata

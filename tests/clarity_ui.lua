@@ -16,6 +16,8 @@ test('expanded title uses runtime version and portrait is centred on the native 
  CreateFrame=function(kind,name,parent,template) local f=create(kind,name,parent,template);if template=='PortraitFrameTemplate' then f.PortraitContainer=create('Frame',nil,f);f.PortraitContainer.portrait=create('Texture',nil,f.PortraitContainer);native=f end;return f end
  local chrome=A.Skin.Window(UIParent);eq(chrome.brandPortrait.point[1],'CENTER');eq(chrome.brandPortrait.point[2],native.PortraitContainer);eq(chrome.brandPortrait.point[3],'TOPLEFT');eq(chrome.brandPortrait.point[4],26);eq(chrome.brandPortrait.point[5],-24)
  eq(chrome.brandPortrait.texture,A.Skin.media..'EmptyEmblem')
+ local uv=chrome.brandPortrait.coords;eq(uv[1],0);eq(uv[2],1);eq(uv[3],0);eq(uv[4],1)
+ eq(chrome.brandPortrait:GetWidth(),58);eq(chrome.brandPortrait:GetHeight(),58)
 end)
 test('map-marker preview includes a map-backed labelled appearance example',function()
  local A,U=setup();U.SetTab('nodes');U.nodeDisplayView.SetPage('world');local v=U.nodeDisplayView
@@ -24,7 +26,9 @@ test('map-marker preview includes a map-backed labelled appearance example',func
  A.Resources.Settings(A.db.settings).groupWorld=false;U.Refresh();eq(v.worldCount:IsShown(),false)
  A.Resources.Settings(A.db.settings).worldIconOpacity=.3;U.Refresh();near(v.worldExamples[1].alpha,.3)
 end)
-test('minimap launcher icon and ring share the same centre',function()
+test('minimap launcher shows the complete badge without a second border or clipping mask',function()
  local A=setup();module('MinimapButton',A);A.MinimapButton.Build();local b=A.MinimapButton.frame
- eq(b.icon.texture,A.Skin.media..'EmptyEmblem');eq(b.icon.point[1],'CENTER');eq(b.border.point[1],'CENTER');eq(b.icon.point[4],0);eq(b.border.point[4],0)
+ eq(b.icon.texture,A.Skin.media..'EmptyEmblem');eq(b.icon.point[1],'CENTER');eq(b.icon.point[4],0);eq(b.icon.point[5],0)
+ local uv=b.icon.coords;eq(uv[1],0);eq(uv[2],1);eq(uv[3],0);eq(uv[4],1)
+ eq(b.icon:GetWidth(),32);eq(b.icon:GetHeight(),32);eq(b.border,nil);eq(b.mask,nil);eq(b.icon.masks,nil)
 end)

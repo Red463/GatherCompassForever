@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.15.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.15.1 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -44,7 +44,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.15.0.zip` from
+1. Download `GatherCompassForever-0.15.1.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -265,8 +265,10 @@ overlapping-stop movement safeguards still apply.
 
 ![Preferences with navigation explanation and grouped arrow/panel settings](docs/images/preferences.png)
 
-The title bar includes the installed addon version (including prerelease metadata). Header and minimap emblems use a centred
-crop of the original high-resolution badge; the launcher keeps one aligned gold ring.
+The title bar includes the installed addon version (including prerelease metadata).
+The header shows the complete supplied badge inside the native portrait frame.
+The minimap launcher uses the badge's own gold compass border and transparency,
+without an extra ring or a circular crop that cuts its points.
 Use `/gcf` to reopen the panel when its minimap button is hidden.
 
 ![Centred minimap launcher using the supplied compass-and-leaf artwork](docs/images/minimap-launcher.png)

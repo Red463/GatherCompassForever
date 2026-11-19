@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0
+
+- Replace free panel resizing with Small (960 x 680), Standard (1100 x 780) and Large (1240 x 880) layouts selected in Preferences. Remove the corner resize grip.
+- Keep normal text and control sizes unchanged, enlarge the route map and lists with each layout, and preserve map artwork proportions and marker alignment.
+- Migrate saved dimensions to the nearest preset without changing panel position, route progress or filters.
+- Fit oversized choices to a smaller preset temporarily; restore the chosen size when screen space returns. Scale the whole panel only when even Small cannot fit.
+- Update Preferences size/reset instructions and preserve minimising, map zoom/pan, Codex selection and active guidance across size changes.
+
 ## 0.14.0
 
 - Remember confirmed detour pickups for the current lap and skip their matching later gather stops in both Lines and Heatmap mode. Reset next lap or on a fresh route start.

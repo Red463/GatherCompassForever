@@ -1,7 +1,7 @@
 from pathlib import Path
 import zipfile
 root = Path(__file__).resolve().parents[1]
-path = root / 'dist/GatherCompassForever-0.14.0.zip'
+path = root / 'dist/GatherCompassForever-0.15.0.zip'
 assert path.is_file(), 'Installable ZIP missing'
 with zipfile.ZipFile(path) as z:
     names = z.namelist()
@@ -11,7 +11,7 @@ with zipfile.ZipFile(path) as z:
     metadata = dict(line[3:].split(': ', 1) for line in toc.splitlines() if line.startswith('## '))
     assert metadata['Title'] == 'Gather Compass Forever'
     assert metadata['SavedVariables'] == 'GatherCompassForeverDB'
-    assert metadata['Version'] == '0.14.0'
+    assert metadata['Version'] == '0.15.0'
     assert metadata['X-License'] == 'MIT'
     assert metadata['IconTexture'] == r'Interface\AddOns\GatherCompassForever\Media\Icon'
     for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow', 'HeatBlob', 'MinimapMasks']:

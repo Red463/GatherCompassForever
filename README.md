@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.14.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.15.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -37,14 +37,14 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   resource breakdown. Minimap outlines retain their original spawn positions.
 - **Tune map markers.** Visible nodes chooses everyday markers; World map/Minimap pages control sizes, opacity,
   grouping and nearby-icon hiding without losing hollow outlines.
-- **Resize the panel.** Drag its bottom-right corner to expand the map and lists while
-  keeping text and controls at their normal size. Dimensions and position are saved.
+- **Choose a panel size.** Select Small, Standard or Large in Preferences. Each layout
+  gives the map and lists appropriate space while keeping normal text and controls unchanged.
 - **Review without losing history.** Removals affect the current plan only. Existing
   saved routes and node history are preserved. A minimap badge opens the panel.
 
 ## Install
 
-1. Download `GatherCompassForever-0.14.0.zip` from
+1. Download `GatherCompassForever-0.15.0.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -273,19 +273,29 @@ Use `/gcf` to reopen the panel when its minimap button is hidden.
 
 ### Panel size
 
-Drag the grip at the bottom-right corner to change width and height independently.
-Extra space enlarges the Routes map, shows more materials and increases the visible Codex
-area. Narrow layouts wrap controls or offer an interior scrollbar; normal text,
-buttons and icons keep their existing sizes. Preferences shows the current dimensions
-and **Reset panel size** (scroll down when needed).
+Use **Preferences > Panel & minimap > Panel size** to choose a fixed layout:
 
-The default is **960 x 624** and the minimum layout is **860 x 600 UI units**. These
-follow WoW's UI coordinate system rather than physical monitor pixels. A smaller
-usable screen uses automatic fitting, which can reduce text size. Your preferred
-size is retained when the screen changes and restored when space is available.
-Minimising preserves the expanded dimensions; guide-arrow size remains independent.
+| Size | Width x height (UI units) |
+| --- | --- |
+| Small | 960 x 680 |
+| Standard (default) | 1100 x 780 |
+| Large | 1240 x 880 |
 
-![Wider panel with a larger route map and unchanged text size](docs/images/panel-resize.png)
+The route map grows with the layout while keeping its artwork proportions and
+aligned nodes, lines and heat. Lists show more rows where space allows; smaller
+layouts use interior scrolling. Normal text, buttons and icons keep their sizes.
+The corner resize grip has been removed. **Reset panel size** chooses Standard.
+
+Saved custom dimensions migrate to the nearest preset, preserving position. If a
+choice does not fit the current screen, the addon temporarily uses the largest
+smaller preset that fits and explains this in Preferences. Only screens too small
+for Small scale down the whole panel. Your preferred choice returns when space is
+available. These sizes use WoW's UI coordinates, rather than physical monitor pixels.
+Minimising preserves the preset; guide-arrow size remains independent.
+
+![Large fixed panel with a proportional route map and unchanged text size](docs/images/panel-resize.png)
+
+![Fixed size selection in Preferences](docs/images/panel-preferences.png)
 
 ## How to read the data
 

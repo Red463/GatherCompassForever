@@ -35,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={version='0.14.0'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={version='0.15.0'};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','MinimapPins','Map','Skin','PanelWindow','ScrollPanel','VirtualList','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','MarkerFiltersView','NodeDisplayView','PreferencesView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -156,7 +156,7 @@ def render(scene):
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(screen_w,screen_h),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHER COMPASS FOREVER 0.14.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHER COMPASS FOREVER 0.15.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)

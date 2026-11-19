@@ -43,10 +43,7 @@ function V.New(parent,U)
   b.icon=b:CreateTexture(nil,'ARTWORK');b.icon:SetSize(18,18);b.icon:SetPoint('LEFT',b,'LEFT',24,0)
   b.label:ClearAllPoints();b.label:SetPoint('LEFT',b,'LEFT',46,0);b.label:SetSize(104,22);b.label:SetJustifyH('LEFT')
   b:EnableMouseWheel(true);b:SetScript('OnMouseWheel',wheel)
-  S.Hint(b,'Material selection',function()
-   local d=b.materialDetails;if not d then return '' end
-   return b.materialName..'\n'..d.requirement..'\n'..d.summary..(d.transition and '\n'..d.transition or '')..(d.contextNote and '\n'..d.contextNote or '')
-  end)
+  A.SkillTooltip.Bind(b,'Material selection',function() return b.materialDetails and {{node=b.materialNode,details=b.materialDetails}} or {} end)
   view.rows[index]=b;return b
  end
  function view.Refresh(player)
@@ -55,7 +52,7 @@ function V.New(parent,U)
   local unresolved=scope=='current' and not mapID
   local entries=unresolved and {} or A.Selection.Materials(A.db,mapID,filter);local skills,context=A.Resources.Skills();local selected=0
   for i,entry in ipairs(entries) do
-   local b=view.rows[i] or row(i);b.materialID=entry.id;b.materialName=entry.name
+   local b=view.rows[i] or row(i);b.materialID=entry.id;b.materialName=entry.name;b.materialNode=entry.sample
    b.materialDetails=A.Resources.SkillDetails(entry.sample,skills,context);b.labelColor=b.materialDetails.color
    local on=not filter.materials or filter.materials[entry.id]
    if on then selected=selected+1;b.check:Show() else b.check:Hide() end

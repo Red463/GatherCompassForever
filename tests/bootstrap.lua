@@ -1,4 +1,4 @@
-local runtime={'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Arrow','MinimapButton','MapArt','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
+local runtime={'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Arrow','MinimapButton','MapArt','RouteSketch','RouteView','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
 local function setup(saved,configure)
  dofile('tests/wow.lua'); fakeUI(); local A={}; GatherCompassForeverDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}

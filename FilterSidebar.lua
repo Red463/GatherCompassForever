@@ -50,7 +50,8 @@ function V.New(parent,U)
  function view.Refresh(player)
   local filter=U.Filter();local scope=U.tab=='atlas' and U.atlasView and U.atlasView.scope or 'current'
   local mapID=scope=='current' and player and player.mapID or A.Store.Number(scope) and scope or nil
-  local entries=A.Selection.Materials(A.db,mapID,filter);local skills,context=A.Resources.Skills();local selected=0
+  local unresolved=scope=='current' and not mapID
+  local entries=unresolved and {} or A.Selection.Materials(A.db,mapID,filter);local skills,context=A.Resources.Skills();local selected=0
   for i,entry in ipairs(entries) do
    local b=view.rows[i] or row(i);b.materialID=entry.id;b.materialName=entry.name
    b.materialDetails=A.Resources.SkillDetails(entry.sample,skills,context);b.labelColor=b.materialDetails.color
@@ -61,7 +62,7 @@ function V.New(parent,U)
   for i=#entries+1,#view.rows do view.rows[i].materialID=nil;view.rows[i]:Hide() end
   child:SetHeight(math.max(scroll:GetHeight(),#entries*24));scroll:UpdateScrollChildRect()
   view.maximum=math.max(0,#entries*24-scroll:GetHeight());view.syncing=true;bar:SetMinMaxValues(0,view.maximum);bar:SetEnabled(view.maximum>0);view.syncing=false;view:SetOffset(view.offset)
-  view.empty:SetText(filter.source=='none' and 'Tick a node source above.' or filter.kind=='none' and 'Tick Herbs or Ore above.' or 'No matching materials here. Import data on Welcome or gather in this zone.')
+  view.empty:SetText(unresolved and 'Position unavailable. Return to a gathering zone.' or filter.source=='none' and 'Tick a node source above.' or filter.kind=='none' and 'Tick Herbs or Ore above.' or 'No matching materials here. Import data on Welcome or gather in this zone.')
   if #entries==0 then view.empty:Show() else view.empty:Hide() end
   U.controls.sourceConfirmed:SetChecked(filter.source=='combined' or filter.source=='confirmed');U.controls.sourceImported:SetChecked(filter.source=='combined' or filter.source=='imported')
   U.controls.kindHerb:SetChecked(filter.kind=='both' or filter.kind=='herb');U.controls.kindOre:SetChecked(filter.kind=='both' or filter.kind=='ore')

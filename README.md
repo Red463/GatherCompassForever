@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.8.8 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.9.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -23,7 +23,8 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 - **Import all zones.** Read installed GatherMate2_Data directly, with GatherMate2's
   saved observations as a fallback. Repeated imports merge matching locations.
 - **Choose what to farm.** Filter by source, herbs/ore and individual materials, with
-  skill-coloured material names and icons.
+  shared checkboxes for maps and generated routes, a scrolling material list and
+  one-time skill-up material selection.
 - **Build routes your way.** Generate a resource-based loop, draw a custom route,
   record a travelled path or drag existing waypoints on the world map.
 - **Follow the path.** World-map lines, minimap guidance and a smooth gold arrow show
@@ -37,7 +38,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.8.8.zip` from
+1. Download `GatherCompassForever-0.9.0.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -54,7 +55,8 @@ routes, known locations and preferences. The addon is built for Forever's interf
 ### Optional node data
 
 Install the **Forever-compatible** versions of GatherMate2 and GatherMate2_Data,
-then click **Import node data**. The data pack declares GatherMate2 as a dependency,
+then open **Welcome** and click **Import node data**. This is the only import button.
+The data pack declares GatherMate2 as a dependency,
 so keep both enabled even though this addon reads the pack directly.
 
 Importing covers all available zones regardless of your location or route filters.
@@ -66,6 +68,18 @@ without an external data pack.
 These are **layout previews rendered from the addon's Lua UI**, with substitute
 fonts, placeholder resource icons and an illustrative map canvas. They are not
 in-game screenshots; actual Forever textures and rendering can differ.
+
+### Welcome and shared filters
+
+Welcome introduces the workflow, imports all available zones and shows import status.
+It appears on first use; guide-arrow clicks still open Routes directly.
+
+![Welcome tab with introduction, all-zone import and quick navigation](docs/images/welcome.png)
+
+Source and Gathering use independent checkboxes. The material list supports mouse-wheel
+scrolling and a scrollbar, with icons and skill-coloured names.
+
+![Checkbox filters and a vertically scrolling material list](docs/images/filters.png)
 
 ### Route library
 
@@ -105,8 +119,8 @@ protection so a stationary player cannot repeatedly advance through a loop.
 
 ## First farming loop
 
-1. Gather a few nodes or import node data.
-2. In **Routes**, choose your node source, gathering type and materials.
+1. Gather a few nodes or import node data from **Welcome**.
+2. In **Routes**, tick your node sources, gathering types and materials.
 3. Click **Generate** to create a named draft from matching current-zone locations.
 4. Review the route and add detours around terrain on **Edit on map**. Save it.
 5. Click **Start route**. Use the arrow, world map and minimap to follow the route.
@@ -119,8 +133,8 @@ sketch in the panel; stopping or completing guidance clears its map lines.
 The **Node Atlas** provides per-resource location browsing, zone comparisons,
 resource-specific route drafts and nearest-location guidance. The separate
 **Resources** tab provides the full item catalogue, independent of your route filters.
-Clicking a ranked zone temporarily focuses that resource on the world map; closing
-the map restores its usual display.
+Clicking a ranked zone temporarily focuses that resource on the world map, subject
+to your shared checkbox filters. Closing the map restores its usual display.
 
 ## Settings and commands
 
@@ -135,10 +149,16 @@ the map restores its usual display.
 | `/gcf inspect report` | Show the latest local capture |
 | `/gcf inspect off` | Cancel a pending capture |
 
-The **Gathering** dropdown filters this addon's node markers on both maps:
-**Herbs**, **Ore** or **Both**. Changes apply immediately. Choose a matching type or
-Both when viewing a resource's locations. Material checkboxes filter route
-generation separately; they do not hide individual map resources.
+The sidebar filters this addon's node markers on both maps and new route generation
+together. Tick **My discoveries**, **Imported locations**, **Herbs** and **Ore** in any
+combination, then tick individual materials. Unticking every source or type gives no
+matching nodes; it does not reset your choices. These selections do not change a
+saved route or interrupt guidance already running.
+
+**All** selects all materials; untick it to clear the selection. **Skill-ups** selects
+known orange, yellow and green materials across matching known zones once. It excludes
+grey, too-difficult and unknown resources, and you can edit the result afterward.
+The selected materials do not change automatically when your profession skill rises.
 
 **Node display** controls marker appearance, difficulty colours, icon-hide distance
 and minimap route visibility. Its three opacity sliders independently adjust

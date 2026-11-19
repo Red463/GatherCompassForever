@@ -50,7 +50,7 @@ function V.New(parent,U)
  view.searchBox=place(S.Edit(grid,224),grid,422,1,224,26);U.controls.resourceSearch=view.searchBox
  view.searchBox:SetScript('OnTextChanged',function(self) view.SetSearch(self:GetText()) end)
  button(grid,'resourceClear','Clear',654,1,70,26,function() view.SetSearch('') end)
- button(grid,'resourceImport','Import node data',734,1,162,26,function() if A.Import then A.Import() else message('Import is unavailable.');end end)
+ button(grid,'resourceWelcome','Welcome',734,1,162,26,function() U.SetTab('welcome') end)
  for i=1,27 do
   local cell=place(S.Panel(grid),grid,((i-1)%9)*100,66+math.floor((i-1)/9)*98,88,88)
   local b=S.Button(cell,'',function(self) if self.item then view.Open(self.item.id) end end,'quiet');b:SetAllPoints(cell);b.cell=cell
@@ -103,7 +103,7 @@ function V.New(parent,U)
   end)
   view.zoneRows[i]=row
  end
- view.zoneEmpty=label(zones,'No known locations yet. Import node data or gather this resource to record locations.',52,118,448,120,14,S.muted);view.zoneEmpty:SetWordWrap(true);view.zoneEmpty:SetJustifyH('CENTER')
+ view.zoneEmpty=label(zones,'No known locations yet. Import data on Welcome or gather this resource to record locations.',52,118,448,120,14,S.muted);view.zoneEmpty:SetWordWrap(true);view.zoneEmpty:SetJustifyH('CENTER')
  button(zones,'resourceZonePrev','<',12,284,26,23,function() view.zonePage=math.max(1,view.zonePage-1);U.Refresh() end,'quiet')
  button(zones,'resourceZoneNext','>',514,284,26,23,function() view.zonePage=view.zonePage+1;U.Refresh() end,'quiet')
  view.zonePageLabel=label(zones,'',48,285,456,22,11,S.muted);view.zonePageLabel:SetJustifyH('CENTER')

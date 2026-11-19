@@ -68,7 +68,7 @@ function U.DisplayRoute()
  if A.follower and A.follower.status~='complete' and A.follower.status~='stopped' then return A.follower.route end
  return nil
 end
-function U.SetTab(tab) if tab=='routes' or tab=='atlas' or tab=='resources' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
+function U.SetTab(tab) if tab=='welcome' or tab=='routes' or tab=='atlas' or tab=='resources' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
 function U.SetCompact(on) S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
 local function buildHeader()
  U.header=place(CreateFrame('Frame',nil,U.frame),U.frame,12,2,936,60)
@@ -81,7 +81,7 @@ local function buildHeader()
  U.controls.close:SetFrameLevel(math.max(U.controls.close:GetFrameLevel(),U.header:GetFrameLevel()+2))
  S.Hint(U.controls.minimize,'Minimise','Keep only the navigation bar visible.')
  U.nav=place(CreateFrame('Frame',nil,U.frame),U.frame,12,64,936,32);U.nav.topTabs=true;U.nav:SetFrameLevel(U.header:GetFrameLevel()+1);U.tabs={}
- for i,t in ipairs({{'routes','Routes',132},{'atlas','Node Atlas',132},{'resources','Resources',132},{'nodes','Node display',132},{'settings','Preferences',132}}) do
+ for i,t in ipairs({{'welcome','Welcome',132},{'routes','Routes',132},{'atlas','Node Atlas',132},{'resources','Resources',132},{'nodes','Node display',132},{'settings','Preferences',132}}) do
   local b=S.Tab(U.nav,t[2],t[3],function() U.SetTab(t[1]) end,true)
   place(b,U.nav,8+(i-1)*140,0,t[3],32);U.tabs[t[1]]=b;U.controls['tab'..t[1]]=b
  end
@@ -123,7 +123,7 @@ local function buildLibrary()
  local icon=S.Image(U.empty,'EmptyEmblem',96,96); icon:SetPoint('TOPLEFT',U.empty,'TOPLEFT',307,-16)
  local title=label(U.empty,'Your first trail starts here.',30,117,650,30,21,S.text,true); title:SetJustifyH('CENTER')
  local body=label(U.empty,'Gather a few herbs or ore, import known locations,\nor draw a route of your own.',80,157,550,46,13,S.muted); body:SetJustifyH('CENTER'); body:SetWordWrap(true)
- button(U.empty,'emptyImport','Import spawn points',202,224,158,30,'primary',U.actions.import)
+ button(U.empty,'emptyWelcome','Get started',202,224,158,30,'primary',function() U.SetTab('welcome') end)
  button(U.empty,'emptyNew','Draw a route',370,224,138,30,'subtle',U.actions.new)
  local hint=label(U.empty,'Your discoveries are remembered across characters.',60,276,590,16,10,S.dim); hint:SetJustifyH('CENTER')
 end
@@ -180,7 +180,7 @@ end
 local function buildNodeOptions()
  U.nodeOptions=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,395)
  label(U.nodeOptions,'Known node locations',0,0,710,26,18,S.gold,true)
- label(U.nodeOptions,'Gathering filters map markers. Materials filter route generation.',0,33,710,20,12,S.muted)
+ label(U.nodeOptions,'Source, gathering and material selections filter both maps and new routes.',0,33,710,20,12,S.muted)
  local display=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,0,66,344,260)
  local tracking=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,360,66,350,260)
  label(display,'Marker appearance',16,14,310,23,17,S.gold,true)
@@ -234,6 +234,7 @@ local function buildFooter()
 end
 local function buildWindow()
  U.actions=A.UIActions.Bind(U)
+ U.tab=A.db.settings.welcomeSeen==true and 'routes' or 'welcome'
  U.frame=CreateFrame('Frame','GatherCompassForeverWindow',UIParent);U.frame:Hide()
  U.compactBackground=S.Panel(U.frame);U.compactBackground:SetAllPoints()
  U.chrome=S.Window(U.frame);U.chrome:SetAllPoints();U.chrome:SetFrameLevel(U.frame:GetFrameLevel()); U.frame:SetPoint('CENTER',UIParent,'CENTER',0,0)
@@ -242,6 +243,7 @@ local function buildWindow()
  U.content=place(CreateFrame('Frame',nil,U.body),U.body,194,0,742,414)
  buildLibrary(); buildWork(); buildAtlas(); buildPreferences(); buildNodeOptions(); buildFooter()
  U.resourceLibraryView=A.ResourceLibraryView.New(U.content,U)
+ U.welcomeView=A.WelcomeView.New(U.content,U)
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherCompassForeverWindow' end
  U.frame:HookScript('OnHide',function() S.CloseDropdown() end)
  U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.RefreshMode() end)
@@ -353,13 +355,14 @@ function U.Refresh()
  if not U.frame:IsShown() then return end
  local p=A.Client.Position(); local work=A.editor or A.recording or A.recordedDraft
  if U.compact then U.RefreshMode(); refreshFooter(p); refreshStatus(p); return end
- local resource=U.tab=='resources';local nodes=resource and {} or U.SelectedNodes()
- show(U.sidebar,not resource);place(U.content,U.body,resource and 0 or 194,0,resource and 936 or 742,414)
+ local resource=U.tab=='resources';local welcome=U.tab=='welcome';local full=resource or welcome;local nodes=full and {} or U.SelectedNodes()
+ show(U.sidebar,not full);place(U.content,U.body,full and 0 or 194,0,full and 936 or 742,414)
  U.RefreshMode(); for id,b in pairs(U.tabs) do S.Selected(b,id==U.tab) end
  show(U.library,U.tab=='routes' and not work); show(U.workPanel,U.tab=='routes' and work~=nil); show(U.atlas,U.tab=='atlas'); show(U.preferences,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
  show(U.resourceLibraryView.frame,resource)
- if not resource then refreshSidebar(p) end
- if U.tab=='routes' then if work then refreshWork() else refreshLibrary() end elseif U.tab=='atlas' then refreshAtlas() elseif resource then U.resourceLibraryView.Refresh() end
+ show(U.welcomeView.frame,welcome)
+ if not full then refreshSidebar(p) end
+ if U.tab=='routes' then if work then refreshWork() else refreshLibrary() end elseif U.tab=='atlas' then refreshAtlas() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
  refreshFooter(p); refreshStatus(p); U.controls.generate:SetEnabled(#nodes>0)
  local marker=A.Resources.Settings(A.db.settings)
  U.controls.nodeWorld:SetChecked(marker.world);U.controls.nodeMini:SetChecked(marker.mini)

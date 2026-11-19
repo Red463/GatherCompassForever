@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0
+
+- Replace node-source and gathering dropdowns with combinable checkboxes, including explicit empty selections.
+- Share source, gathering and material filters between both maps and new route generation.
+- Add All and one-time Skill-ups material selection, retaining individual edits and skill colours.
+- Replace material pages with a vertically scrolling list and Classic scrollbar.
+- Add a first-use Welcome tab with introduction, import progress and the sole import button.
+- Preserve saved data, active guidance, editor drafts, marker opacity and native minimap tracking clearance.
+
 ## 0.8.8
 
 - Make Gathering filter node markers on both the world map and minimap: Herbs, Ore or Both.

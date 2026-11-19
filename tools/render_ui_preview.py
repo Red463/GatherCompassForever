@@ -28,7 +28,7 @@ CreateFrame=function(...)
  f.SetEndPoint=function(self,...) self.lineEnd={...} end
  return f
 end
-A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -91,6 +91,9 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
     if scene=='recording':lua.execute("A.UI.controls.record.scripts.OnClick(); for i=1,6 do A.recording:Sample({mapID=1,x=.2+i*.02,y=.4+i*.01},i) end;A.UI.Refresh()")
     if scene=='compact':lua.execute('A.UI.controls.start.scripts.OnClick();A.UI.OpenRoutes();A.UI.SetCompact(true)')
     if scene=='preferences':lua.execute("A.UI.SetTab('settings')")
+    if scene in ('welcome','welcome_importing'):
+        lua.execute("A.UI.SetTab('welcome')")
+        if scene=='welcome_importing':lua.execute("A.importJob=coroutine.create(function() end);A.status='Importing all zones: 1240 locations...';A.UI.Refresh()")
     if scene in ('nodes','dropdown'):lua.execute("A.UI.SetTab('nodes')")
     if scene=='dropdown':lua.execute("A.UI.controls.nodeDistance.scripts.OnClick(A.UI.controls.nodeDistance)")
     if scene in ('arrow_hidden_progress','arrow_paused','arrow_no_direction'):
@@ -133,7 +136,7 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(1280,800),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHER COMPASS FOREVER 0.8.8 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHER COMPASS FOREVER 0.9.0 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)
@@ -257,4 +260,4 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['filters_scroll','filters_scroll_end','library','map_editor','map_editor_drag','map_following','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','editing','recording','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','map_editor','map_editor_drag','map_following','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','editing','recording','compact','preferences','atlas','atlas_zones','atlas_all_zones','atlas_locations_page2','atlas_empty','nodes','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

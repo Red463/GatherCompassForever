@@ -21,6 +21,14 @@ test('material scrollbar reaches the last row and preserves then clamps its offs
  local offset=view.offset;view.rows[24].scripts.OnClick(view.rows[24]);eq(A.db.settings.materials.m24,false);eq(view.offset,offset)
  U.Refresh();eq(view.offset,offset);U.SetSource('confirmed');eq(view.maximum,0);eq(view.offset,0);eq(view.empty:IsShown(),true)
 end)
+
+test('unavailable current position does not expose another zone materials while All zones remains explicit',function()
+ local A,U=setup();A.Store.Observe(A.db,{mapID=2,x=.3,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'})
+ A.Client.Position=function() return nil end;U.Refresh()
+ for _,row in ipairs(U.materialRows) do eq(row.materialID,nil) end
+ eq(U.filterSidebar.empty:IsShown(),true);assert(U.filterSidebar.empty:GetText():find('Position unavailable',1,true))
+ U.SetTab('atlas');U.atlasView.SetScope('all');eq(U.materialRows[1].materialID,'gm:herb:401')
+end)
 test('bulk material checkboxes include offscreen and other-zone materials then allow edits',function()
  local A,U=setup()
  for _,row in ipairs({{1,403,'Earthroot'},{2,405,'Briarthorn'},{1,401,'Peacebloom'},{1,409,'Wild Steelbloom'}}) do

@@ -1,4 +1,4 @@
-local runtime={'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','Arrow','MinimapButton','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','UI','Core'}
+local runtime={'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Gathering','Imports','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','Arrow','MinimapButton','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Core'}
 local function setup(saved,configure)
  dofile('tests/wow.lua'); fakeUI(); local A={}; GatherCompassForeverDB=saved
  C_Map={GetBestMapForUnit=function() return 1 end,GetPlayerMapPosition=function() return {GetXY=function() return .2,.5 end} end,GetMapWorldSize=function() return 1000,500 end,GetMapInfo=function() return {name='Test Zone'} end}
@@ -151,6 +151,23 @@ test('unknown schema preserved and absent APIs leave UI usable',function()
  C_Map=nil; GetPlayerFacing=nil; A.Tick(.5); A.Command(''); eq(A.UI.frame:IsShown(),true)
  assert(A.UI.status:GetText():find('Position unavailable'))
 end)
+test('Welcome queues a real all-zone batch import and arrow navigation still opens Routes',function()
+ local A=setup();A.Command('');eq(A.UI.tab,'welcome')
+ A.Imports.Provider=function()
+  return function()
+   return function(_,key)
+    local i=(key or 0)+1;if i>80 then return end
+    return i,{mapID=i<=40 and 1 or 2,x=.01*((i-1)%40+1),y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom'}
+   end,nil,0
+  end,{direct=80,fallback=0}
+ end
+ A.UI.controls.import.scripts.OnClick();assert(A.importJob);eq(A.UI.controls.import:IsEnabled(),false)
+ A.Tick(.1);A.Tick(.1);A.Tick(.5);eq(A.importJob,nil)
+ eq(#A.Store.Select(A.db,1,{source='imported'}),40);eq(#A.Store.Select(A.db,2,{source='imported'}),40)
+ assert(A.UI.welcomeView.status:GetText():find('80 locations across 2 zones',1,true));eq(A.UI.controls.import:IsEnabled(),true)
+ A.Arrow.frame.scripts.OnMouseUp(A.Arrow.frame,'LeftButton');eq(A.UI.tab,'routes')
+end)
+
 test('live GatherMate provider imports through Core in batches and never confirms',function()
  local A=setup(); local data={ [20003000]=401,[40005000]=402 }
  GatherMate2={gmdbs={['Herb Gathering']={[1]=data}},

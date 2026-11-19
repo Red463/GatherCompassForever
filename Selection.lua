@@ -32,7 +32,7 @@ function M.Materials(db,mapID,settings)
   for _,node in ipairs(A.Store.Select(db,id,{source=f.source,kind=f.kind})) do
    if not seen[node.materialID] then
     local info=A.Resources.Info(node)
-    local entry={id=node.materialID,name=info and info.name or node.name or node.materialID,kind=node.kind,sample=node}
+    local entry={id=node.materialID,name=info and info.name or type(node.name)=='string' and node.name or node.materialID,kind=node.kind,sample=node}
     seen[entry.id]=true;entries[#entries+1]=entry
    end
   end

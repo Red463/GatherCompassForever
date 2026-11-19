@@ -24,6 +24,11 @@ test('shared selections intersect source type and material without duplicating d
  eq(choices,M.Materials(A.db,1,A.db.settings))
  S.Observe(A.db,{mapID=1,x=.4,y=.5,kind='herb',materialID='c',source='confirmed'});eq(#M.Materials(A.db,1,A.db.settings),3)
 end)
+
+test('material choices tolerate missing or malformed display names',function()
+ local A=setup();A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='custom',name={},source='imported'})
+ eq(A.Selection.Materials(A.db,1,A.db.settings)[1].name,'custom')
+end)
 test('bulk skill-up selection covers all zones once and allows later manual changes',function()
  local A=setup();local M=A.Selection;local db=A.db
  for i,row in ipairs({{1,403,'Earthroot'},{2,405,'Briarthorn'},{1,401,'Peacebloom'},{1,409,'Wild Steelbloom'},{2,9999,'Unknown'}}) do

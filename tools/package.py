@@ -14,7 +14,7 @@ for name in files:
     assert (root / name).is_file(), f'Missing package file: {name}'
 dist = root / 'dist'
 dist.mkdir(exist_ok=True)
-path = dist / 'GatherCompassForever-0.8.8.zip'
+path = dist / 'GatherCompassForever-0.9.0.zip'
 with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
     for name in files:
         z.write(root / name, 'GatherCompassForever/' + name)

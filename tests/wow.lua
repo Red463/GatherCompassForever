@@ -54,6 +54,8 @@ function fakeUI()
  function methods:SetFrameLevel(value) self.frameLevel=value end
  function methods:CreateFontString() return CreateFrame('FontString',nil,self) end
  function methods:CreateTexture() return CreateFrame('Texture',nil,self) end
+ function methods:CreateMaskTexture() return CreateFrame('MaskTexture',nil,self) end
+ function methods:AddMaskTexture(mask) self.masks=self.masks or {};self.masks[#self.masks+1]=mask end
  function methods:CreateLine() return CreateFrame('Line',nil,self) end
  CreateFrame=function(kind,name,parent,template)
   if template=='CharacterFrameTabButtonTemplate' then error("CreateFrame(): Couldn't find inherited node CharacterFrameTabButtonTemplate") end

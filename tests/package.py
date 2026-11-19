@@ -14,7 +14,7 @@ with zipfile.ZipFile(path) as z:
     assert metadata['Version'] == '0.10.0'
     assert metadata['X-License'] == 'MIT'
     assert metadata['IconTexture'] == r'Interface\AddOns\GatherCompassForever\Media\Icon'
-    for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow', 'HeatBlob']:
+    for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow', 'HeatBlob', 'MinimapMasks']:
         assert f'GatherCompassForever/Media/{texture}.tga' in names
     for line in toc.splitlines():
         if line.strip() and not line.startswith('#'):

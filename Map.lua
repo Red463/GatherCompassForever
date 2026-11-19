@@ -1,5 +1,5 @@
 local _, A = ...
-local M={pins={},byKey={},worldLines={},worldShadows={},miniLines={},worldHeat={}}; A.Map=M
+local M={pins={},byKey={},worldLines={},worldShadows={},miniLines={},worldHeat={},miniHeat={}}; A.Map=M
 local positionHandle,paintHandle
 function M.SetNodeFocus(mapID,materials,nodeKey,source)
  if mapID==nil then M.nodeFocus=nil;return true end
@@ -286,7 +286,7 @@ local function pin()
 end
 function M.Refresh(db,route,follower)
  if not CreateFrame then return end
- hide(M.worldLines);hide(M.worldShadows);hide(M.miniLines);A.Heatmap.Hide(M.worldHeat);M.targetIndex=nil
+ hide(M.worldLines);hide(M.worldShadows);hide(M.miniLines);A.Heatmap.Hide(M.worldHeat);A.MiniHeat.Hide(M.miniHeat);M.targetIndex=nil
  local lib=pinsLib()
  for _,p in ipairs(M.pins) do p.wanted=false end
  local function retire()
@@ -414,9 +414,9 @@ function M.Refresh(db,route,follower)
   if selected then add(selected,nil,selected,false) end
   local count=selected and 1 or 0;for _,n in ipairs(nodes) do if count>=400 then break end;if n~=selected then add(n,nil,n,false);count=count+1 end end
  end
- local miniRadius=C_Minimap and C_Minimap.GetViewRadius and A.Client.Read(C_Minimap.GetViewRadius())
+ local miniRadius=A.Client.MinimapRadius()
  local nodeW,nodeH;if player then nodeW,nodeH=A.Client.Size(player.mapID) end
- local miniFacing=0;if GetCVar and GetCVar('rotateMinimap')=='1' then miniFacing=A.Client.Facing() end
+ local miniFacing=A.Client.MinimapFacing()
  local canGroup=settings.groupMini and player and nodeW and A.Store.Number(miniRadius) and miniRadius>0 and miniFacing~=nil and Minimap
  local miniGroups
  if canGroup then
@@ -441,13 +441,12 @@ function M.Refresh(db,route,follower)
  local reviewing=A.plan and A.plan.review and route==A.plan.route
  local heat=db.settings.routeStyle=='heatmap'
  local world=(active or editing or reviewing) and canvas and map:IsShown() and map:GetMapID()==route.mapID and not focus
- local radius=C_Minimap and C_Minimap.GetViewRadius and A.Client.Read(C_Minimap.GetViewRadius())
- local facing=0
- if GetCVar and GetCVar('rotateMinimap')=='1' then facing=A.Client.Facing() end
+ local radius=A.Client.MinimapRadius()
+ local facing=A.Client.MinimapFacing()
  -- Editing draws only on the world map; minimap paths require navigation.
  local mini=active and player and player.mapID==route.mapID and w and A.Store.Number(radius) and radius>0 and facing~=nil and Minimap and Minimap:IsShown()
  local holes={}
- if mini and not heat and settings.routeLines then
+ if mini and settings.routeLines and settings.routeOpacity>0 then
   holes[1]={x=0,y=0,r=8} -- Native player arrow.
   local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
   local function protect(p)
@@ -465,6 +464,16 @@ function M.Refresh(db,route,follower)
   local zw,zh=w or route.width or 1000,h or route.height or 1000
   A.Heatmap.Draw(M.worldHeat,worldLayer,route,function(p) return M.Project(p,canvas:GetWidth(),canvas:GetHeight()) end,function(radius) return radius/zw*canvas:GetWidth(),radius/zh*canvas:GetHeight() end)
  end
+ if mini and heat and settings.routeLines and settings.routeOpacity>0 then
+  local shape='ROUND'
+  if type(GetMinimapShape)=='function' then local ok,value=pcall(GetMinimapShape);shape=ok and A.Client.Read(value) or 'UNKNOWN' end
+  if not M.miniHeatLayer then M.miniHeatLayer=CreateFrame('Frame',nil,Minimap);M.miniHeatLayer:EnableMouse(false);M.miniHeatLayer:SetAllPoints(Minimap) end
+  if M.miniHeatLayer:GetParent()~=Minimap then M.miniHeatLayer:SetParent(Minimap);M.miniHeatLayer:ClearAllPoints();M.miniHeatLayer:SetAllPoints(Minimap) end
+  local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
+  local function project(p) return miniRaw(p,player,w,h,radius,mw,mh,facing) end
+  M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,holes,settings.routeOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end)
+  A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape)
+ end
  local wi,mi=0,0
  local zoom=map and map.GetCanvasScale and map:GetCanvasScale() or 1
  if not A.Store.Number(zoom) or zoom<=0 then zoom=1 end
@@ -479,13 +488,13 @@ function M.Refresh(db,route,follower)
  end
  local function segment(a,b,color)
   if world and not heat and wi<600 then wi=wi+1;drawWorld(wi,a,b,color) end
-  if mini and not heat and settings.routeLines and mi<200 then
+  if mini and not heat and settings.routeLines and settings.routeOpacity>0 and mi<200 then
    local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
    local x1,y1=miniRaw(a,player,w,h,radius,mw,mh,facing); local x2,y2=miniRaw(b,player,w,h,radius,mw,mh,facing)
    x1,y1,x2,y2=M.Clip(x1,y1,x2,y2,mw,mh)
    if x1 then
     local thickness=color==gold and 1.5 or 1
-    local miniColor={color[1],color[2],color[3],math.min(color[4] or 1,.55),thickness}
+    local miniColor={color[1],color[2],color[3],math.min(color[4] or 1,.55)*settings.routeOpacity,thickness}
     for _,piece in ipairs(M.GapSegments(x1,y1,x2,y2,holes,thickness/2)) do
      if mi>=200 then break end
      mi=mi+1; line(M.miniLines,mi,Minimap,piece[1],piece[2],piece[3],piece[4],miniColor,true)

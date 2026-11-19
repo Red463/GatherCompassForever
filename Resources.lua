@@ -73,7 +73,7 @@ function R.Settings(settings)
  if type(s.routeLines)~='boolean' then s.routeLines=true end
  s.outlineSize=finite(s.outlineSize,24,20,40); s.iconSize=finite(s.iconSize,14,10,24); s.hideDistance=finite(s.hideDistance,20,0,100)
  if type(s.groupWorld)~='boolean' then s.groupWorld=true end;if type(s.groupMini)~='boolean' then s.groupMini=true end
- s.worldIconSize=finite(s.worldIconSize,s.iconSize,10,24);s.routeOpacity=finite(s.routeOpacity,.35,0,1)
+ s.worldIconSize=finite(s.worldIconSize,s.iconSize,10,24);s.routeOpacity=finite(s.routeOpacity,.65,0,1)
  s.worldIconOpacity=finite(s.worldIconOpacity,1,0,1);s.miniIconOpacity=finite(s.miniIconOpacity,1,0,1);s.miniOutlineOpacity=finite(s.miniOutlineOpacity,1,0,1)
  return s
 end

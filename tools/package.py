@@ -6,7 +6,7 @@ root = Path(__file__).resolve().parents[1]
 toc = root / 'GatherCompassForever.toc'
 files = ['GatherCompassForever.toc', 'README.md', 'NOTICE.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md',
          'Libs/LICENSE.txt', 'Libs/HereBeDragons-LICENSE.txt','Libs/OpenMap-Reveal-LICENSE.txt',
-         'Media/Icon.tga','Media/Header.tga','Media/LogoSheet.tga','Media/EmptyEmblem.tga','Media/README.txt','Media/NodeRing.tga','Media/NodeSquare.tga','Media/GuideArrow.tga','Media/HeatBlob.tga']
+         'Media/Icon.tga','Media/Header.tga','Media/LogoSheet.tga','Media/EmptyEmblem.tga','Media/README.txt','Media/NodeRing.tga','Media/NodeSquare.tga','Media/GuideArrow.tga','Media/HeatBlob.tga','Media/MinimapMasks.tga']
 files += [line.strip() for line in toc.read_text().splitlines()
           if line.strip() and not line.startswith('#')]
 files += [p.relative_to(root).as_posix() for p in sorted((root / 'docs/images').glob('*.png'))]

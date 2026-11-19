@@ -1,0 +1,19 @@
+local function setup() dofile('tests/wow.lua');fakeUI();local A={};for _,n in ipairs({'Store','Client','Heatmap','MiniHeat'}) do module(n,A) end;return A end
+test('minimap heat uses bounded nonoverlapping cells with safe opacity and tracking clearance',function()
+ local A=setup();local r={mapID=1,width=1000,height=500,points={point(.1),point(.4)},loop=true}
+ local field=A.MiniHeat.Field(r,function(p) return (p.x-.2)*500,0 end,200,200,'ROUND',{{x=0,y=0,r=8},{x=40,y=0,r=7}},.35,function(radius) return radius*.5,radius*.5 end)
+ assert(#field>0 and #field<=1600)
+ for _,c in ipairs(field) do
+  assert(c.alpha>0 and c.alpha<=.35);assert(A.MiniHeat.InShape(c.x,c.y,200,200,'ROUND'));assert(A.MiniHeat.InShape(c.x+c.width,c.y-c.height,200,200,'ROUND'))
+  for _,hole in ipairs({{x=0,y=0,r=8},{x=40,y=0,r=7}}) do local dx=math.max(c.x-hole.x,0,hole.x-c.x-c.width);local dy=math.max(c.y-c.height-hole.y,0,hole.y-c.y);assert(dx*dx+dy*dy>=hole.r*hole.r) end
+ end
+ local pool={};A.MiniHeat.Draw(pool,Minimap,field,'ROUND');assert(#pool<=1600);assert(pool[1].masks and #pool[1].masks==1);A.MiniHeat.Hide(pool);eq(pool[1]:IsShown(),false)
+ eq(#A.MiniHeat.Field(r,function() return 0,0 end,200,200,'UNKNOWN',{},1,function() return 50,50 end),0)
+end)
+test('minimap shape quadrants and ignored rotation match their native projection',function()
+ local A=setup();eq(A.MiniHeat.InShape(-99,99,200,200,'SQUARE'),true);eq(A.MiniHeat.InShape(-99,99,200,200,'ROUND'),false)
+ eq(A.MiniHeat.InShape(-99,99,200,200,'CORNER-TOPLEFT'),false);eq(A.MiniHeat.InShape(99,-99,200,200,'CORNER-TOPLEFT'),true)
+ GetCVar=function() return '1' end;A.Client.Facing=function() return 1.2 end;C_Minimap={IsRotateMinimapIgnored=function() return true end,GetViewRadius=function() error('unavailable') end}
+ eq(A.Client.MinimapFacing(),0);eq(A.Client.MinimapRadius(),nil);C_Minimap.IsRotateMinimapIgnored=function() return false end;near(A.Client.MinimapFacing(),1.2)
+ A.Client.Facing=function() return nil end;eq(A.Client.MinimapFacing(),nil);C_Minimap=nil;GetCVar=nil
+end)

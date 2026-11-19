@@ -30,6 +30,7 @@ Planner.lua
 FarmingSession.lua
 Follower.lua
 Heatmap.lua
+MiniHeat.lua
 Map.lua
 Skin.lua
 Dropdown.lua

@@ -35,7 +35,7 @@ CreateFrame=function(...)
  return f
 end
 WorldMapFrame:Hide()
-A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','Map','Skin','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','FarmingSession','Follower','Heatmap','MiniHeat','Map','Skin','Dropdown','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end
@@ -84,6 +84,8 @@ def render(scene):
         if scene=='resources_search_empty':lua.execute("A.UI.resourceLibraryView.SetSearch('No matching resource')")
         if scene=='resources_page2':lua.execute("A.UI.controls.resourceNext.scripts.OnClick()")
         if scene=='resources_restored_preferences':lua.execute("A.UI.SetTab('settings')")
+    if scene=='mini_heat':
+        lua.execute("A.UI.actions.generateStart();A.db.settings.routeStyle='heatmap';A.Resources.Settings(A.db.settings).mini=false;Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(240,240);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',520,-240);local terrain=Minimap:CreateTexture(nil,'BACKGROUND');terrain:SetAllPoints();terrain:SetTexture(9001);C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;GetMinimapShape=function() return 'SQUARE' end;A.Map.Refresh(A.db,A.follower.route,A.follower);local player=Minimap:CreateTexture(nil,'OVERLAY');player:SetPoint('CENTER',Minimap,'CENTER');player:SetSize(11,16);player:SetTexture('Interface\\\\AddOns\\\\GatherCompassForever\\\\Media\\\\GuideArrow');for _,n in ipairs(A.db.nodes[1]) do local x,y=A.Map.MiniProject(n,A.Client.Position(),1000,600,200,240,240,0);if x then local dot=Minimap:CreateTexture(nil,'OVERLAY');dot:SetColorTexture(1,.9,.1,1);dot:SetSize(4,4);dot:SetPoint('CENTER',Minimap,'CENTER',x,y) end end;local text=A.Skin.Label(UIParent,'Minimap heat with simulated native tracking dots',15,A.Skin.gold);text:SetPoint('TOPLEFT',UIParent,'TOPLEFT',400,-190);text:SetSize(500,30)")
     if scene=='minimap_button':
         lua.execute("A.UI.frame:Hide();Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(180,180);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',900,-100);Minimap:SetBackdropColor(.12,.16,.09,1);A.MinimapButton.Build()")
     if scene=='material_skills':
@@ -154,7 +156,7 @@ def render(scene):
         layer=o['drawLayer'] or ('OVERLAY' if o['kind']=='FontString' else 'ARTWORK')
         return strata_order.get(strata,2),level,({'BACKGROUND':0,'BORDER':1,'ARTWORK':2,'OVERLAY':3,'HIGHLIGHT':4}.get(layer,0) if region else -1),o['sublevel'] or 0,ident(o)
     for o in sorted(objects,key=draw_order):
-        if not visible(o):continue
+        if not visible(o) or o['kind']=='MaskTexture':continue
         x,y,w,h=box(o)
         if o['kind']=='Line' and o['lineStart'] is not None:
             def endpoint(a):
@@ -207,7 +209,11 @@ def render(scene):
             if o['backdrop'] is not None and 'UI-DialogBox-Background' in (o['backdrop']['bgFile'] or ''):
                 d.rectangle(rect,fill='#171410',outline='#675b49',width=2)
             else:d.rectangle(rect,fill=rgba(o['backColor']),outline=rgba(o['borderColor']))
-        if o['kind']!='Line' and o['color'] is not None and rgba(o['color'])[3]:d.rectangle(rect,fill=rgba(o['color']))
+        if o['kind']!='Line' and o['color'] is not None and rgba(o['color'])[3]:
+            colour=rgba(o['color'])
+            if colour[3]<255 and w>0 and h>0:
+                tile=Image.new('RGBA',(max(1,round(w)),max(1,round(h))),colour);im.alpha_composite(tile,(round(x),round(y)))
+            else:d.rectangle(rect,fill=colour)
         texture=o['texture']
         if texture==9001 and w>0 and h>0:
             art=map_art.copy()
@@ -276,4 +282,4 @@ def render(scene):
     path=out/(scene+'.png');im.convert('RGB').save(path)
     (out/(scene+'.json')).write_text(json.dumps(text_report,indent=2),encoding='utf-8')
     print(path)
-for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)
+for scene in ['welcome','welcome_importing','filters_scroll','filters_scroll_end','library','route_heatmap','route_selected','groups','resources','resources_herb','resources_ore','resources_zero','resources_search_empty','resources_page2','resources_restored_preferences','minimap_button','mini_heat','material_skills','empty','compact','preferences','nodes','nodes_mini','arrow','arrow_name','arrow_name_no_progress','arrow_hidden_progress','arrow_paused','arrow_no_direction','dropdown']:render(scene)

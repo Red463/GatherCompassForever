@@ -16,10 +16,29 @@ test('review heat replaces lines and stopping clears heat while keeping resource
  A.plan={route=route,review=true};A.Map.Refresh(db,route,nil);assert(A.Map.worldHeat[1]:IsShown())
  eq(#A.Map.worldLines,0);local f=A.Follower.New(route,point(.1),distance);A.plan.review=false
  A.Map.Refresh(db,route,f);eq(#A.Map.miniLines,0);eq(A.Map.targetIndex,f.index)
+ assert(A.Map.miniHeat[1] and A.Map.miniHeat[1]:IsShown())
  db.settings.routeStyle='lines';A.Map.Refresh(db,route,f);eq(A.Map.worldHeat[1]:IsShown(),false);assert(A.Map.worldLines[1]:IsShown())
+ eq(A.Map.miniHeat[1]:IsShown(),false)
  db.settings.routeStyle='heatmap';A.Map.Refresh(db,route,f);WorldMapFrame:Hide();eq(A.Map.worldHeat[1]:IsVisible(),false)
  WorldMapFrame:Show();A.Map.Refresh(db,nil,nil);eq(A.Map.worldHeat[1]:IsShown(),false)
  C_Minimap=nil
+end)
+
+test('minimap heat respects overlay controls pause zone shape opacity and stop cleanup',function()
+ dofile('tests/wow.lua');fakeUI();local A={};for _,n in ipairs({'Store','Client','Follower','Map'}) do module(n,A) end
+ A.Client.Position=function() return point(.1) end;A.Client.Size=function() return 1000,500 end;A.Client.Distance=distance;A.Client.Facing=function() return 0 end
+ GetCVar=function() return '0' end;C_Minimap={GetViewRadius=function() return 200 end};GetMinimapShape=function() return 'ROUND' end
+ local db=A.Store.Open();db.settings.routeStyle='heatmap';local settings=A.Resources.Settings(db.settings);settings.mini=false
+ local route={mapID=1,width=1000,height=500,points={point(.2),point(.3)},loop=true};local f=A.Follower.New(route,point(.1),distance)
+ A.Map.Refresh(db,route,f);assert(A.Map.miniHeat[1]:IsShown());eq(A.Map.miniHeatLayer.mouse,false)
+ f:Pause();A.Map.Refresh(db,route,f);assert(A.Map.miniHeat[1]:IsShown())
+ settings.routeLines=false;A.Map.Refresh(db,route,f);eq(A.Map.miniHeat[1]:IsShown(),false)
+ settings.routeLines=true;settings.routeOpacity=0;A.Map.Refresh(db,route,f);eq(A.Map.miniHeat[1]:IsShown(),false)
+ settings.routeOpacity=.35;GetMinimapShape=function() return 'UNSUPPORTED' end;A.Map.Refresh(db,route,f);eq(A.Map.miniHeat[1]:IsShown(),false)
+ GetMinimapShape=function() return 'ROUND' end;A.Map.Refresh(db,route,f);Minimap:Hide();eq(A.Map.miniHeat[1]:IsVisible(),false);Minimap:Show()
+ A.Client.Position=function() return {mapID=2,x=.1,y=.5} end;A.Map.Refresh(db,route,f);eq(A.Map.miniHeat[1]:IsShown(),false)
+ A.Client.Position=function() return point(.1) end;A.Map.Refresh(db,route,f);f:Stop();A.Map.Refresh(db,nil,f);eq(A.Map.miniHeat[1]:IsShown(),false)
+ GetMinimapShape=nil;C_Minimap=nil
 end)
 test('browsing another saved route cannot draw an inactive world route',function()
  dofile('tests/wow.lua'); fakeUI(); local A={}; module('Store',A); module('Client',A); module('Map',A)

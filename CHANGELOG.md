@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0
+
+- Add one-time Gatherable material selection, including eligible grey resources and capped professions.
+- Replace the saved-route/manual creation workflow with Generate & start and Generate & review; preserve existing saved data.
+- Add a larger map-backed review with node selection, Remove node, Undo removal, mouse-wheel zoom and right-drag pan.
+- Add Lines and Heatmap corridor views of the same plan. Heat replaces world-map lines and suppresses minimap route lines.
+- Generate a bounded nearby farming corridor through representative spawn locations, with included/omitted counts and no long closing jump.
+- Fix the reproduced nearest-start then distant-next-leg transition; orient generated loops toward the nearer outgoing side.
+- Preserve pause state and lap display when a node removal rebuilds active guidance. Filter changes leave the active plan intact until regeneration.
+- Keep Welcome as the sole import page and update its introduction for the new workflow.
+- Keep MIT licensing and no new dependency. Geometry does not establish terrain passability; mountains, caves and walls may still need detours.
+
 ## 0.9.0
 
 - Replace node-source and gathering dropdowns with combinable checkboxes, including explicit empty selections.

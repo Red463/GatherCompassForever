@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.9.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.10.0 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -24,21 +24,21 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   saved observations as a fallback. Repeated imports merge matching locations.
 - **Choose what to farm.** Filter by source, herbs/ore and individual materials, with
   shared checkboxes for maps and generated routes, a scrolling material list and
-  one-time skill-up material selection.
-- **Build routes your way.** Generate a resource-based loop, draw a custom route,
-  record a travelled path or drag existing waypoints on the world map.
-- **Follow the path.** World-map lines, minimap guidance and a smooth gold arrow show
-  the way. Optionally show the next resource, waypoint progress and lap number.
+  one-time Gatherable (including grey) or Skill-ups material selection.
+- **Generate a local corridor.** Start immediately, or review a large zone map and
+  remove individual nodes with undo. No save step is needed.
+- **Follow the path.** Choose thin lines or a soft heatmap corridor on the world map
+  and route sketch. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
 - **Explore resources.** Browse a square item grid and view zones ranked by known
   node count, source-specific skill requirements and personal gather history.
 - **Tune map markers.** Use icons on the world map and icons, rings or squares on
   the minimap. Hide nearby minimap icons while retaining hollow outlines.
-- **Manage saved routes.** Use descriptive generated names, edit existing routes or
-  delete one through a named confirmation. A draggable minimap badge opens the panel.
+- **Review without losing history.** Removals affect the current plan only. Existing
+  saved routes and node history are preserved. A minimap badge opens the panel.
 
 ## Install
 
-1. Download `GatherCompassForever-0.9.0.zip` from
+1. Download `GatherCompassForever-0.10.0.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -47,6 +47,9 @@ where resources grow, build farming routes and follow a clear in-game guide arro
    `Interface/AddOns/GatherCompassForever/GatherCompassForever.toc`.
 4. Restart WoW, enable **Gather Compass Forever** in the AddOns list, then type
    `/gcf` or click the compass badge beside the minimap.
+
+Manual route creation, recording and the saved-route list are no longer exposed.
+Existing saved routes remain in your SavedVariables.
 
 When updating, replace the complete addon folder. **Keep SavedVariables** to retain
 routes, known locations and preferences. The addon is built for Forever's interface
@@ -81,11 +84,14 @@ scrolling and a scrollbar, with icons and skill-coloured names.
 
 ![Checkbox filters and a vertically scrolling material list](docs/images/filters.png)
 
-### Route library
+### Generate and review
 
-Choose materials, preview a saved circuit, then edit, open its map, delete or start it.
+Choose materials, then use **Generate & start** or **Generate & review**. Click a node
+to select it, then **Remove node** to update the corridor. **Undo removal** restores
+it. Scroll to zoom and right-drag empty map space to pan. Dim icons are outside the
+current local circuit; counts show the included and omitted locations.
 
-![Route library with material filters, route preview and management buttons](docs/images/routes.png)
+![Large map-backed route review with node selection, removal and undo](docs/images/routes.png)
 
 ### Resource catalogue and details
 
@@ -97,13 +103,15 @@ remain visible so you can plan what to seek next.
 
 ![Resource details with skill guidance, personal history and ranked zones](docs/images/resource-details.png)
 
-### Editing waypoints
+### Heatmap corridor
 
-**Edit path** opens the route's map. Drag a gold circle to move a waypoint, click
-empty map space to add one, then use **Save route** or **Route panel**. The saved
-route stays unchanged until you save. Numbers appear on selected or hovered handles.
+Select **Heatmap corridor** above the route sketch to replace the lines with a soft,
+warm band through the generated farming areas. It is a route view, rather than a
+live resource scanner. The arrow follows the same points; switching views does not
+regenerate the route. Minimap route lines are hidden in this view, while resource
+markers and the destination marker remain.
 
-![Map editing with circular waypoint handles and save/return controls](docs/images/waypoint-editing.png)
+![Soft density corridor over an illustrative map](docs/images/route-heatmap.png)
 
 ### Guide arrow
 
@@ -121,17 +129,18 @@ protection so a stationary player cannot repeatedly advance through a loop.
 
 1. Gather a few nodes or import node data from **Welcome**.
 2. In **Routes**, tick your node sources, gathering types and materials.
-3. Click **Generate** to create a named draft from matching current-zone locations.
-4. Review the route and add detours around terrain on **Edit on map**. Save it.
-5. Click **Start route**. Use the arrow, world map and minimap to follow the route.
-   Pause, skip or stop through the route panel.
+3. Click **Generate & start** for quick guidance, or **Generate & review** to inspect it.
+4. In review, select unwanted nodes and use **Remove node** or **Undo removal**.
+   Choose **Route lines** or **Heatmap corridor**, then **Start route**.
+5. Follow the arrow. Pause, skip or stop through the panel; click the arrow to reopen it.
 
-World-map paths use thin gold lines and appear only while following a route
-(including when paused) or editing its path. Selecting a saved route keeps its
-sketch in the panel; stopping or completing guidance clears its map lines.
+Path overlays appear while following (including when paused) or reviewing the current
+plan. Stopping or completing guidance clears them. Generation starts at the nearest
+selected local node and builds connected farming areas, rather than forcing a whole
+zone into one circuit. The displayed counts show when other areas are omitted.
 
 The **Node Atlas** provides per-resource location browsing, zone comparisons,
-resource-specific route drafts and nearest-location guidance. The separate
+resource-specific route review and nearest-location guidance. The separate
 **Resources** tab provides the full item catalogue, independent of your route filters.
 Clicking a ranked zone temporarily focuses that resource on the world map, subject
 to your shared checkbox filters. Closing the map restores its usual display.
@@ -153,9 +162,12 @@ The sidebar filters this addon's node markers on both maps and new route generat
 together. Tick **My discoveries**, **Imported locations**, **Herbs** and **Ore** in any
 combination, then tick individual materials. Unticking every source or type gives no
 matching nodes; it does not reset your choices. These selections do not change a
-saved route or interrupt guidance already running.
+current plan or interrupt guidance already running. A changed-selection message
+reminds you to generate again when you want the new choices applied.
 
-**All** selects all materials; untick it to clear the selection. **Skill-ups** selects
+**All** selects all materials; untick it to clear the selection. **Gatherable** selects
+known resources your current skill can gather, including grey resources and capped
+professions. **Skill-ups** selects
 known orange, yellow and green materials across matching known zones once. It excludes
 grey, too-difficult and unknown resources, and you can edit the result afterward.
 The selected materials do not change automatically when your profession skill rises.
@@ -164,6 +176,8 @@ The selected materials do not change automatically when your profession skill ri
 and minimap route visibility. Its three opacity sliders independently adjust
 world-map icons, minimap icons and minimap outlines from 0% to 100%. Changes apply
 immediately and are remembered. Navigation markers keep their own appearance.
+![Node appearance, difficulty colours and independent opacity controls](docs/images/node-display.png)
+
 **Preferences** controls arrival distance, arrow scale,
 optional labels and minimap-button visibility. Use `/gcf` to restore the minimap
 button if it is hidden.
@@ -180,9 +194,16 @@ Skill colours use **Classic reference data**, current profession rank and readab
 cap/bonus information. Unknown information stays neutral. Native tooltip inspection
 is optional, stored locally and does not automatically change the skill rules.
 
-Routes connect coordinates directly. They do not automatically avoid cliffs, water,
-walls or caves. Add detours where needed. Routes are single-zone and dense generated
-inputs/visuals are bounded for performance. Entering a waypoint's arrival radius
+Routes use nearby spatial groups and geometric connections of at most 450 yards,
+including their return path. Dense areas use representative actual spawn locations;
+the arrow does not visit every candidate individually. Disconnected or distant
+areas are omitted rather than joined across the zone.
+
+This is **not terrain pathfinding**: short connections can still cross cliffs, water,
+walls or caves. Move around obstacles, skip a difficult destination, remove an
+unwanted node, or regenerate from a better position. No third-party terrain engine
+or navigation data is bundled. Routes are single-zone and their inputs/visuals are
+bounded for performance. Entering a waypoint's arrival radius
 can advance the route without a harvest. The addon does not move your character or
 gather automatically, and it does not replace your native waypoint.
 

@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $addonRoot = Split-Path $PSScriptRoot -Parent
 $distRoot = Join-Path $addonRoot 'dist'
 New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
-$archivePath = Join-Path $distRoot 'GatherCompassForever-0.9.0.zip'
+$archivePath = Join-Path $distRoot 'GatherCompassForever-0.10.0.zip'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archiveStream = [System.IO.File]::Open($archivePath, [System.IO.FileMode]::Create)

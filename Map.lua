@@ -195,9 +195,28 @@ function M.WorldRouteLayer(canvas)
  if WorldMapFrame.GetPinFrameLevelsManager then
   local ok,manager=pcall(WorldMapFrame.GetPinFrameLevelsManager,WorldMapFrame)
   if ok and (type(manager)=='table' or type(manager)=='userdata') and type(manager.GetFrameLevelStart)=='function' then
-   local good,base=pcall(manager.GetFrameLevelStart,manager,'PIN_FRAME_LEVEL_DEFAULT')
-   if A.Store.Number(manager.minLevel) then good,base=true,manager.minLevel end
-   if good and A.Store.Number(base) then level=math.max(level,base-10) end
+   -- Exploration and highlight artwork are pins too. The minimum pin tier
+   -- places routes beneath that artwork, even when above detail-layer tiles.
+   for _,kind in ipairs({'PIN_FRAME_LEVEL_DEFAULT','PIN_FRAME_LEVEL_MAP_EXPLORATION','PIN_FRAME_LEVEL_MAP_HIGHLIGHT'}) do
+    local good,base=pcall(manager.GetFrameLevelStart,manager,kind)
+    if good and A.Store.Number(base) then
+     local range=1
+     if type(manager.GetFrameLevelRange)=='function' then
+      local valid,value=pcall(manager.GetFrameLevelRange,manager,kind)
+      if valid and A.Store.Number(value) and value>=1 then range=value end
+     end
+     level=math.max(level,base+range)
+    end
+   end
+  end
+ end
+ -- OpenMap can put stitched terrain above the normal map-art tiers.
+ local api=OpenMapAPI
+ if type(api)=='table' and api.major==1 and type(api.IsStitched)=='function' and type(api.ArtTopLevel)=='function' then
+  local ok,active=pcall(api.IsStitched)
+  if ok and active then
+   local good,top=pcall(api.ArtTopLevel)
+   if good and A.Store.Number(top) then level=math.max(level,top+1) end
   end
  end
  layer:SetFrameLevel(level);layer:Show();return layer

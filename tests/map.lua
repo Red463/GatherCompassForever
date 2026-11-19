@@ -103,12 +103,59 @@ test('world route contrast and its outline stay aligned while editing and clear 
  LibStub=nil
 end)
 
-test('world route sits below the lowest native pin tier and editor stays above it without visible nodes',function()
+test('world route stays above exploration and highlight pins while below native resource pins',function()
+ local A=markerSetup();module('Follower',A);module('Editor',A);A.Client.Size=function() return 1000,500 end
+ -- Blizzard's explored terrain is itself a pin above DEFAULT, not a detail-layer child.
+ local levels={PIN_FRAME_LEVEL_DEFAULT=2000,PIN_FRAME_LEVEL_MAP_EXPLORATION=2001,PIN_FRAME_LEVEL_MAP_HIGHLIGHT=2007,PIN_FRAME_LEVEL_AREA_POI=2020}
+ local manager={minLevel=2000,GetFrameLevelStart=function(_,kind) return levels[kind] or 2000 end,GetFrameLevelRange=function() return 1 end}
+ WorldMapFrame.GetPinFrameLevelsManager=function() return manager end
+ local route={mapID=1,name='Explored terrain',points={point(.3),point(.6)},loop=true}
+ local follower=A.Follower.New(route,point(.1),distance)
+ for _,editing in ipairs({false,true}) do
+  local r=route;if editing then A.Map.SetEditor(A.Editor.New(route));r=A.Map.editor.draft end
+  A.Map.Refresh(A.db,r,not editing and follower or nil)
+  for _,pool in ipairs({A.Map.worldLines,A.Map.worldShadows}) do
+   local stroke=pool[1];assert(stroke:IsShown())
+   assert(stroke:GetParent():GetFrameLevel()>levels.PIN_FRAME_LEVEL_MAP_HIGHLIGHT,'Exploration or highlight pin covers route')
+   assert(stroke:GetParent():GetFrameLevel()<levels.PIN_FRAME_LEVEL_AREA_POI,'Route covers native resource pin tier')
+  end
+ end
+ LibStub=nil
+end)
+
+test('world route follows OpenMap terrain priority without raising lines on other maps',function()
+ local A=markerSetup();A.Client.Size=function() return 1000,500 end
+ local route={mapID=1,points={point(.3),point(.6)}}
+ local stitched=true;local artTop=2300
+ OpenMapAPI={major=1,IsStitched=function() return stitched end,ArtTopLevel=function() return artTop end}
+ WorldMapFrame.GetPinFrameLevelsManager=function() return {minLevel=2000,GetFrameLevelStart=function(_,kind) return kind=='PIN_FRAME_LEVEL_MAP_HIGHLIGHT' and 2200 or 2000 end,GetFrameLevelRange=function() return 1 end} end
+ A.Map.Refresh(A.db,route);local layer=A.Map.worldLines[1]:GetParent()
+ assert(layer:GetFrameLevel()>artTop,'OpenMap terrain covers route')
+ artTop=2400;A.Map.Refresh(A.db,route);assert(layer:GetFrameLevel()>artTop,'Route priority did not follow rebuilt map art')
+ stitched=false;A.Map.Refresh(A.db,route);assert(layer:GetFrameLevel()<2300,'Inactive stitched map still controls route priority')
+ OpenMapAPI=nil;LibStub=nil
+end)
+
+test('world route fallback keeps editor above it without visible nodes',function()
  local A=markerSetup();module('Editor',A);A.Resources.Settings(A.db.settings).world=false
  WorldMapFrame.GetPinFrameLevelsManager=function() return {minLevel=1700,GetFrameLevelStart=function() return 2000 end} end
  local e=A.Editor.New({mapID=1,name='Priority',points={point(.3),point(.6)}});A.Map.SetEditor(e);A.Map.Refresh(A.db,e.draft)
- local layer=A.Map.worldLines[1]:GetParent();assert(layer:GetFrameLevel()<1700,'Stroke covers native pins below the default tier')
+ local layer=A.Map.worldLines[1]:GetParent();assert(layer:GetFrameLevel()>2000,'Fallback route is below the default native tier')
  assert(A.Map.editLayer:GetFrameLevel()>layer:GetFrameLevel(),'Route layer covers editor handles with world markers hidden')
+ LibStub=nil
+end)
+
+test('world route respects complete terrain tier ranges and safely handles unavailable optional APIs',function()
+ local A=markerSetup();A.Client.Size=function() return 1000,500 end
+ local route={mapID=1,points={point(.3),point(.6)}}
+ local manager={GetFrameLevelStart=function(_,kind) return kind=='PIN_FRAME_LEVEL_MAP_HIGHLIGHT' and 2200 or 2000 end,GetFrameLevelRange=function() return 8 end}
+ WorldMapFrame.GetPinFrameLevelsManager=function() return manager end
+ OpenMapAPI={major=1,IsStitched=function() error('not ready') end,ArtTopLevel=function() error('not ready') end}
+ A.Map.Refresh(A.db,route);local layer=A.Map.worldLines[1]:GetParent();eq(layer:GetFrameLevel(),2208)
+ OpenMapAPI.IsStitched=function() return true end;A.Map.Refresh(A.db,route);eq(layer:GetFrameLevel(),2208)
+ OpenMapAPI.ArtTopLevel=function() return 0/0 end;A.Map.Refresh(A.db,route);eq(layer:GetFrameLevel(),2208)
+ OpenMapAPI=nil;WorldMapFrame.GetPinFrameLevelsManager=function() error('not ready') end
+ A.Map.Refresh(A.db,route);eq(layer:GetFrameLevel(),WorldMapFrame:GetCanvas():GetFrameLevel()+10)
  LibStub=nil
 end)
 

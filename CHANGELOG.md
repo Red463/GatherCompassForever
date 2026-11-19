@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.4
+
+- Place world-map routes above Blizzard's exploration and highlight pin artwork.
+- Respect OpenMap's active stitched-terrain layer while keeping node markers above routes.
+- Cover following, editing, terrain tier ranges and unavailable map APIs in regression checks.
+
 ## 0.8.3
 
 - Put world-map route strokes on a dedicated layer above map artwork and below pins.

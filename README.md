@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.8.3 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.8.4 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -37,7 +37,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.8.3.zip` from
+1. Download `GatherCompassForever-0.8.4.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever

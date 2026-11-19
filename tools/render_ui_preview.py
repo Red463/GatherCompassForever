@@ -129,7 +129,7 @@ local p=A.editor.draft.points[4];dragX,dragY=p.x,p.y;WorldMapFrame.ScrollContain
         resolving.remove(k);boxes[k]=r;return r
     def visible(o):return o['shown'] is not False and (o['parent'] is None or ident(o['parent'])==0 or visible(o['parent']))
     im=Image.new('RGBA',(1280,800),'#0c1711');d=ImageDraw.Draw(im)
-    d.text((160,27),'GATHER COMPASS FOREVER 0.8.3 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
+    d.text((160,27),'GATHER COMPASS FOREVER 0.8.4 / '+scene.upper()+' / ACTUAL LUA LAYOUT PREVIEW',font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',11),fill='#9cae9d')
     fonts={}; text_report=[]
     def font(o):
         size=int(o['fontSize'] or 12);family='georgia.ttf' if 'FRIZ' in (o['fontPath'] or '') else 'arial.ttf';key=(family,size)

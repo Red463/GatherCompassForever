@@ -10,6 +10,12 @@ function A.Follower.New(route,start,distance,options)
  local best
  for i,p in ipairs(f.route.points) do local d=distance(start,p); if d and (not best or d<best) then best=d; f.index=i end end
  if #f.route.points==0 then f.status='complete' end
+ if route.generated and route.loop and #f.route.points>2 then
+  local nextPoint=f.route.points[f.index%#f.route.points+1]
+  local previous=f.route.points[(f.index-2)%#f.route.points+1]
+  local forward,back=distance(start,nextPoint),distance(start,previous)
+  if back and forward and back<forward then f.direction=-1 end
+ end
  function f:Target() if self.status=='complete' or self.status=='stopped' then return nil end; return self.route.points[self.index] end
  function f:Snapshot() return {status=self.status,index=self.index,total=#self.route.points,loop=self.route.loop,lap=self.lap,target=self:Target(),direction=self.direction,reason=self.reason,visited=self.visited} end
  function f:Pause() if self.status~='complete' and self.status~='stopped' then self.status='paused'; self.reason='Paused by you.' end end

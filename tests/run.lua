@@ -6,6 +6,7 @@ end
 function eq(a,b) assert(a==b, tostring(a)..' ~= '..tostring(b)) end
 function near(a,b) assert(math.abs(a-b)<0.00001, tostring(a)..' not near '..tostring(b)) end
 function module(name,A)
+ if name=='Planner' and not A.Corridor then module('Corridor',A) end
  if name=='Map' and not A.Resources then module('Resources',A) end
  if name=='Map' and not A.Selection then module('Selection',A) end
  local f=loadfile(name..'.lua'); assert(f, 'Missing module '..name); f('GatherCompassForever',A)

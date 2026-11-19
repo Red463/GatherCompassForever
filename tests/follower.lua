@@ -61,3 +61,10 @@ test('map loss suspends without advancing and manual pause survives return',func
  f:Resume(); f:Skip(); eq(f:Snapshot().index,2)
  f:Reverse(); eq(f:Snapshot().index,2); f:Skip(); eq(f:Snapshot().index,1)
 end)
+
+test('generated loop joins the nearest point toward its shorter outgoing side',function()
+ local A={};module('Store',A);module('Follower',A)
+ local route={mapID=1,generated=true,loop=true,points={point(.1),point(.9),point(.12)}}
+ local f=A.Follower.New(route,point(.1),distance);eq(f.index,1);eq(f.direction,-1)
+ f:Tick(point(.1),0,false);eq(f.index,3)
+end)

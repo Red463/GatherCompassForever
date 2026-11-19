@@ -18,12 +18,14 @@ function V.New(parent,U)
  check('kindOre','Ore',104,138,42,function() U.ToggleKind('ore') end)
  view.title=label(f,'Materials',14,170,164,22,13,S.gold)
  check('allMaterials','All',12,197,30,function() local state=A.Selection.BulkState(A.db,A.Resources.Skills());U.BulkMaterials('all',not state.all) end)
- check('skillMaterials','Skill-ups',76,197,80,function() local skills,context=A.Resources.Skills();local state=A.Selection.BulkState(A.db,skills,context);U.BulkMaterials('skillups',not state.skillups) end)
+ check('gatherableMaterials','Gatherable',76,197,80,function() local skills,context=A.Resources.Skills();local state=A.Selection.BulkState(A.db,skills,context);U.BulkMaterials('gatherable',not state.gatherable) end)
+ check('skillMaterials','Skill-ups',12,223,136,function() local skills,context=A.Resources.Skills();local state=A.Selection.BulkState(A.db,skills,context);U.BulkMaterials('skillups',not state.skillups) end)
  S.Hint(U.controls.allMaterials,'All materials','Tick to select every material, including newly discovered resources. Untick to clear the selection.')
  S.Hint(U.controls.skillMaterials,'Select skill-up materials','Select known orange, yellow and green materials across all zones matching the chosen source and gathering type. This selects once; individual materials remain editable.')
- local scroll=place(CreateFrame('ScrollFrame',nil,f),f,12,232,150,168);view.scroll=scroll
- local child=CreateFrame('Frame',nil,scroll);child:SetSize(150,168);scroll:SetScrollChild(child);view.child=child
- local bar=place(S.Slider(f,0,0,1,function(_,value) if not view.syncing then view:SetOffset(value) end end),f,168,232,14,168)
+ S.Hint(U.controls.gatherableMaterials,'All gatherable materials','Select resources you can gather, including grey resources that no longer grant skill-ups. Unknown requirements and too-difficult resources stay unselected. Individual choices remain editable.')
+ local scroll=place(CreateFrame('ScrollFrame',nil,f),f,12,258,150,142);view.scroll=scroll
+ local child=CreateFrame('Frame',nil,scroll);child:SetSize(150,142);scroll:SetScrollChild(child);view.child=child
+ local bar=place(S.Slider(f,0,0,1,function(_,value) if not view.syncing then view:SetOffset(value) end end),f,168,258,14,142)
  bar:SetOrientation('VERTICAL');bar:SetThumbTexture('Interface\\Buttons\\UI-ScrollBar-Knob');bar.lowLabel:Hide();bar.highLabel:Hide();view.scrollbar=bar
  local thumb=bar:GetThumbTexture();if type(thumb)=='table' or type(thumb)=='userdata' then thumb:SetSize(18,24) end
  function view:SetOffset(value)
@@ -33,7 +35,7 @@ function V.New(parent,U)
  end
  local function wheel(_,delta) if A.Store.Number(delta) then view:SetOffset(view.offset-delta*24) end end
  scroll:EnableMouseWheel(true);scroll:SetScript('OnMouseWheel',wheel);bar:EnableMouseWheel(true);bar:SetScript('OnMouseWheel',wheel)
- view.empty=label(f,'',16,240,140,128,12,S.muted);view.empty:SetWordWrap(true)
+ view.empty=label(f,'',16,266,140,128,12,S.muted);view.empty:SetWordWrap(true)
  local function row(index)
   local b=place(S.Button(child,'',function(self) if self.materialID then U.ToggleMaterial(self.materialID) end end,'quiet'),child,0,(index-1)*24,150,24)
   b.box=b:CreateTexture(nil,'ARTWORK');b.box:SetTexture('Interface\\Buttons\\UI-CheckBox-Up');b.box:SetSize(20,20);b.box:SetPoint('LEFT',b,'LEFT',0,0)
@@ -67,6 +69,7 @@ function V.New(parent,U)
   U.controls.sourceConfirmed:SetChecked(filter.source=='combined' or filter.source=='confirmed');U.controls.sourceImported:SetChecked(filter.source=='combined' or filter.source=='imported')
   U.controls.kindHerb:SetChecked(filter.kind=='both' or filter.kind=='herb');U.controls.kindOre:SetChecked(filter.kind=='both' or filter.kind=='ore')
   local state=A.Selection.BulkState(A.db,skills,context);U.controls.allMaterials:SetChecked(state.all);U.controls.skillMaterials:SetChecked(state.skillups);U.controls.skillMaterials:SetEnabled(state.eligible>0)
+  U.controls.gatherableMaterials:SetChecked(state.gatherable);U.controls.gatherableMaterials:SetEnabled(state.gatherableCount>0)
   view.title:SetText('Materials  '..selected..'/'..#entries)
   local matching=0
   if scope=='all' then for id in pairs(A.db.nodes) do matching=matching+#A.Store.Select(A.db,id,filter) end else matching=#A.Store.Select(A.db,mapID,filter) end

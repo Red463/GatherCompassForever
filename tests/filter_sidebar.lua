@@ -6,7 +6,7 @@ local function setup()
 end
 test('sidebar source and gathering checkboxes can combine or clear independently',function()
  local A,U=setup();assert(U.filterSidebar)
- for _,key in ipairs({'sourceConfirmed','sourceImported','kindHerb','kindOre','allMaterials','skillMaterials'}) do eq(U.controls[key].kind,'CheckButton') end
+ for _,key in ipairs({'sourceConfirmed','sourceImported','kindHerb','kindOre','allMaterials','skillMaterials','gatherableMaterials'}) do eq(U.controls[key].kind,'CheckButton') end
  eq(U.controls.source,nil);eq(U.controls.kind,nil);eq(U.controls.prevMaterials,nil);eq(U.controls.nextMaterials,nil)
  U.controls.sourceConfirmed.scripts.OnClick();eq(A.db.settings.source,'imported')
  U.controls.sourceImported.scripts.OnClick();eq(A.db.settings.source,'none');eq(U.controls.sourceConfirmed:GetChecked(),false)

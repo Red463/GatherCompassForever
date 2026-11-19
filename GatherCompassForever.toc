@@ -23,6 +23,7 @@ Gathering.lua
 Imports.lua
 Editor.lua
 Recorder.lua
+Corridor.lua
 Planner.lua
 Follower.lua
 Map.lua

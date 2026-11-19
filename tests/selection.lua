@@ -44,3 +44,17 @@ test('bulk skill-up selection covers all zones once and allows later manual chan
  M.Bulk(db,'all',false);eq(next(db.settings.materials),nil)
  M.Bulk(db,'skillups',true,{},{});eq(next(db.settings.materials),nil)
 end)
+
+test('Gatherable bulk includes grey and capped resources with readable requirements and excludes unknown or too difficult',function()
+ local A=setup();local M=A.Selection
+ for _,row in ipairs({{401,'Peacebloom'},{403,'Earthroot'},{409,'Wild Steelbloom'},{9999,'Unknown'}}) do
+  A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='gm:herb:'..row[1],name=row[2],source='imported'})
+ end
+ M.Bulk(A.db,'gatherable',true,{herb=109},{herb={maxRank=150,bonus=0}})
+ eq(A.db.settings.materials['gm:herb:401'],true);eq(A.db.settings.materials['gm:herb:403'],true)
+ eq(A.db.settings.materials['gm:herb:409'],nil);eq(A.db.settings.materials['gm:herb:9999'],nil)
+ eq(M.BulkState(A.db,{herb=109},{herb={maxRank=150,bonus=0}}).gatherable,true)
+ M.Bulk(A.db,'gatherable',true,{herb=109},{herb={maxRank=109,bonus=10}});eq(A.db.settings.materials['gm:herb:409'],true)
+ M.ToggleMaterial(A.db,'gm:herb:401');eq(A.db.settings.materials['gm:herb:401'],false)
+ M.Bulk(A.db,'gatherable',true,{},{});eq(next(A.db.settings.materials),nil)
+end)

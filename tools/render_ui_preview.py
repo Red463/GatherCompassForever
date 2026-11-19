@@ -28,7 +28,7 @@ CreateFrame=function(...)
  f.SetEndPoint=function(self,...) self.lineEnd={...} end
  return f
 end
-A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
+A={};for _,m in ipairs({'Store','Client','Resources','Selection','Atlas','ResourceLibrary','DifficultyProbe','Editor','Recorder','Corridor','Planner','Follower','Map','Skin','Dropdown','RouteSketch','AtlasView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','UI','Arrow','MinimapButton'}) do assert(loadfile(m..'.lua'))('GatherCompassForever',A) end
 A.db=A.Store.Open();A.Client.Position=function() return {mapID=1,x=.2,y=.4} end
 A.Client.Size=function() return 1000,600 end
 A.Client.Distance=function(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*1000)^2+((a.y-b.y)*600)^2) end

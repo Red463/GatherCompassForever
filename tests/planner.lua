@@ -37,5 +37,25 @@ test('generation bounds quadratic work before clustering and optimization',funct
  local A={}; module('Store',A); module('Planner',A); local nodes={}; local calls=0
  for i=1,5000 do local p=point((i%100)/100,math.floor(i/100)/100); p.key=tostring(i); p.materialID='x'; nodes[i]=p end
  local r,warning=A.Planner.Generate(nodes,point(.1),function(a,b) calls=calls+1; return distance(a,b) end)
- assert(#r.points<=300); assert(warning:find('300')); assert(calls<180000,'unbounded work: '..calls)
+ assert(#r.points<=192);assert(r.areaCount<=96);assert(warning:find('Local corridor'));assert(calls<180000,'unbounded work: '..calls)
+end)
+
+test('local corridor fixes the reproduced nearest-then-distant second waypoint and bounds every leg',function()
+ local A={};for _,name in ipairs({'Store','Planner','Follower'}) do module(name,A) end
+ local seed=15;local function rng() seed=(seed*16807)%2147483647;return seed/2147483647 end
+ local start={mapID=1,x=.2,y=.8};local nodes={{mapID=1,x=.2,y=.8,materialID='herb',kind='herb',key='n0'}}
+ for i=1,223 do nodes[#nodes+1]={mapID=1,x=.05+rng()*.9,y=.05+rng()*.9,materialID='herb',kind='herb',key='n'..i} end
+ local function d(a,b) return math.sqrt(((a.x-b.x)*6000)^2+((a.y-b.y)*4000)^2) end
+ local r=A.Planner.Generate(nodes,start,d);local f=A.Follower.New(r,start,d,{arrival=15});f:Tick(start,0,false)
+ assert(d(start,f:Target())<=450,'First outgoing leg still crosses the zone')
+ assert(#r.points<=192);assert(r.includedCount and r.omittedCount)
+ for i,p in ipairs(r.points) do assert(d(p,r.points[i%#r.points+1])<=450.00001,'Route or closing leg exceeds the connection limit') end
+end)
+
+test('generation keeps the nearest candidate beyond old input cap and leaves disconnected regions out',function()
+ local A={};module('Store',A);module('Planner',A)
+ local nodes={};for i=1,301 do nodes[i]={mapID=1,x=.9,y=.5,kind='herb',materialID='herb',key='far'..i} end
+ nodes[302]={mapID=1,x=.1,y=.5,kind='herb',materialID='herb',key='near'}
+ local r=A.Planner.Generate(nodes,point(.1),distance);assert(r and r.points[1].nodeKey=='near');eq(r.includedCount,1);eq(r.omittedCount,301)
+ eq(A.Planner.Generate({nodes[1]},point(.1),distance),nil)
 end)

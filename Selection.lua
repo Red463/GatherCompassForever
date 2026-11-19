@@ -50,27 +50,31 @@ function M.ToggleMaterial(db,id)
  end
  s.materials[id]=not s.materials[id]
 end
-local function eligible(entry,skills,context)
+local function eligible(entry,skills,context,mode)
  local _,_,key=A.Resources.Difficulty(entry.sample,skills,context)
- return key=='orange' or key=='yellow' or key=='green'
+ return key=='orange' or key=='yellow' or key=='green' or mode=='gatherable' and key=='grey'
 end
 function M.Bulk(db,mode,on,skills,context)
- if mode~='all' and mode~='skillups' then return end
+ if mode~='all' and mode~='skillups' and mode~='gatherable' then return end
  if mode=='all' and on then db.settings.materials=nil;return end
  local selected={}
- if on then for _,entry in ipairs(M.Materials(db,nil,db.settings)) do if eligible(entry,skills,context) then selected[entry.id]=true end end end
+ if on then for _,entry in ipairs(M.Materials(db,nil,db.settings)) do if eligible(entry,skills,context,mode) then selected[entry.id]=true end end end
  db.settings.materials=selected
 end
 function M.BulkState(db,skills,context)
  local entries=M.Materials(db,nil,db.settings);local selected=db.settings.materials
- local result={total=#entries,selected=0,eligible=0,all=selected==nil,skillups=false};local exact=true
+ local result={total=#entries,selected=0,eligible=0,gatherableCount=0,all=selected==nil,skillups=false,gatherable=false};local exact=true;local gatherExact=true
  for _,entry in ipairs(entries) do
   local on=selected==nil or not not selected[entry.id];local can=eligible(entry,skills,context)
   if on then result.selected=result.selected+1 end
   if can then result.eligible=result.eligible+1 end
   if on~=can then exact=false end
+  local gather=eligible(entry,skills,context,'gatherable')
+  if gather then result.gatherableCount=result.gatherableCount+1 end
+  if on~=gather then gatherExact=false end
  end
  result.all=result.all or #entries>0 and result.selected==#entries
  result.skillups=result.eligible>0 and exact
+ result.gatherable=result.gatherableCount>0 and gatherExact
  return result
 end

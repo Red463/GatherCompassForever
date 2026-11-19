@@ -26,3 +26,30 @@ test('zoomed map art clips tile geometry and UVs at the viewport edges',function
  near(v.tiles[1]:GetWidth(),400);near(v.tiles[1]:GetHeight(),200);near(v.tiles[1].coords[1],.25);near(v.tiles[1].coords[2],.75)
  C_Map=nil
 end)
+
+test('revealed artwork adds missing exploration pieces with padded edge UVs and native overrides',function()
+ local A=setup();A.MapReveal={[7]={['300:100:100:50']='91,92'}};local art=7;local explored={}
+ C_Map={GetMapArtID=function() return art end,GetMapArtLayers=function() return {{layerWidth=1000,layerHeight=600,tileWidth=256,tileHeight=256}} end,GetMapArtLayerTextures=function() return {1} end}
+ C_MapExplorationInfo={GetExploredMapTextures=function(id) eq(id,1);return explored end}
+ local v=A.MapArt.New(UIParent);local b={left=0,top=0,right=1,bottom=1};v:Draw(1,b,1000,600)
+ eq(v.revealed,true);eq(#v.overlays,2);eq(v.overlays[2].texture,92);near(v.overlays[2].coords[2],44/64);near(v.overlays[2].coords[4],100/128)
+ v:Draw(1,{left=.37,top=0,right=.39,bottom=.5},400,300);near(v.overlays[1].coords[1],14/64);near(v.overlays[1].coords[2],34/64);near(v.overlays[1]:GetWidth(),400)
+ explored={{textureWidth=300,textureHeight=100,offsetX=100,offsetY=50,fileDataIDs={101,102}}, {textureWidth=20,textureHeight=20,offsetX=0,offsetY=0,fileDataIDs={103},isShownByMouseOver=true}}
+ v.events.scripts.OnEvent(v.events,'MAP_EXPLORATION_UPDATED');v:Draw(1,b,1000,600);eq(v.overlays[1].texture,101);eq(v.overlays[2].texture,102);eq(#v.overlays,2)
+ art=8;v:Draw(1,b,1000,600);eq(v.revealed,false);assert(v.status:find('Native',1,true));eq(v.overlays[1].texture,101)
+ C_MapExplorationInfo=nil;C_Map=nil
+end)
+
+test('pinned reveal metadata includes only attributed map geometry and client texture IDs',function()
+ local A={};module('Data/MapReveal',A);local maps,pieces=0,0
+ for art,entries in pairs(A.MapReveal) do assert(type(art)=='number');maps=maps+1;for key,ids in pairs(entries) do assert(key:match('^%d+:%d+:%d+:%d+$'));assert(ids:match('^[%d,%s]+$'));pieces=pieces+1 end end
+ eq(maps,84);eq(pieces,1073)
+end)
+
+test('incomplete native overlay files fall back to usable reveal metadata',function()
+ local A=setup();A.MapReveal={[7]={['300:100:100:50']='91, 92'}}
+ C_Map={GetMapArtID=function() return 7 end,GetMapArtLayers=function() return {{layerWidth=1000,layerHeight=600,tileWidth=256,tileHeight=256}} end,GetMapArtLayerTextures=function() return {1} end}
+ C_MapExplorationInfo={GetExploredMapTextures=function() return {{textureWidth=300,textureHeight=100,offsetX=100,offsetY=50,fileDataIDs={101}}} end}
+ local v=A.MapArt.New(UIParent);v:Draw(1,{left=0,top=0,right=1,bottom=1},1000,600);eq(#v.overlays,2);eq(v.overlays[2].texture,92)
+ C_MapExplorationInfo=nil;C_Map=nil
+end)

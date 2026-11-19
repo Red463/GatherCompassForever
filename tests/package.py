@@ -19,7 +19,7 @@ with zipfile.ZipFile(path) as z:
     for line in toc.splitlines():
         if line.strip() and not line.startswith('#'):
             assert 'GatherCompassForever/' + line.strip().replace('\\','/') in names, line
-    for file in ['LICENSE','CHANGELOG.md','CONTRIBUTING.md','NOTICE.md','README.md','Libs/LICENSE.txt','Libs/HereBeDragons-LICENSE.txt','Media/Icon.tga','Media/Header.tga']:
+    for file in ['LICENSE','CHANGELOG.md','CONTRIBUTING.md','NOTICE.md','README.md','Libs/LICENSE.txt','Libs/HereBeDragons-LICENSE.txt','Libs/OpenMap-Reveal-LICENSE.txt','Media/Icon.tga','Media/Header.tga']:
         assert 'GatherCompassForever/' + file in names
     assert z.read('GatherCompassForever/LICENSE').startswith(b'MIT License')
     for path in (root / 'docs/images').glob('*.png'):

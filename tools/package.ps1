@@ -10,7 +10,7 @@ $archive = [System.IO.Compression.ZipArchive]::new($archiveStream, [System.IO.Co
 try {
     $runtimeFiles = Get-Content -LiteralPath (Join-Path $addonRoot 'GatherCompassForever.toc') | Where-Object { $_.Trim() -and -not $_.StartsWith('#') }
     $imageFiles = Get-ChildItem -LiteralPath (Join-Path $addonRoot 'docs/images') -Filter '*.png' -File | Sort-Object Name | ForEach-Object { 'docs/images/' + $_.Name }
-    $packageFiles = @('GatherCompassForever.toc','README.md','NOTICE.md','LICENSE','CHANGELOG.md','CONTRIBUTING.md','Libs/LICENSE.txt','Libs/HereBeDragons-LICENSE.txt','Media/Icon.tga','Media/Header.tga','Media/LogoSheet.tga','Media/EmptyEmblem.tga','Media/README.txt','Media/NodeRing.tga','Media/NodeSquare.tga','Media/GuideArrow.tga','Media/HeatBlob.tga') + @($runtimeFiles) + @($imageFiles)
+    $packageFiles = @('GatherCompassForever.toc','README.md','NOTICE.md','LICENSE','CHANGELOG.md','CONTRIBUTING.md','Libs/LICENSE.txt','Libs/HereBeDragons-LICENSE.txt','Libs/OpenMap-Reveal-LICENSE.txt','Media/Icon.tga','Media/Header.tga','Media/LogoSheet.tga','Media/EmptyEmblem.tga','Media/README.txt','Media/NodeRing.tga','Media/NodeSquare.tga','Media/GuideArrow.tga','Media/HeatBlob.tga') + @($runtimeFiles) + @($imageFiles)
     foreach ($relativeFile in $packageFiles) {
         $sourcePath = Join-Path $addonRoot $relativeFile.Trim()
         if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) { throw "Missing package file: $relativeFile" }

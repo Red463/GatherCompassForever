@@ -7,6 +7,7 @@ function eq(a,b) assert(a==b, tostring(a)..' ~= '..tostring(b)) end
 function near(a,b) assert(math.abs(a-b)<0.00001, tostring(a)..' not near '..tostring(b)) end
 function module(name,A)
  if name=='Planner' and not A.Corridor then module('Corridor',A) end
+ if name=='MapArt' and not A.MapOverlays then module('MapOverlays',A) end
  if name=='Map' and not A.Heatmap then module('Heatmap',A) end
  if name=='Map' and not A.Resources then module('Resources',A) end
  if name=='Map' and not A.MarkerGroups then module('MarkerGroups',A) end
@@ -16,7 +17,7 @@ function module(name,A)
 end
 function moduleUI(A)
  if not A.FarmingSession then module('FarmingSession',A) end
- for _,name in ipairs({'Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','Skin','Dropdown','Heatmap','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI'}) do module(name,A) end
+ for _,name in ipairs({'Resources','MarkerGroups','SkillTooltip','Selection','Atlas','ResourceLibrary','Skin','Dropdown','Heatmap','Data/MapReveal','MapOverlays','MapArt','GroupPicker','RouteSketch','RouteView','ResourceLibraryView','UIActions','FilterSidebar','WelcomeView','NodeDisplayView','UI'}) do module(name,A) end
 end
 function distance(a,b)
  if not a or not b or a.mapID~=b.mapID then return nil end

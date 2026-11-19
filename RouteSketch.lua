@@ -61,7 +61,7 @@ function A.RouteSketch.New(parent)
    end
   end
   b,w,h=self:Bounds();self.bounds=b;self.art:Draw(mapID,b,w,h)
-  if self.art.available then self.fallback:Hide() else self.fallback:Show() end
+  if not self.art.available or self.art.status then self.fallback:SetText(self.art.status or 'Map artwork unavailable - schematic view');self.fallback:Show() else self.fallback:Hide() end
   hide(self.lines);hide(self.marks);hide(self.pins);A.Heatmap.Hide(self.heat)
   local function project(p) return A.MapArt.Project(p,b,w,h) end;self.Project=project
   local points=route and route.points or {};local geometry={}

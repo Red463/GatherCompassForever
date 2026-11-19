@@ -25,3 +25,5 @@ Brand artwork supplied by the user on 19 November 2026: Gather Compass Forever L
 NodeRing.tga and NodeSquare.tga are original geometric marker textures produced by tools/build_marker_textures.py. Classic UI backgrounds, borders, buttons, checkboxes and standalone resource icons reference Blizzard client assets; those assets are not redistributed. Installed GatherMate2 resource icons are referenced in place, not copied. Classic difficulty metadata is reference data, not a Forever server export.
 
 GuideArrow.tga is original flat navigation geometry from tools/build_arrow_texture.py, with editable SVG source in assets/GuideArrow.svg. It contains no Blizzard pointer artwork.
+
+Map reveal metadata in Data/MapReveal.lua is adapted from OpenMap, copyright (c) 2026 OpenMap contributors, under MIT. Source: openmap-world/openmap commit 0f4d2e4b6fe82b9032618fd3b824eaaa5b36dcef, OpenMap/Data/Forever/Reveal.lua (build 1.60.1.70245). The full upstream notice is in Libs/OpenMap-Reveal-LICENSE.txt. Only metadata is included; map textures are loaded from the installed client. No OpenMap addon dependency or private runtime table is used.

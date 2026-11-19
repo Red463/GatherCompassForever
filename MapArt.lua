@@ -6,10 +6,11 @@ local function query(fn,...)
  local ok,value=pcall(fn,...);if ok then return value end
 end
 function M.New(parent)
- local self={parent=parent,tiles={}}
+ local self={parent=parent,tiles={},overlays={},overlaySource=A.MapOverlays.New()};self.events=self.overlaySource.events
  function self:Draw(mapID,bounds,width,height)
   for _,t in ipairs(self.tiles) do t:Hide() end
-  self.available=false
+  for _,t in ipairs(self.overlays) do t:Hide() end
+  self.available=false;self.revealed=false;self.status=nil
   if not mapID or not C_Map then self.aspect=nil;return end
   local artID=query(C_Map.GetMapArtID,mapID)
   if not artID or self.mapID~=mapID or self.artID~=artID or not self.layer or type(self.textures)~='table' or not next(self.textures) or not C_Map.GetMapArtLayers then
@@ -30,7 +31,7 @@ function M.New(parent)
    local x2,y2=math.min(right,bounds.right),math.min(bottom,bounds.bottom)
    if file and x1<x2 and y1<y2 then
     used=used+1;local t=self.tiles[used]
-    if not t then t=self.parent:CreateTexture(nil,'BACKGROUND');self.tiles[used]=t end
+    if not t then t=self.parent:CreateTexture(nil,'BACKGROUND',nil,-6);self.tiles[used]=t end
     local x,y=M.Project({x=x1,y=y1},bounds,width,height)
     t:SetTexture(file);t:ClearAllPoints();t:SetPoint('TOPLEFT',self.parent,'TOPLEFT',x,y)
     t:SetSize((x2-x1)/(bounds.right-bounds.left)*width,(y2-y1)/(bounds.bottom-bounds.top)*height)
@@ -38,6 +39,23 @@ function M.New(parent)
    end
   end end
   self.available=used>0
+  local pieces,covered=self.overlaySource:Get(mapID,artID,layer);self.revealed=covered
+  self.status=not covered and 'Native map artwork (full-reveal data unavailable)' or nil
+  local count=0
+  for _,p in ipairs(pieces) do
+   local left,top=p.x/w,p.y/h;local right,bottom=(p.x+p.width)/w,(p.y+p.height)/h
+   local x1,y1=math.max(left,bounds.left,0),math.max(top,bounds.top,0)
+   local x2,y2=math.min(right,bounds.right,1),math.min(bottom,bounds.bottom,1)
+   if x1<x2 and y1<y2 then
+    count=count+1;local t=self.overlays[count]
+    if not t then t=self.parent:CreateTexture(nil,'BACKGROUND',nil,-4);self.overlays[count]=t end
+    local x,y=M.Project({x=x1,y=y1},bounds,width,height)
+    t:SetTexture(p.file);t:SetDrawLayer('BACKGROUND',p.top and -3 or -4);t:ClearAllPoints();t:SetPoint('TOPLEFT',self.parent,'TOPLEFT',x,y)
+    t:SetSize((x2-x1)/(bounds.right-bounds.left)*width,(y2-y1)/(bounds.bottom-bounds.top)*height)
+    t:SetTexCoord((x1-left)*w/p.fileWidth,(x2-left)*w/p.fileWidth,(y1-top)*h/p.fileHeight,(y2-top)*h/p.fileHeight);t:Show()
+   end
+  end
+  self.available=self.available or count>0
  end
  return self
 end

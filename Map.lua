@@ -302,10 +302,10 @@ function M.Refresh(db,route,follower)
  M.UpdateEditorHelp()
  local zone=route and route.mapID or player and player.mapID
  local settings=A.Resources.Settings(db.settings);local skills,skillContext=A.Resources.Skills()
- local filter={source='combined'}
+ local filter={source='combined',kind=db.settings.kind or 'both'}
  local worldZone=map and map:IsShown() and map:GetMapID() or zone
  local focus=map and map:IsShown() and M.nodeFocus and M.nodeFocus.mapID==worldZone and M.nodeFocus or nil
- local worldFilter=focus and {source=focus.source,materials=focus.materials} or filter
+ local worldFilter=focus and {source=focus.source,materials=focus.materials,kind=filter.kind} or filter
  local nodes=(settings.world or focus) and A.Store.Select(db,worldZone,worldFilter) or {}
  local knownMiniNodes=A.Store.Select(db,player and player.mapID,filter)
  local miniNodes=settings.mini and knownMiniNodes or {}
@@ -407,8 +407,10 @@ function M.Refresh(db,route,follower)
    local x,y=miniRaw(p,player,w,h,radius,mw,mh,facing)
    if math.abs(x)<=mw/2+8 and math.abs(y)<=mh/2+8 then holes[#holes+1]={x=x,y=y,r=7} end
   end
-  -- Protection is independent of marker toggles and the 400-pin display cap.
-  for _,node in ipairs(knownMiniNodes) do protect(node) end
+  -- Native tracking dots can still show kinds hidden by our marker filter.
+  -- Clearance also stays independent of marker toggles and the pin cap.
+  local clearanceNodes=filter.kind=='both' and knownMiniNodes or A.Store.Select(db,player.mapID,{source='combined'})
+  for _,node in ipairs(clearanceNodes) do protect(node) end
   if snapshot and snapshot.target then protect(snapshot.target) end
  end
  local wi,mi=0,0

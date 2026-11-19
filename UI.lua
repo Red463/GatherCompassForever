@@ -43,7 +43,11 @@ function U.MaterialNodes(p)
  return result
 end
 function U.SetSource(v) if v=='combined' or v=='confirmed' or v=='imported' then A.db.settings.source=v end; U.Refresh() end
-function U.SetKind(v) if v=='both' or v=='herb' or v=='ore' then A.db.settings.kind=v end; U.Refresh() end
+function U.SetKind(v)
+ if v~='both' and v~='herb' and v~='ore' then return end
+ A.db.settings.kind=v;U.Refresh()
+ if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.editor and nil or A.follower) end
+end
 function U.ToggleMaterial(id)
  local settings=A.db.settings
  if not settings.materials then
@@ -206,7 +210,7 @@ end
 local function buildNodeOptions()
  U.nodeOptions=place(CreateFrame('Frame',nil,U.content),U.content,20,19,710,395)
  label(U.nodeOptions,'Known node locations',0,0,710,26,18,S.gold,true)
- label(U.nodeOptions,'Map markers are independent of your route material filters.',0,33,710,20,12,S.muted)
+ label(U.nodeOptions,'Gathering filters map markers. Materials filter route generation.',0,33,710,20,12,S.muted)
  local display=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,0,66,344,260)
  local tracking=place(CreateFrame('Frame',nil,U.nodeOptions),U.nodeOptions,360,66,350,260)
  label(display,'Marker appearance',16,14,310,23,17,S.gold,true)

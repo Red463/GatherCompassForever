@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.8
+
+- Make Gathering filter node markers on both the world map and minimap: Herbs, Ore or Both.
+- Apply type changes immediately and clear older resource-map focus.
+- Keep minimap tracking-dot clearance for hidden node types and preserve current guidance.
+
 ## 0.8.7
 
 - Add independent 0-100% opacity sliders for world-map icons, minimap icons and minimap outlines in Node display.

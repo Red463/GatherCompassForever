@@ -19,6 +19,19 @@ test('node opacity sliders update markers live without changing unrelated opacit
  U.controls.nodeWorldOpacity.scripts.OnValueChanged(U.controls.nodeWorldOpacity,0/0);eq(count,3)
  eq(U.nodeOpacityLabels.nodeWorldOpacity:GetText(),'World-map icons: 25%')
 end)
+
+test('changing Gathering immediately refreshes both maps and clears an older resource focus',function()
+ local A=setup();module('Map',A);local U=A.UI;local count=0
+ local herb=A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='herb',source='imported'})
+ local ore=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind='ore',materialID='ore',source='imported'})
+ LibStub=function() return {AddWorldMapIconMap=function() end,AddMinimapIconMap=function() end,RemoveWorldMapIcon=function() end,RemoveMinimapIcon=function() end} end
+ local refresh=A.Map.Refresh;A.Map.Refresh=function(...) count=count+1;return refresh(...) end
+ A.Map.SetNodeFocus(1,{herb=true},herb.key)
+ U.SetKind('ore');eq(count,1);eq(A.Map.nodeFocus,nil)
+ assert(A.Map.byKey['w:node:'..ore.key]);eq(A.Map.byKey['w:node:'..herb.key],nil)
+ assert(A.Map.byKey['m:node:'..ore.key]);eq(A.Map.byKey['m:node:'..herb.key],nil)
+ LibStub=nil
+end)
 test('expedition empty state is useful and edit controls stay contextual',function()
  local A=setup(); local U=A.UI
  eq(U.empty:IsShown(),true); eq(U.workPanel:IsShown(),false); eq(U.controls.save:IsVisible(),false)

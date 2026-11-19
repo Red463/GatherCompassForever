@@ -79,6 +79,20 @@ test('idle route selection never draws lines and known resource markers remain v
  LibStub=nil
 end)
 
+test('Gathering kind filters both map marker layers and switching retires the old type',function()
+ local A=markerSetup();local nodes={}
+ for _,kind in ipairs({'herb','ore'}) do nodes[kind]=A.Store.Observe(A.db,{mapID=1,x=.4,y=.5,kind=kind,materialID=kind,name=kind,source='imported'}) end
+ for _,kind in ipairs({'herb','ore','both','herb'}) do
+  A.db.settings.kind=kind;A.Map.Refresh(A.db,nil)
+  for nodeKind,node in pairs(nodes) do for _,prefix in ipairs({'w:node:','m:node:'}) do
+   eq(A.Map.byKey[prefix..node.key]~=nil,kind=='both' or kind==nodeKind)
+  end end
+ end
+ assert(A.Map.SetNodeFocus(1,{ore=true},nodes.ore.key));A.Map.Refresh(A.db,nil)
+ eq(A.Map.byKey['w:node:'..nodes.ore.key],nil)
+ LibStub=nil
+end)
+
 test('node texture opacity is independent per map and layer without tinting difficulty colours',function()
  local A=markerSetup();local s=A.Resources.Settings(A.db.settings)
  A.Client.Position=function() return point(.35) end
@@ -319,6 +333,18 @@ local function segmentDistance(x,y,l)
  local t=len>0 and math.max(0,math.min(1,((x-ax)*dx+(y-ay)*dy)/len)) or 0
  return math.sqrt((x-ax-t*dx)^2+(y-ay-t*dy)^2)
 end
+test('filtered-out node markers still leave room for native minimap tracking dots',function()
+ local A=markerSetup();module('Follower',A);A.Client.Position=function() return point(.5) end;A.Client.Size=function() return 1000,500 end
+ C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;A.db.settings.kind='herb'
+ local ore=A.Store.Observe(A.db,{mapID=1,x=.6,y=.5,kind='ore',materialID='gm:ore:201',name='Copper',source='imported'})
+ local route={mapID=1,points={point(.35),point(.65)}};local f=A.Follower.New(route,point(.5),distance)
+ A.Map.Refresh(A.db,f.route,f);eq(A.Map.byKey['m:node:'..ore.key],nil)
+ local shown=0;for _,line in ipairs(A.Map.miniLines) do if line:IsShown() then
+  shown=shown+1;assert(segmentDistance(50,0,line)>=7,'Kind filtering removed native tracking clearance')
+ end end;assert(shown>0)
+ C_Minimap=nil;GetCVar=nil;LibStub=nil
+end)
+
 test('minimap route leaves tracking clearance even with addon node markers disabled',function()
  local A=markerSetup();A.Client.Position=function() return point(.5) end;A.Client.Size=function() return 1000,500 end
  C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end

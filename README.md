@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/GatherCompassForever/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 0.8.7 ? **Client interface:** 16001 ? **Command:** `/gcf`
+**Current version:** 0.8.8 ? **Client interface:** 16001 ? **Command:** `/gcf`
 
 ## What it does
 
@@ -37,7 +37,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 
 ## Install
 
-1. Download `GatherCompassForever-0.8.7.zip` from
+1. Download `GatherCompassForever-0.8.8.zip` from
    [Releases](https://github.com/Red463/GatherCompassForever/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `GatherCompassForever` folder into your Forever
@@ -134,6 +134,11 @@ the map restores its usual display.
 | `/gcf inspect` | Arm a one-shot native herb/vein tooltip capture |
 | `/gcf inspect report` | Show the latest local capture |
 | `/gcf inspect off` | Cancel a pending capture |
+
+The **Gathering** dropdown filters this addon's node markers on both maps:
+**Herbs**, **Ore** or **Both**. Changes apply immediately. Choose a matching type or
+Both when viewing a resource's locations. Material checkboxes filter route
+generation separately; they do not hide individual map resources.
 
 **Node display** controls marker appearance, difficulty colours, icon-hide distance
 and minimap route visibility. Its three opacity sliders independently adjust

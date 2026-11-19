@@ -44,14 +44,14 @@ test('panel reflows routes materials and footer without scaling normal controls'
  U.window:Resize(860,600);assert(U.routeSketch.frame:GetWidth()>500);assert(U.routeSketch.frame:GetHeight()>170);eq(U.routeView.narrow,true)
  eq(U.body:GetHeight(),390);eq(U.footer:GetWidth(),836);eq(U.status:GetWidth(),824)
 end)
-test('Codex resize changes capacity without losing entries and detail rows use extra height',function()
+test('Codex resize reflows scrolling tiles and gives zone lists more visible height',function()
  local A=setup();local U=A.UI;U.SetTab('codex');local v=U.codexView
- U.window:Resize(860,600);local small=v.capacity;assert(small>0 and small<27);eq(v.filterRows,2)
+ U.window:Resize(860,600);local small=v.gridList.columns;eq(v.filterRows,2)
  local seen={};local total=#v.model.items
- for page=1,math.ceil(total/v.capacity) do v.page=page;U.Refresh();for _,tile in ipairs(v.tiles) do if tile.cell:IsShown() then assert(tile.item and not seen[tile.item.id]);seen[tile.item.id]=true end end end
+ for offset=0,v.gridList.scroller.maximum+v.gridList.height,v.gridList.height do v.gridList:SetOffset(offset);for _,tile in ipairs(v.tiles) do if tile.item and tile:IsVisible() then seen[tile.item.id]=true end end end
  local count=0;for _ in pairs(seen) do count=count+1 end;eq(count,total)
- U.window:Resize(1400,900);assert(v.capacity>small);assert(v.capacity>27);eq(v.filterRows,1);eq(v.page,1)
- assert(v.zoneCapacity>7);v.Open(v.model.items[1].id);assert(v.detail:GetWidth()>896)
+ local zoneHeight=v.zoneList.height;U.window:Resize(1400,900);assert(v.gridList.columns>small);eq(v.filterRows,1)
+ assert(v.zoneList.height>zoneHeight);v.Open(v.model.items[1].id);assert(v.detail:GetWidth()>896)
 end)
 test('minimum settings and Welcome remain accessible through interior scroll',function()
  local A=setup();local U=A.UI;U.window:Resize(860,600)
@@ -103,11 +103,11 @@ test('grip drag against right and bottom margins keeps top-left fixed',function(
  near(U.window.geometry.left,left);near(U.window.geometry.top,top);eq(U.frame:GetWidth(),960);eq(U.frame:GetHeight(),624)
  U.window:Cancel();GetCursorPosition=nil
 end)
-test('large Codex includes all observed custom resources in reachable pages',function()
+test('large Codex includes all custom resources through responsive scrolling',function()
  local A=setup();local U=A.UI
  for i=1,80 do A.Store.Observe(A.db,{mapID=1,x=.2+i*.001,y=.5,kind='herb',materialID='node:herb:Custom '..i,name='Custom '..i,source='confirmed'}) end
  U.window:Resize(1400,900);U.SetTab('codex');local v=U.codexView;local seen={}
- for page=1,math.ceil(#v.model.items/v.capacity) do v.page=page;U.Refresh();for _,b in ipairs(v.tiles) do if b.cell:IsShown() then assert(b.item);seen[b.item.id]=true end end end
+ for offset=0,v.gridList.scroller.maximum+v.gridList.height,v.gridList.height do v.gridList:SetOffset(offset);for _,b in ipairs(v.tiles) do if b.item and b:IsVisible() then seen[b.item.id]=true end end end
  local count=0;for _ in pairs(seen) do count=count+1 end;eq(count,#v.model.items)
 end)
 test('scrolling an interior closes a dropdown when its owner moves',function()
@@ -141,7 +141,7 @@ test('grip converts cursor movement using non-unit effective UI scale',function(
  eq(U.frame:GetWidth(),1060);eq(U.frame:GetHeight(),674);U.window:Cancel();GetCursorPosition=nil
 end)
 
-test('narrow Codex Back preserves the grid page when detail needs an interior scrollbar',function()
+test('narrow Codex Back preserves grid scrolling with a short source-history card',function()
  local A=setup();local U=A.UI;U.window:Resize(860,600);U.SetTab('codex');local v=U.codexView
- v.page=2;U.Refresh();local item=v.tiles[1].item;v.Open(item.id);v.Back();eq(v.page,2);eq(v.tiles[1].item.id,item.id)
+ v.gridList:SetOffset(96);local offset=v.gridList.scroller.offset;local item=v.tiles[1].item;v.Open(item.id);v.Back();eq(v.gridList.scroller.offset,offset);eq(v.tiles[1].item.id,item.id)
 end)

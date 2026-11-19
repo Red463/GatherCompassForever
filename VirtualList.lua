@@ -24,7 +24,7 @@ function V.New(parent,options)
     row:SetScript('OnMouseWheel',function(_,delta) self:SetOffset(scroll.offset-delta*self.rowHeight) end)
    end
    if row then
-    if row.boundID~=id(item) and GameTooltip and GameTooltip.IsOwned and GameTooltip:IsOwned(row) then GameTooltip:Hide() end
+    if row.boundID~=id(item) and GameTooltip and GameTooltip.IsOwned and (GameTooltip:IsOwned(row) or row.button and GameTooltip:IsOwned(row.button)) then GameTooltip:Hide() end
     row.boundID=id(item);options.bind(row,item,index,cw)
     if item then row:ClearAllPoints();row:SetPoint('TOPLEFT',self.body,'TOPLEFT',((slot-1)%self.columns)*cw,-(start+math.floor((slot-1)/self.columns))*self.rowHeight);row:SetSize(cw,self.rowHeight);row:Show() else row:Hide() end
    end

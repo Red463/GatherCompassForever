@@ -10,11 +10,11 @@ local function add(A,map,x,id,name,kind)
  A.Store.Observe(A.db,{mapID=map,x=x,y=.5,kind=kind or 'herb',materialID='gm:'..(kind or 'herb')..':'..id,name=name,source='imported'})
 end
 
-test('Resources is a full-width grid with independent type search and paged square item buttons',function()
+test('Resources is a full-width grid with independent type search and scrolling square item buttons',function()
  local A,V=viewSetup();eq(A.UI.tab,'codex');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
- assert(#V.model.items>35);eq(#V.tiles,27);eq(V.tiles[1].cell:GetWidth(),V.tiles[1].cell:GetHeight())
- A.UI.controls.resourceNext.scripts.OnClick();eq(V.page,2)
- A.UI.controls.resourceType:SelectValue('ore');eq(V.kind,'ore');eq(V.page,1)
+ assert(#V.model.items>35);assert(#V.tiles<=54);eq(V.tiles[1].cell:GetWidth(),V.tiles[1].cell:GetHeight())
+ V.gridList:SetOffset(96);assert(V.gridList.scroller.offset>0)
+ A.UI.controls.resourceType:SelectValue('ore');eq(V.kind,'ore');eq(V.gridList.scroller.offset,0)
  V.SetSearch('copper');eq(#V.model.items,1);eq(V.tiles[1].item.itemID,2770);eq(V.tiles[1].label:GetText(),'Copper Ore')
  eq(A.db.settings.kind,'both');eq(A.db.settings.materials,nil)
  V.SetSearch('%');eq(#V.model.items,0);eq(V.empty:IsShown(),true)
@@ -22,16 +22,16 @@ test('Resources is a full-width grid with independent type search and paged squa
 end)
 
 test('resource square opens a detail page and Back restores exact grid state',function()
- local A,V=viewSetup();A.UI.controls.resourceNext.scripts.OnClick();local page=V.page
+ local A,V=viewSetup();V.gridList:SetOffset(96);local offset=V.gridList.scroller.offset
  local item=V.tiles[1].item;V.tiles[1].scripts.OnClick(V.tiles[1]);eq(V.mode,'detail');eq(V.item.id,item.id)
  eq(V.detail:IsShown(),true);eq(V.grid:IsShown(),false);eq(V.name:GetText(),item.name)
- A.UI.controls.resourceBack.scripts.OnClick();eq(V.mode,'grid');eq(V.page,page);eq(V.tiles[1].item.id,item.id)
+ A.UI.controls.resourceBack.scripts.OnClick();eq(V.mode,'grid');eq(V.gridList.scroller.offset,offset);eq(V.tiles[1].item.id,item.id)
  V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);V.Back();eq(V.search,'Silverleaf');eq(#V.model.items,1)
 end)
 
 test('zero-data items show honest missing locations while multi-source ore shows both requirements',function()
  local A,V=viewSetup();V.SetSearch('Black Lotus');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(V.item.count,0);eq(V.zoneEmpty:IsShown(),true)
- eq(V.zoneRows[1]:IsShown(),false);assert(V.zoneEmpty:GetText():find('No known locations',1,true))
+ assert(not V.zoneRows[1] or not V.zoneRows[1]:IsShown());assert(V.zoneEmpty:GetText():find('No known locations',1,true))
  V.Back();add(A,2,.2,214,'Small Thorium Vein','ore');add(A,1,.3,215,'Rich Thorium Vein','ore');V.SetSearch('Thorium')
  V.tiles[1].scripts.OnClick(V.tiles[1]);eq(V.item.count,2);eq(V.item.name,'Thorium Ore')
  assert(V.sourceRows[1].requirement:GetText():find('245',1,true));assert(V.sourceRows[2].requirement:GetText():find('275',1,true))
@@ -62,13 +62,13 @@ test('resource page skips hidden or compact work and restores the original sideb
  A.UI.SetTab('resources');eq(A.UI.sidebar:IsShown(),false);eq(A.UI.content:GetWidth(),936)
 end)
 
-test('resource zone pages refresh after imports and draft guards cover recording states',function()
+test('resource zone scrolling refreshes after imports and draft guards cover recording states',function()
  local A,V=viewSetup();for map=1,10 do add(A,map,.2,402,'Silverleaf') end
  V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);eq(#V.item.zones,10)
- A.UI.controls.resourceZoneNext.scripts.OnClick();eq(V.zonePage,2);eq(V.zoneRows[1].zone.mapID,8);eq(V.zoneRows[4]:IsShown(),false)
+ V.zoneList:SetOffset(10000);assert(V.zoneList.scroller.offset>0);local last=false;for _,r in ipairs(V.zoneRows) do if r.zone and r.zone.mapID==10 then last=true end end;assert(last)
  add(A,10,.3,402,'Silverleaf');A.UI.Refresh();eq(V.item.zones[1].mapID,10);eq(V.item.count,11)
  V.Back();V.searchBox:SetText('Copper');V.searchBox.scripts.OnTextChanged(V.searchBox)
- eq(V.search,'Copper');eq(V.page,1);eq(#V.model.items,1);eq(A.UI.controls.resourceType:GetValue(),'all')
+ eq(V.search,'Copper');eq(V.gridList.scroller.offset,0);eq(#V.model.items,1);eq(A.UI.controls.resourceType:GetValue(),'all')
  V.SetSearch('Silverleaf');V.tiles[1].scripts.OnClick(V.tiles[1]);local focused=false;A.Map={SetNodeFocus=function() focused=true end}
  for _,state in ipairs({'recording','recordedDraft'}) do
   A[state]={mapID=1,points={}};V.ShowZone(1);eq(focused,false);assert(A.status:find('Save',1,true));A[state]=nil

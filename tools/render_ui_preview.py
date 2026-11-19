@@ -84,7 +84,7 @@ def render(scene):
         if scene=='resources_ore':lua.execute("A.Store.Observe(A.db,{mapID=1,x=.5,y=.5,kind='ore',name='Small Thorium Vein',materialID='gm:ore:214',source='imported'});A.Store.Observe(A.db,{mapID=2,x=.6,y=.5,kind='ore',name='Rich Thorium Vein',materialID='gm:ore:215',source='imported'});A.UI.resourceLibraryView.SetSearch('Thorium');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
         if scene=='resources_zero':lua.execute("A.UI.resourceLibraryView.SetSearch('Black Lotus');A.UI.resourceLibraryView.tiles[1].scripts.OnClick(A.UI.resourceLibraryView.tiles[1])")
         if scene=='resources_search_empty':lua.execute("A.UI.resourceLibraryView.SetSearch('No matching resource')")
-        if scene=='resources_page2':lua.execute("A.UI.controls.resourceNext.scripts.OnClick()")
+        if scene=='resources_page2':lua.execute("A.UI.codexView.gridList:SetOffset(96)")
         if scene=='resources_restored_preferences':lua.execute("A.UI.SetTab('settings')")
     if scene=='mini_heat':
         lua.execute("A.UI.actions.generateStart();A.db.settings.routeStyle='heatmap';A.Resources.Settings(A.db.settings).mini=false;Minimap=CreateFrame('Frame',nil,UIParent);Minimap:SetSize(240,240);Minimap:SetPoint('TOPLEFT',UIParent,'TOPLEFT',520,-240);local terrain=Minimap:CreateTexture(nil,'BACKGROUND');terrain:SetAllPoints();terrain:SetTexture(9001);C_Minimap={GetViewRadius=function() return 200 end};GetCVar=function() return '0' end;GetMinimapShape=function() return 'SQUARE' end;A.Map.Refresh(A.db,A.follower.route,A.follower);local player=Minimap:CreateTexture(nil,'OVERLAY');player:SetPoint('CENTER',Minimap,'CENTER');player:SetSize(11,16);player:SetTexture('Interface\\\\AddOns\\\\GatherCompassForever\\\\Media\\\\GuideArrow');for _,n in ipairs(A.db.nodes[1]) do local x,y=A.Map.MiniProject(n,A.Client.Position(),1000,600,200,240,240,0);if x then local dot=Minimap:CreateTexture(nil,'OVERLAY');dot:SetColorTexture(1,.9,.1,1);dot:SetSize(4,4);dot:SetPoint('CENTER',Minimap,'CENTER',x,y) end end;local text=A.Skin.Label(UIParent,'Minimap heat with simulated native tracking dots',15,A.Skin.gold);text:SetPoint('TOPLEFT',UIParent,'TOPLEFT',400,-190);text:SetSize(500,30)")
@@ -104,7 +104,7 @@ def render(scene):
     if scene in ('welcome','welcome_importing'):
         lua.execute("A.UI.SetTab('welcome')")
         if scene=='welcome_importing':lua.execute("A.importJob=coroutine.create(function() end);A.status='Importing all zones: 1240 locations...';A.UI.Refresh()")
-    if scene in ('nodes','nodes_mini','dropdown'):lua.execute("A.UI.SetTab('nodes')")
+    if scene in ('nodes','nodes_mini','dropdown'):lua.execute("A.UI.SetTab('nodes');A.UI.nodeDisplayView.SetPage('world')")
     if scene in ('nodes_mini','dropdown'):lua.execute("A.UI.nodeDisplayView.SetPage('mini')")
     if scene=='dropdown':lua.execute("A.UI.controls.nodeDistance.scripts.OnClick(A.UI.controls.nodeDistance)")
     if scene in ('arrow_hidden_progress','arrow_paused','arrow_no_direction'):

@@ -16,9 +16,8 @@ local function lastGathered(value)
 end
 local function work() return A.editor or A.recording or A.recordedDraft end
 function V.New(parent,U)
- local view={kind='all',scope='all',source='combined',skill='all',search='',page=1,zonePage=1,mode='grid',tiles={},sourceRows={},zoneRows={}}
- local scroller=A.ScrollPanel.New(parent);view.scroller=scroller;view.frame=scroller.frame
- place(view.frame,parent,20,19,896,395);local root=scroller.body;root:SetSize(896,395);view.capacity=27;view.zoneCapacity=7
+ local view={kind='all',scope='all',source='combined',skill='all',search='',mode='grid',tiles={},sourceRows={},zoneRows={}}
+ local root=place(CreateFrame('Frame',nil,parent),parent,20,19,896,395);view.frame=root
  local function button(parent,key,text,x,y,w,h,fn,style)
   local b=place(S.Button(parent,text,fn,style),parent,x,y,w,h or 24);U.controls[key]=b;return b
  end
@@ -26,11 +25,11 @@ function V.New(parent,U)
  function view.SetSearch(text)
   text=tostring(text or '')
   if view.search==text then return end
-  view.search=text;view.page=1
+  view.search=text
   if view.searchBox:GetText()~=text then view.searchBox:SetText(text) end
   U.Refresh()
  end
- function view.Open(id) view.selectedID=id;view.mode='detail';view.zonePage=1;S.CloseDropdown();U.Refresh() end
+ function view.Open(id) view.selectedID=id;view.mode='detail';S.CloseDropdown();U.Refresh() end
  function view.Back() view.mode='grid';U.Refresh() end
  local function mapAvailable(item,mapID)
   local filter=U.MarkerFilter();local signature=A.FarmingSession.Signature(filter)..'/'..view.source
@@ -56,19 +55,20 @@ function V.New(parent,U)
  local grid=place(CreateFrame('Frame',nil,root),root,0,0,896,395);view.grid=grid
  label(grid,'Node Codex',0,0,180,26,18,S.gold)
  view.info=label(grid,'',0,73,896,18,12,S.muted)
- local kind=place(S.Dropdown(grid,{{value='all',label='All resources'},{value='herb',label='Herbs'},{value='ore',label='Ore'}},function(value) view.kind=value;view.page=1;U.Refresh() end),grid,0,37,190,26);U.controls.resourceType=kind
+ local kind=place(S.Dropdown(grid,{{value='all',label='All resources'},{value='herb',label='Herbs'},{value='ore',label='Ore'}},function(value) view.kind=value;U.Refresh() end),grid,0,37,190,26);U.controls.resourceType=kind
  view.searchLabel=label(grid,'Search',384,3,48,24,12,S.gold)
  view.searchBox=place(S.Edit(grid,224),grid,438,1,330,26);U.controls.resourceSearch=view.searchBox
  view.searchBox:SetScript('OnTextChanged',function(self) view.SetSearch(self:GetText()) end)
  button(grid,'resourceClear','Clear',778,1,118,26,function() view.SetSearch('') end)
  local function browse(key,items,x,w,field)
-  local d=place(S.Dropdown(grid,items,function(value) view[field]=value;view.page=1;U.Refresh() end),grid,x,37,w,26);U.controls[key]=d;return d
+  local d=place(S.Dropdown(grid,items,function(value) view[field]=value;U.Refresh() end),grid,x,37,w,26);U.controls[key]=d;return d
  end
  local skill=browse('codexSkill',{{value='all',label='All skill levels'},{value='gatherable',label='Gatherable'},{value='skillups',label='Skill-ups'}},200,210,'skill')
  local scope=browse('codexScope',{{value='all',label='All zones'},{value='current',label='Current zone'}},420,210,'scope')
  local source=browse('codexSource',{{value='combined',label='All known sources'},{value='confirmed',label='My discoveries'},{value='imported',label='Imported locations'}},640,256,'source')
- local function tile(i)
-  local cell=place(S.Panel(grid),grid,((i-1)%9)*100,100+math.floor((i-1)/9)*90,88,88)
+ view.gridList=A.VirtualList.New(grid,{rowHeight=96,create=function(parent)
+  local wrapper=CreateFrame('Frame',nil,parent)
+  local cell=place(S.Panel(wrapper),wrapper,0,0,88,88)
   local b=S.Button(cell,'',function(self) if self.item then view.Open(self.item.id) end end,'quiet');b:SetAllPoints(cell);b.cell=cell
   b.icon=b:CreateTexture(nil,'ARTWORK');place(b.icon,b,22,7,44,44)
   b.label:ClearAllPoints();place(b.label,b,4,53,80,31);b.label:SetJustifyH('CENTER');b.label:SetFont(S.bodyFont,11,'');b.label:SetWordWrap(true)
@@ -79,24 +79,26 @@ function V.New(parent,U)
    return item.count..' known locations in '..#item.zones..' zones. Click for sources, history and ranked zones.'
   end)
   b.skillBar=b:CreateTexture(nil,'OVERLAY');place(b.skillBar,b,3,83,82,3)
-  view.tiles[i]=b;return b
- end
- for i=1,27 do tile(i) end
+  wrapper.button=b;view.tiles[#view.tiles+1]=b
+  b:EnableMouseWheel(true);b:SetScript('OnMouseWheel',function(_,delta) view.gridList:SetOffset(view.gridList.scroller.offset-delta*96) end)
+  return wrapper
+ end,bind=function(wrapper,item)
+  local b=wrapper.button;b.item=item;show(b.cell,item~=nil)
+  if item then b.labelColor=item.skill.color;b.skillBar:SetColorTexture(unpack(item.skill.color));b:SetText(safe(item.name));b.icon:SetTexture(item.icon);S.Selected(b,item.id==view.selectedID) end
+ end})
  view.empty=label(grid,'No resources match. Clear the search or choose another type.',190,150,516,90,15,S.muted);view.empty:SetWordWrap(true);view.empty:SetJustifyH('CENTER')
- button(grid,'resourcePrev','< Previous',0,372,106,23,function() view.page=math.max(1,view.page-1);U.Refresh() end,'quiet')
- button(grid,'resourceNext','Next >',790,372,106,23,function() view.page=view.page+1;U.Refresh() end,'quiet')
- view.pageLabel=label(grid,'',120,373,656,22,11,S.muted);view.pageLabel:SetJustifyH('CENTER')
  local detail=place(CreateFrame('Frame',nil,root),root,0,0,896,395);view.detail=detail
  button(detail,'resourceBack','< Back to Codex',0,5,158,26,view.Back)
  view.icon=detail:CreateTexture(nil,'ARTWORK');place(view.icon,detail,176,0,44,44)
  view.name=label(detail,'',234,0,662,25,20,S.gold)
  view.profession=label(detail,'',234,29,662,18,12,S.muted)
  local information=place(S.Panel(detail),detail,0,64,330,296)
- view.stats=label(information,'',14,12,302,48,12,S.text);view.stats:SetWordWrap(true)
- view.last=label(information,'',14,66,302,18,11,S.muted)
- label(information,'Gathering sources',14,91,302,22,15,S.gold)
+ view.sourceScroll=A.ScrollPanel.New(information);view.sourceScroll.frame:SetPoint('TOPLEFT',information,'TOPLEFT',8,-8);local infoBody=view.sourceScroll.body
+ view.stats=label(infoBody,'',14,12,302,48,12,S.text);view.stats:SetWordWrap(true)
+ view.last=label(infoBody,'',14,66,302,18,11,S.muted)
+ label(infoBody,'Gathering sources',14,91,302,22,15,S.gold)
  for i=1,2 do
-  local row=place(CreateFrame('Frame',nil,information),information,14,120+(i-1)*88,302,80)
+  local row=place(CreateFrame('Frame',nil,infoBody),infoBody,14,120+(i-1)*88,302,80)
   row.name=label(row,'',0,0,302,17,12,S.gold)
   row.requirement=label(row,'',0,20,302,17,11,S.text)
   row.summary=label(row,'',0,39,302,17,11,S.text)
@@ -110,21 +112,22 @@ function V.New(parent,U)
  view.zoneHint=label(zones,'Ranked by known locations. Possible spawns, not live availability.',14,43,524,18,11,S.muted)
  view.zoneHeader=label(zones,'Zone',16,68,310,18,12,S.gold)
  local totals=label(zones,'Known / Personal',360,68,176,18,12,S.gold);totals:SetJustifyH('RIGHT');view.zoneTotals=totals;view.zones=zones
- local function zoneRow(i)
-  local row=button(zones,'resourceZone'..i,'',12,90+(i-1)*24,528,23,function(self) if self.zone then view.ShowZone(self.zone.mapID) end end,'quiet')
-  row.label:ClearAllPoints();place(row.label,row,4,0,338,24);row.label:SetJustifyH('LEFT')
+ view.zoneList=A.VirtualList.New(zones,{rowHeight=24,create=function(parent)
+  local row=S.Button(parent,'',function(self) if self.zone then view.ShowZone(self.zone.mapID) end end,'quiet')
+  row.label:ClearAllPoints();row.label:SetPoint('LEFT',row,'LEFT',4,0);row.label:SetJustifyH('LEFT')
   row.counts=label(row,'',348,0,174,24,11,S.muted);row.counts:SetJustifyH('RIGHT')
   S.Hint(row,'Show resource locations',function()
    if not row.zone then return '' end
-   return safe(U.ZoneName(row.zone.mapID))..'\n'..row.zone.count..' known locations / '..row.zone.confirmed..' personally confirmed.\nClick to show this resource on the world map.\nSave or discard unfinished work first.'
+   return safe(U.ZoneName(row.zone.mapID))..' / '..row.zone.count..' known locations. '..(row:IsEnabled() and 'Click to show this resource on the world map.' or 'Hidden by current map-marker filters, or unfinished work. Choose visible nodes in Node display.')
   end)
-  view.zoneRows[i]=row;return row
- end
- for i=1,7 do zoneRow(i) end
- view.zoneEmpty=label(zones,'No known locations yet. Import data on Welcome or gather this resource to record locations.',52,118,448,120,14,S.muted);view.zoneEmpty:SetWordWrap(true);view.zoneEmpty:SetJustifyH('CENTER')
- button(zones,'resourceZonePrev','<',12,270,26,23,function() view.zonePage=math.max(1,view.zonePage-1);U.Refresh() end,'quiet')
- button(zones,'resourceZoneNext','>',514,270,26,23,function() view.zonePage=view.zonePage+1;U.Refresh() end,'quiet')
- view.zonePageLabel=label(zones,'',48,271,456,22,11,S.muted);view.zonePageLabel:SetJustifyH('CENTER')
+  view.zoneRows[#view.zoneRows+1]=row;return row
+ end,bind=function(row,zone,index,width)
+  row.zone=zone;if not zone then return end
+  row:SetText(safe(index..'. '..U.ZoneName(zone.mapID)));row.label:SetSize(width-190,24)
+  row.counts:ClearAllPoints();place(row.counts,row,width-180,0,174,24);row.counts:SetText(zone.count..' / '..zone.confirmed)
+  row:SetEnabled(view.item~=nil and not work() and WorldMapFrame~=nil and A.Map~=nil and A.Map.SetNodeFocus~=nil and mapAvailable(view.item,zone.mapID))
+ end})
+ view.zoneEmpty=label(zones,'No known locations yet. Import data on Welcome or gather this resource to record locations.',24,118,448,120,14,S.muted);view.zoneEmpty:SetWordWrap(true);view.zoneEmpty:SetJustifyH('CENTER')
  view.localInfo=label(detail,'',0,45,896,18,11,S.muted)
  local function current()
   local player=A.Client.Position();return A.ResourceLibrary.LocalCandidates(A.db,view.item,player,U.Filter()),player
@@ -154,11 +157,10 @@ function V.New(parent,U)
  button(detail,'codexGuide','Guide nearest',216,369,150,26,view.Guide)
  button(detail,'codexMap','Show current zone',376,369,206,26,function() local p=A.Client.Position();if p then view.ShowZone(p.mapID) end end)
  S.Hint(U.controls.codexPlan,'Resource route','Uses this resource and your Routes checkboxes. Stop current guidance first.')
+ S.Hint(U.controls.codexMap,'Show resource markers','Uses your current map-marker selections. Choose visible nodes in Node display; an active route override may temporarily apply route selections.')
  S.Hint(U.controls.codexGuide,'Nearest known location','Uses your Routes checkboxes. Known locations are possible spawns, not live nodes.')
  function view.Layout(width,height)
-  local h=height-19;local contentHeight=view.mode=='detail' and math.max(395,h) or h
-  local w=scroller:Layout(width-40,h,contentHeight);root:SetHeight(contentHeight)
-  grid:SetSize(w,h);detail:SetSize(w,contentHeight)
+  local w,h=width-40,height-19;root:SetSize(w,h);grid:SetSize(w,h);detail:SetSize(w,h)
   local function move(f,p,x,y,fw,fh) f:ClearAllPoints();place(f,p,x,y,fw,fh) end
   move(view.searchLabel,grid,w-512,3,48,24);move(view.searchBox,grid,w-458,1,330,26);move(U.controls.resourceClear,grid,w-118,1,118,26)
   view.filterRows=w<896 and 2 or 1;local controls={kind,skill,scope,source}
@@ -169,23 +171,19 @@ function V.New(parent,U)
    for i,control in ipairs(controls) do local cw=(w-30)*fractions[i]/(866/896);move(control,grid,x,37,cw,26);x=x+cw+10 end
   end
   local top=view.filterRows==2 and 136 or 100
-  move(view.info,grid,0,top-27,w,18)
-  local columns=math.max(1,math.floor((w+12)/100));local rows=math.max(1,math.floor((h-top-26)/90))
-  local capacity=math.min(256,columns*rows);if view.mode=='grid' then if capacity~=view.capacity then view.page=1 end;view.capacity=capacity end
-  for i=1,capacity do local b=view.tiles[i] or tile(i);move(b.cell,grid,((i-1)%columns)*100,top+math.floor((i-1)/columns)*90,88,88) end
-  move(U.controls.resourcePrev,grid,0,h-23,106,23);move(U.controls.resourceNext,grid,w-106,h-23,106,23)
-  move(view.pageLabel,grid,120,h-22,w-240,22);move(view.empty,grid,50,top,w-100,math.max(50,h-top-30))
+  move(view.info,grid,0,top-27,w,18);move(view.empty,grid,50,top,w-100,math.max(50,h-top))
+  view.gridList.frame:ClearAllPoints();view.gridList.frame:SetPoint('TOPLEFT',grid,'TOPLEFT',0,-top)
+  view.gridList:Layout(w,h-top,math.max(1,math.min(16,math.floor((w-20)/96))))
   move(view.name,detail,234,0,w-234,25);move(view.profession,detail,234,29,w-234,18);view.localInfo:SetWidth(w)
-  local ph=contentHeight-99;information:SetSize(330,ph);zones:SetSize(w-344,ph)
-  local zw=w-344
-  view.zoneTitle:SetWidth(zw-28);view.zoneHint:SetWidth(zw-28);view.zoneHeader:SetWidth(zw-218)
+  local ph=h-99;information:SetSize(330,ph);zones:SetSize(w-344,ph)
+  local iw=view.sourceScroll:Layout(314,ph-16,288)
+  for _,t in ipairs({view.stats,view.last}) do t:SetWidth(iw-28) end
+  for _,row in ipairs(view.sourceRows) do row:SetWidth(iw-28);for _,key in ipairs({'name','requirement','summary','transition'}) do row[key]:SetWidth(iw-28) end end
+  local zw=w-344;view.zoneTitle:SetWidth(zw-28);view.zoneHint:SetWidth(zw-28);view.zoneHeader:SetWidth(zw-218)
   move(totals,zones,zw-192,68,176,18)
-  local count=math.max(1,math.floor((ph-116)/24));view.zoneCapacity=count
-  for i=1,count do local row=view.zoneRows[i] or zoneRow(i);move(row,zones,12,90+(i-1)*24,zw-24,23);row.label:SetWidth(zw-214);move(row.counts,row,zw-204,0,174,24) end
-  for i=count+1,#view.zoneRows do view.zoneRows[i]:Hide() end
-  move(U.controls.resourceZonePrev,zones,12,ph-26,26,23);move(U.controls.resourceZoneNext,zones,zw-38,ph-26,26,23)
-  move(view.zonePageLabel,zones,48,ph-25,zw-96,22);move(view.zoneEmpty,zones,24,118,zw-48,math.max(40,ph-150))
-  for _,e in ipairs({{'codexPlan',0,206},{'codexGuide',216,150},{'codexMap',376,206}}) do move(U.controls[e[1]],detail,e[2],contentHeight-26,e[3],26) end
+  view.zoneList.frame:ClearAllPoints();view.zoneList.frame:SetPoint('TOPLEFT',zones,'TOPLEFT',12,-90);view.zoneList:Layout(zw-24,ph-100,1)
+  move(view.zoneEmpty,zones,24,118,zw-48,math.max(40,ph-150))
+  for _,e in ipairs({{'codexPlan',0,206},{'codexGuide',216,150},{'codexMap',376,206}}) do move(U.controls[e[1]],detail,e[2],h-26,e[3],26) end
  end
  function view.Refresh()
   local detailMode=view.mode=='detail';local p=A.Client.Position()
@@ -193,20 +191,15 @@ function V.New(parent,U)
   local model=A.ResourceLibrary.Query(A.db,detailMode and 'all' or view.kind,detailMode and '' or view.search,options)
   view.model=model;view.item=nil
   for _,item in ipairs(model.items) do if item.id==view.selectedID then view.item=item;break end end
-  if view.mode=='detail' and not view.item then view.mode='grid';view.Refresh();return end
+  if view.mode=='detail' and not view.item then view.mode='grid';U.layoutsKey=nil;U.Refresh();return end
   show(grid,view.mode=='grid');show(detail,view.mode=='detail');kind:SetValue(view.kind);skill:SetValue(view.skill);scope:SetValue(view.scope);source:SetValue(view.source)
   U.zone:SetText('Node Codex  -  Browse resources; choose farming materials in Routes')
   if view.mode=='grid' then
-   local pages=math.max(1,math.ceil(#model.items/view.capacity));view.page=math.max(1,math.min(view.page,pages))
-   view.info:SetText(#model.items..' resources / Browsing filters leave your Routes checkboxes unchanged')
-   for i,tile in ipairs(view.tiles) do
-    local item=i<=view.capacity and model.items[(view.page-1)*view.capacity+i] or nil;tile.item=item;show(tile.cell,item~=nil)
-    if item then tile.labelColor=item.skill.color;tile.skillBar:SetColorTexture(unpack(item.skill.color));tile:SetText(safe(item.name));tile.icon:SetTexture(item.icon);S.Selected(tile,item.id==view.selectedID) end
-   end
+   local query=table.concat({view.kind,view.scope,view.source,view.skill,view.search,tostring(view.scope=='current' and p and p.mapID or '')},'/')
+   view.info:SetText(#model.items..' resources / Scroll to browse. Route and marker choices remain unchanged.')
+   view.gridList:SetItems(model.items,query~=view.query);view.query=query
    view.empty:SetText(view.scope=='current' and not p and 'Position unavailable. Choose All zones to browse the catalogue.' or 'No resources match. Clear the search or choose another filter.')
-   show(view.empty,#model.items==0);view.pageLabel:SetText('Page '..view.page..' / '..pages)
-   U.controls.resourcePrev:SetEnabled(view.page>1);U.controls.resourceNext:SetEnabled(view.page<pages)
-   return
+   show(view.empty,#model.items==0);return
   end
   local item=view.item;view.icon:SetTexture(item.icon);view.name:SetText(safe(item.name))
   local nodes,player=current();local best
@@ -227,20 +220,12 @@ function V.New(parent,U)
    if source then
     local d=A.Resources.SkillDetails(source.node,skills,context);row.node=source.node;row.details=d
     row.name:SetText(safe(source.node.name));row.requirement:SetText(safe(d.requirement));row.summary:SetText(safe(d.summary));row.summary:SetTextColor(unpack(d.color))
-    row.transition:SetText(safe(d.transition or (d.source=='reference' and 'Source: Reference data (Classic)' or 'Source: Unknown')))
+    row.transition:SetText(safe(d.transition or (d.source=='profession' and 'Profession not learned' or d.source=='reference' and 'Source: Reference data (Classic)' or 'Source: Unknown')))
    else row.node=nil;row.details=nil end
   end
-  local pages=math.max(1,math.ceil(#item.zones/view.zoneCapacity));view.zonePage=math.max(1,math.min(view.zonePage,pages))
-  for i,row in ipairs(view.zoneRows) do
-   local index=(view.zonePage-1)*view.zoneCapacity+i;local zone=i<=view.zoneCapacity and item.zones[index] or nil;row.zone=zone;show(row,zone~=nil)
-   if zone then
-    row:SetText(safe(index..'. '..U.ZoneName(zone.mapID)));row.counts:SetText(zone.count..' / '..zone.confirmed)
-    local matches=mapAvailable(item,zone.mapID)
-    row:SetEnabled(matches and not work() and WorldMapFrame~=nil and A.Map~=nil and A.Map.SetNodeFocus~=nil)
-   end
-  end
-  show(view.zoneEmpty,#item.zones==0);view.zonePageLabel:SetText('Zones '..view.zonePage..' / '..pages..' / Click a zone to show its map')
-  U.controls.resourceZonePrev:SetEnabled(view.zonePage>1);U.controls.resourceZoneNext:SetEnabled(view.zonePage<pages)
+  view.zoneList:SetItems(item.zones,view.zoneItem~=item.id);view.zoneItem=item.id
+  show(view.zoneEmpty,#item.zones==0)
+
  end
  return view
 end

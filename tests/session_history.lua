@@ -44,3 +44,13 @@ test('missing character identity and unknown history schemas never share or over
  local future={version=99,characters={keep=true}};db.sessionHistory=future
  eq(A.SessionHistory.New(db,{key='a'}),nil);eq(db.sessionHistory,future);eq(future.characters.keep,true)
 end)
+
+test('malformed optional Auctionator API cannot prevent saving a stopped session',function()
+ local previous=Auctionator
+ for _,addon in ipairs({true,{API=true},{API={v1=true}},{API={v1='unavailable'}}}) do
+  local A,h=historySetup();local s=h:Begin({},10);h:Loot(s.id,'a',{itemID=765,quantity=3})
+  Auctionator=addon;local ok,saved=pcall(h.Stop,h,20);Auctionator=previous
+  assert(ok,saved);assert(saved);eq(saved.valuation,nil);eq(h:Active(),nil);eq(#h:List(),1)
+ end
+ Auctionator=previous
+end)

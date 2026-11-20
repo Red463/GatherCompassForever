@@ -48,3 +48,28 @@ test('confirmed loot still counts when the player leaves the loot window open fo
  local A,h,s,t,e,g=lootSession();t:Snapshot({e(1,765,3)},1);t:Gather(g())
  t:Cleared(1,90);eq(s.items[765].quantity,3)
 end)
+
+test('a repeated confirmation cannot bind its cast to another window on the same node',function()
+ local A,h,s,t,e,g=lootSession();t:Snapshot({e(1,765,2)},1);t:Gather(g());t:Cleared(1,1.1);t:Closed(1.2)
+ t:Snapshot({e(1,765,5)},1.3);t:Cleared(1,1.4);t:Gather(g())
+ eq(s.items[765].quantity,2);eq(s.gathers,1)
+end)
+
+test('a later loot snapshot can fill missing quantity without changing an already cleared receipt',function()
+ local A,h,s,t,e,g=lootSession();t:Snapshot({e(1,765,nil)},1)
+ t:Snapshot({e(1,765,3)},1.1);t:Gather(g());t:Cleared(1,1.2)
+ eq(s.items[765].quantity,3)
+ t:Snapshot({e(1,765,30)},1.3);t:Cleared(1,1.4);eq(s.items[765].quantity,3)
+end)
+
+test('pre-Stop cleared loot with late confirmation updates only its original session at Stop prices',function()
+ local previous=Auctionator;Auctionator={API={v1={GetAuctionPriceByItemID=function() return 250 end}}}
+ local A,h,s,t,e,g=lootSession();t:Snapshot({e(1,765,3),e(2,2452,2)},1);t:Cleared(1,1.1)
+ local saved=h:Stop(110);local nextSession=h:Begin({},111)
+ Auctionator.API.v1.GetAuctionPriceByItemID=function() return 99999 end
+ t:Cleared(2,1.2);t:Gather(g())
+ Auctionator=previous
+ eq(saved.items[765].quantity,3);eq(saved.items[2452],nil);eq(saved.gathers,1);eq(saved.valuation.totalCopper,750)
+ eq(next(nextSession.items),nil);eq(nextSession.gathers,0)
+ t:Gather(g());eq(saved.items[765].quantity,3)
+end)

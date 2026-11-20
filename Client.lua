@@ -9,14 +9,14 @@ function C.Timestamp()
  return 0
 end
 function C.Character()
- local key,name,realm
- if type(UnitGUID)=='function' then local ok,value=pcall(UnitGUID,'player');if ok then value=C.Read(value);if type(value)=='string' and value:match('^Player%-') then key=value end end end
+ local name,realm
  if type(UnitFullName)=='function' then local ok,n,r=pcall(UnitFullName,'player');if ok then name=C.Read(n);realm=C.Read(r) end end
  if (type(realm)~='string' or realm=='') and type(GetRealmName)=='function' then local ok,r=pcall(GetRealmName);if ok then realm=C.Read(r) end end
  if type(name)~='string' or name=='' then name=nil end
  if type(realm)~='string' or realm=='' then realm=nil end
- key=key or name and realm and (realm..':'..name)
- if key then return {key=key,name=name,realm=realm} end
+ -- Name + realm is available consistently across login and reload. Do not
+ -- switch journal keys when the player GUID becomes readable later.
+ if name and realm then return {key=realm..':'..name,name=name,realm=realm} end
 end
 function C.HBD() return LibStub and LibStub('HereBeDragons-2.0',true) end
 function C.Position()

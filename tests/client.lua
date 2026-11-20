@@ -10,10 +10,21 @@ test('session character identity uses player identity and realm without inventin
  local A={};module('Store',A);module('Client',A)
  local oldGUID,oldName,oldRealm=UnitGUID,UnitFullName,GetRealmName
  UnitGUID=function() return 'Player-1-A' end;UnitFullName=function() return 'Tom','Realm' end
- local c=A.Client.Character();eq(c.key,'Player-1-A');eq(c.name,'Tom');eq(c.realm,'Realm')
+ local c=A.Client.Character();eq(c.key,'Realm:Tom');eq(c.name,'Tom');eq(c.realm,'Realm')
  UnitGUID=nil;eq(A.Client.Character().key,'Realm:Tom')
  UnitFullName=nil;GetRealmName=nil;eq(A.Client.Character(),nil)
  UnitGUID,UnitFullName,GetRealmName=oldGUID,oldName,oldRealm
+end)
+
+test('a login without a readable GUID and a reload with a GUID use the same character journal',function()
+ local A={};module('Store',A);module('Client',A);module('SessionHistory',A)
+ local oldGUID,oldName=UnitGUID,UnitFullName
+ UnitGUID=function() return nil end;UnitFullName=function() return 'Tom','Realm' end
+ local db=A.Store.Open();local h=A.SessionHistory.New(db,A.Client.Character());local first=h:Begin({},100)
+ UnitGUID=function() return 'Player-1-A' end
+ local reopened=A.SessionHistory.New(A.Store.Copy(db),A.Client.Character())
+ UnitGUID,UnitFullName=oldGUID,oldName
+ assert(reopened:Active());eq(reopened:Active().id,first.id)
 end)
 
 test('corridor range uses actual zoomed-out minimap radius without changing zoom',function()

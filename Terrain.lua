@@ -171,15 +171,24 @@ function T.Path(a,b,options)
  if not position(a) or not position(b) then return nil,'invalid point' end
  if a.mapID~=b.mapID then return nil,'map mismatch' end
  local z,reason=T.Zone(a.mapID);if not z then return nil,reason end
+ options=type(options)=='table' and options or {}
+ local maxDistance=options.maxDistance
+ if maxDistance~=nil and (not number(maxDistance) or maxDistance<0) then return nil,'invalid distance' end
  if not segment(z,a,a) or not segment(z,b,b) then return nil,'blocked endpoint' end
- if segment(z,a,b) then return {point(a),point(b)},yards(z,a,b) end
+ local direct=yards(z,a,b)
+ if maxDistance and direct>maxDistance+.000001 then return nil,'too long' end
+ if segment(z,a,b) then return {point(a),point(b)},direct end
  refreshCache(z)
  local key,reverse=cacheKey(a,b);local hit=cache[key]
  if hit then
   if not hit.points then return nil,hit.reason end
+  if maxDistance and hit.length>maxDistance+.000001 then return nil,'too long' end
   return pathCopy(hit.points,reverse),hit.length
  end
- options=type(options)=='table' and options or {}
+ -- A failed local search says nothing about longer paths across this zone.
+ -- Keep range-scoped failures separate from unrestricted cached results.
+ local rangeKey=maxDistance and (key..'@'..string.format('%.17g',maxDistance))
+ if rangeKey and cache[rangeKey] then return nil,cache[rangeKey].reason end
  local budget=options.maxExpansions or options.budget or 16384
  if not number(budget) or budget<0 then return nil,'invalid budget' end
  budget=min(262144,floor(budget))
@@ -187,6 +196,21 @@ function T.Path(a,b,options)
  local sx,sy=coordinates(z,a);local ex,ey=coordinates(z,b);local start=sy*z.w+sx;local goal=ey*z.w+ex
  local wx,wy=z.widthYards/z.w,z.heightYards/z.h
  local diagonal=sqrt(wx*wx+wy*wy)
+ local major2,minor2,ux,uy,mx,my
+ if maxDistance then
+  -- Every point on a path of length L lies inside the ellipse whose foci
+  -- are its endpoints and whose distance sum is L. Pad for grid centres;
+  -- do not search the rest of the zone for a local 450-yard connection.
+  local allowance=maxDistance+2*diagonal
+  major2=(allowance/2)^2;minor2=major2-(direct/2)^2
+  ux=(b.x-a.x)*z.widthYards/direct;uy=(b.y-a.y)*z.heightYards/direct
+  mx=(a.x+b.x)*z.widthYards/2;my=(a.y+b.y)*z.heightYards/2
+ end
+ local function inRange(x,y)
+  local dx,dy=(x+.5)*wx-mx,(y+.5)*wy-my
+  local along,across=dx*ux+dy*uy,dx*uy-dy*ux
+  return along*along/major2+across*across/minor2<=1.000000001
+ end
  -- Exact unobstructed eight-neighbor distance is admissible on rectangular
  -- cells and avoids exploring the extra area admitted by Euclidean distance.
  local function heuristic(x,y)
@@ -209,14 +233,17 @@ function T.Path(a,b,options)
    local x,y=id%z.w,floor(id/z.w)
    for _,offset in ipairs(neighbors) do
     local dx,dy=offset[1],offset[2];local nx,ny=x+dx,y+dy;local nid=ny*z.w+nx
-    if not closed[nid] and cell(z,nx,ny) and (dx==0 or dy==0 or (cell(z,x+dx,y) and cell(z,x,y+dy))) then
+    if not closed[nid] and cell(z,nx,ny) and (not maxDistance or inRange(nx,ny)) and (dx==0 or dy==0 or (cell(z,x+dx,y) and cell(z,x,y+dy))) then
      local g=entry.g+(dx==0 and wy or dy==0 and wx or diagonal)
      if not scores[nid] or g<scores[nid] then scores[nid]=g;previous[nid]=id;push(heap,nid,g+heuristic(nx,ny),g) end
     end
    end
   end
  end
- if not found then remember(key,reverse,nil,nil,'unreachable');return nil,'unreachable' end
+ if not found then
+  local why=maxDistance and 'too long' or 'unreachable'
+  remember(rangeKey or key,reverse,nil,nil,why);return nil,why
+ end
  local backwards={point(b)};local id=goal
  while true do
   backwards[#backwards+1]={mapID=a.mapID,x=(id%z.w+.5)/z.w,y=(floor(id/z.w)+.5)/z.h}
@@ -238,6 +265,7 @@ function T.Path(a,b,options)
  end
  -- Bound retained geometry as well as cache entry count.
  if #result<=1024 then remember(key,reverse,result,length) end
+ if maxDistance and length>maxDistance+.000001 then return nil,'too long' end
  return result,length
 end
 function T.Distance(a,b,options)

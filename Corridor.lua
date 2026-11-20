@@ -58,7 +58,7 @@ local function terrainGenerate(nodes,start,options)
  local first,nearest
  for i,e in ipairs(valid) do
   if e.distance>maxLink or nearest and e.distance>nearest then break end
-  local path,d=T.Path(start,e.point)
+  local path,d=T.Path(start,e.point,{maxDistance=maxLink})
   if path then if d<=maxLink and (not nearest or d<nearest) then first,nearest=e,d end
   elseif d=='budget' then return nil,'Terrain routing exceeded its search budget. Narrow the material filters or move closer.' end
   if i%64==0 and T.Checkpoint then T.Checkpoint() end
@@ -97,7 +97,7 @@ local function terrainGenerate(nodes,start,options)
  local edges={};for i=1,#groups do edges[i]={} end
  for i=1,#groups do for j=i+1,#groups do
   if straight(groups[i].point,groups[j].point)<=maxLink then
-   local path,d=T.Path(groups[i].point,groups[j].point)
+   local path,d=T.Path(groups[i].point,groups[j].point,{maxDistance=maxLink})
    if path then if d<=maxLink then edges[i][j]=d;edges[j][i]=d end
    elseif d=='budget' then return nil,'Terrain routing exceeded its search budget. Narrow the material filters or move closer.' end
   end

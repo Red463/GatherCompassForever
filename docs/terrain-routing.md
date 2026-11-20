@@ -59,6 +59,13 @@ closing connection. Included and omitted counts remain visible. Selecting all
 materials does not promise a circuit covering the whole zone. Backtracking has no
 added penalty; necessary branch returns remain.
 
+Candidate connections search only the padded endpoint ellipse that can contain a
+path within their 450-yard limit. This prevents a close but inaccessible candidate
+from consuming the search budget while exploring distant parts of the zone.
+Range-limited failures are cached separately from unrestricted path results;
+they do not declare the rest of the zone unreachable. Explicit work budgets and
+cooperative frame checkpoints still apply.
+
 Generation, saved-route starts, resource guidance, removal/undo and explicit
 resume use a cooperative planning job. The soft frame budget is four milliseconds,
 with a work cap for frozen timers. This is not a hard real-time guarantee.

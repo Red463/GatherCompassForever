@@ -23,6 +23,25 @@ test('terrain decodes six-bit rows including padding and swimming cells',functio
  assert(T.Segment(p(1,2),p(7,2)));near(T.Distance(p(1,2),p(7,2)),60)
 end)
 
+test('distance-limited terrain searches do not poison longer or unrestricted searches',function()
+ local T,p=fixture({'11011','11011','11011','11111','11011'},100,100)
+ local a,b=p(2,1),p(4,1)
+ local short,reason=T.Path(a,b,{maxDistance=45});eq(short,nil);eq(reason,'too long')
+ local full,length=T.Path(a,b);assert(full);assert(length>45)
+ local accepted,d=T.Path(a,b,{maxDistance=200});assert(accepted);near(d,length)
+ local reversed,why=T.Path(b,a,{maxDistance=45});eq(reversed,nil);eq(why,'too long')
+end)
+
+test('distance-limited searches enforce direct distance and preserve explicit work budgets',function()
+ local T,p=fixture({'11111'});local a,b=p(1,1),p(5,1)
+ local path,reason=T.Path(a,b,{maxDistance=39});eq(path,nil);eq(reason,'too long')
+ assert(T.Path(a,b,{maxDistance=40}))
+ for _,n in ipairs({-1,0/0,math.huge}) do local r,why=T.Path(a,b,{maxDistance=n});eq(r,nil);eq(why,'invalid distance') end
+ T,p=fixture({'11011','11011','11011','11111','11011'},100,100)
+ local r,why=T.Path(p(2,1),p(4,1),{maxDistance=200,budget=0});eq(r,nil);eq(why,'budget')
+ assert(T.Path(p(2,1),p(4,1),{maxDistance=200}))
+end)
+
 test('terrain missing or malformed data never permits straight-line fallback',function()
  local T,p,A=fixture({'111','111'})
  A.TerrainData.zones[1].status='unavailable';eq(T.Zone(1),nil);assert(not T.Allowed(p(1,1)))

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix Ashenvale route generation aborting when a nearby candidate on the other side of a ridge consumes the terrain-search budget. Limit candidate searches to the area relevant to their 450-yard connection limit, retaining terrain checks and keeping local range failures separate from unrestricted path caches.
+
 ## 1.1.0 - 2026-11-20
 
 This entry includes all changes since 1.0.0, including the 1.0.1 gathering-reference update.

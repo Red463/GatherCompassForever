@@ -87,6 +87,14 @@ test('same-cell spawn groups and minimap coverage never claim through a sealed r
  safeGeometry(route,blocked)
 end)
 
+test('one close node across a sealed ridge does not exhaust generation for a reachable farming area',function()
+ local A=terrainPlanner(fixture(function(x) return x==201 end,400,240,400*25/6,240*25/6))
+ local nodes={terrainNode(.49,.5,'near'),terrainNode(.51,.5,'other-side')}
+ local route,reason=A.Planner.Generate(nodes,nodes[1],distance,{coverageRadius=180})
+ assert(route,reason);eq(route.includedCount,1);eq(route.includedKeys['other-side'],nil)
+ assert(A.Terrain.Validate(route))
+end)
+
 test('generation propagates path budgets instead of describing them as disconnected nodes',function()
  local A={Terrain={Zone=function() return {widthYards=1000,heightYards=600} end,
   Approach=function(p) return p end,Path=function() return nil,'budget' end}}

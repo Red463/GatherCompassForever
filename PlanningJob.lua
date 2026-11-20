@@ -1,6 +1,8 @@
 local _,A=...
 local J={};A.PlanningJob=J
 local job
+local function refresh() if A.UI and A.UI.Refresh then A.UI.Refresh() end end
+function J.IsRunning() return job~=nil end
 local function number(n)
  return not (issecretvalue and issecretvalue(n)) and type(n)=='number' and n==n and n>-math.huge and n<math.huge
 end
@@ -10,15 +12,18 @@ local function clock()
  return 0
 end
 function J.Cancel(reason)
+ local active=job
  job=nil
  if A.Terrain then A.Terrain.Checkpoint=nil end
  if reason then A.status=reason end
+ if active then refresh() end
 end
 function A.PlanJob(work,done,failed)
  J.Cancel()
  local p=A.Client.Position()
  job={thread=coroutine.create(work),done=done,failed=failed,mapID=p and p.mapID}
  A.status='Planning terrain-safe route...'
+ refresh()
  return true
 end
 function J.Tick()
@@ -43,5 +48,6 @@ function J.Tick()
  elseif coroutine.status(active.thread)=='dead' then
   job=nil;if active.done then active.done(a,b,c) end
  end
+ if not job then refresh() end
  return not job
 end

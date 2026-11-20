@@ -109,6 +109,39 @@ local function buildFooter()
  U.statusHover=place(CreateFrame('Frame',nil,U.frame),U.frame,14,621,932,28); U.statusHover:EnableMouse(true)
  S.Hint(U.statusHover,'Gatherly status',function() return U.status:GetText() end)
 end
+local function planning() return A.PlanningJob and A.PlanningJob.IsRunning and A.PlanningJob.IsRunning() or false end
+local function buildPlanningOverlay()
+ local overlay=CreateFrame('Frame',nil,U.body);U.planningOverlay=overlay
+ overlay:SetAllPoints(U.body);overlay:SetFrameLevel(U.body:GetFrameLevel()+200);overlay:EnableMouse(true)
+ S.Fill(overlay,{0,0,0,.58})
+ local card=S.Panel(overlay);U.planningCard=card;card:SetFrameLevel(overlay:GetFrameLevel()+1);card:SetPoint('CENTER',overlay,'CENTER',0,0)
+ U.planningTitle=label(card,'Generating route...',14,18,404,32,20,S.gold);U.planningTitle:SetJustifyH('CENTER')
+ U.planningMessage=label(card,'Finding paths around restricted terrain.\nYou can cancel this calculation at any time.',20,58,392,44,12,S.text)
+ U.planningMessage:SetWordWrap(true);U.planningMessage:SetJustifyH('CENTER')
+ U.controls.cancelPlanning=place(S.Button(card,'Cancel generation',function()
+  if A.PlanningJob then A.PlanningJob.Cancel('Route generation cancelled.') end
+ end),card,126,122,180,26)
+ overlay:SetScript('OnUpdate',function(_,elapsed)
+  U.planningElapsed=(U.planningElapsed or 0)+elapsed
+  if U.planningElapsed<.35 then return end
+  U.planningElapsed=0;U.planningDots=((U.planningDots or 0)+1)%4
+  U.planningTitle:SetText('Generating route'..string.rep('.',U.planningDots))
+ end)
+ overlay:Hide()
+end
+function U.RefreshPlanning()
+ if not U.planningOverlay then return end
+ local active=planning();show(U.planningOverlay,active)
+ if active then
+  local w=math.min(440,U.body:GetWidth()-32)
+  U.planningCard:SetSize(w,174)
+  place(U.planningTitle,U.planningCard,14,18,w-28,32)
+  place(U.planningMessage,U.planningCard,20,58,w-40,44)
+  place(U.controls.cancelPlanning,U.planningCard,(w-180)/2,122,180,26)
+  if not U.wasPlanning then U.planningElapsed=0;U.planningDots=0;U.planningTitle:SetText('Generating route...') end
+ end
+ U.wasPlanning=active
+end
 local function buildWindow()
  A.Selection.Init(A.db.settings)
  U.actions=A.UIActions.Bind(U)
@@ -123,6 +156,7 @@ local function buildWindow()
  U.codexView=A.ResourceLibraryView.New(U.content,U);U.resourceLibraryView=U.codexView
  U.welcomeView=A.WelcomeView.New(U.content,U)
  U.historyView=A.HistoryView.New(U.content,U)
+ buildPlanningOverlay()
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherlyWindow' end
  U.frame:HookScript('OnHide',function() S.CloseDropdown();U.routeSketch.picker:Close() end)
  U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.window:Cancel();U.Refresh() end)
@@ -171,6 +205,7 @@ function U.RefreshMode()
  local active=A.follower and (A.follower.status=='running' or A.follower.status=='paused' or A.follower.status=='suspended')
  U.footerName:SetWidth(compact and 250 or math.max(140,width-(active and 530 or 300)))
  U.footerMeta:SetWidth(compact and 280 or math.max(140,width-(active and 530 or 300)))
+ U.RefreshPlanning()
 end
 local function refreshSidebar(p) U.filterSidebar.Refresh(p) end
 local function refreshFooter(p)
@@ -182,6 +217,7 @@ local function refreshFooter(p)
  if active then detail=(f.status=='paused' and 'Paused' or f.status=='suspended' and 'Guidance suspended' or 'Following route')..' / '..f.index..' of '..#r.points..(r.loop and (' / Lap '..(f.lap+1)) or '')
  elseif session then detail='Session in progress / Press Stop to save its summary'
  elseif r then detail='Ready to follow / Join at the nearest route point' end
+ if planning() then detail='Generating route... Please wait.' end
  U.footerMeta:SetText(detail)
  show(U.controls.start,not active);show(U.controls.pause,active);show(U.controls.skip,active);show(U.controls.stop,active or session~=nil)
  show(U.controls.followReverse,active and not U.compact);show(U.controls.expand,U.compact);show(U.controls.workReturn,false)
@@ -203,6 +239,7 @@ end
 function U.Refresh()
  if A.RouteControls and A.db then A.RouteControls.Update(A.follower) end
  if not U.frame or not A.db then return end
+ U.RefreshPlanning()
  if not U.frame:IsShown() then return end
  local p=A.Client.Position(); local work=A.editor or A.recording or A.recordedDraft
  if U.compact then U.RefreshMode(); refreshFooter(p); refreshStatus(p); return end

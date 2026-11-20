@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Show a prominent animated route-generation message in the addon window, disable generation buttons while work is pending and provide Cancel generation without stopping existing guidance or its gathering session. Clear the message on completion, cancellation and failure.
 - Add character-specific route-session history and automatically open its summary on Stop. Keep one session from route Start until explicit Stop, including detours, pauses, laps, replacement routes and reloads; keep Stop accessible without a follower.
 - Count actual received item quantities from confirmed gathering loot, including bonus items and repeated mining taps, while avoiding duplicate notifications, uncollected loot and unrelated sources. Show successful gathering actions separately from item totals.
 - Optionally snapshot Auctionator's public item prices at Stop, showing estimated gross auction value and unpriced items. Omit valuation when Auctionator is absent; saved reports retain their original price snapshot.

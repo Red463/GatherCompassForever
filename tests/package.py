@@ -1,7 +1,7 @@
 from pathlib import Path
 import zipfile
 root = Path(__file__).resolve().parents[1]
-path = root / 'dist/Gatherly-1.0.0.zip'
+path = root / 'dist/Gatherly-1.0.1.zip'
 assert path.is_file(), 'Installable ZIP missing'
 with zipfile.ZipFile(path) as z:
     names = z.namelist()
@@ -11,7 +11,7 @@ with zipfile.ZipFile(path) as z:
     metadata = dict(line[3:].split(': ', 1) for line in toc.splitlines() if line.startswith('## '))
     assert metadata['Title'] == 'Gatherly'
     assert metadata['SavedVariables'] == 'GatherlyDB'
-    assert metadata['Version'] == '1.0.0'
+    assert metadata['Version'] == '1.0.1'
     assert metadata['X-License'] == 'MIT'
     assert metadata['IconTexture'] == r'Interface\AddOns\Gatherly\Media\Icon'
     for texture in ['Icon', 'LogoSheet', 'EmptyEmblem', 'NodeRing', 'NodeSquare', 'GuideArrow', 'HeatBlob', 'MinimapMasks']:

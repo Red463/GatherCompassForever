@@ -58,3 +58,14 @@ test('Gatherable bulk includes grey and capped resources with readable requireme
  M.ToggleMaterial(A.db,'gm:herb:401');eq(A.db.settings.materials['gm:herb:401'],false)
  M.Bulk(A.db,'gatherable',true,{},{});eq(next(A.db.settings.materials),nil)
 end)
+
+test('starter nodes remain skill-up route targets through skill 100 and leave at 101',function()
+ local A=setup();local M=A.Selection
+ A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',materialID='gm:herb:401',name='Peacebloom',source='imported'})
+ M.Bulk(A.db,'skillups',true,{herb=100},{herb={maxRank=150,bonus=0}})
+ eq(A.db.settings.materials['gm:herb:401'],true)
+ M.Bulk(A.db,'skillups',true,{herb=101},{herb={maxRank=150,bonus=0}})
+ eq(A.db.settings.materials['gm:herb:401'],nil)
+ M.Bulk(A.db,'gatherable',true,{herb=101},{herb={maxRank=150,bonus=0}})
+ eq(A.db.settings.materials['gm:herb:401'],true)
+end)

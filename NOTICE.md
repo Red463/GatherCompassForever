@@ -22,7 +22,7 @@ WoWUIDev/Ace3 ac3d1225037e0dc74e025a72342c0f7824aae147 LibStub and CallbackHandl
 
 Brand artwork supplied by the user on 19 November 2026: Gatherly Logo.png and Gatherly Badge.png. Preserved originals and conversion details are recorded in assets/source and Media/README.txt.
 
-NodeRing.tga and NodeSquare.tga are original geometric marker textures produced by tools/build_marker_textures.py. Classic UI backgrounds, borders, buttons, checkboxes and standalone resource icons reference Blizzard client assets; those assets are not redistributed. Installed GatherMate2 resource icons are referenced in place, not copied. Classic difficulty metadata is reference data, not a Forever server export.
+NodeRing.tga and NodeSquare.tga are original geometric marker textures produced by tools/build_marker_textures.py. Classic UI backgrounds, borders, buttons, checkboxes and standalone resource icons reference Blizzard client assets; those assets are not redistributed. Installed GatherMate2 resource icons are referenced in place, not copied. Gathering difficulty uses the minimum-relative model inspected in Mastercraft 2.0.7 by Shadowblade (https://www.curseforge.com/wow/addons/mastercraft-forever): yellow +25, green +50, grey +100. Gatherly retains its own implementation and existing resource catalogue; no Mastercraft source code or bundled dataset is redistributed. This model is reference guidance, not a Forever server export or verified percentage formula.
 
 GuideArrow.tga is original flat navigation geometry from tools/build_arrow_texture.py, with editable SVG source in assets/GuideArrow.svg. It contains no Blizzard pointer artwork.
 

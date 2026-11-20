@@ -283,7 +283,7 @@ local function pin()
    if self.node.confirmed then GameTooltip:AddLine('Personally gathered: '..(self.node.count or 0),.8,.9,.9) end
    if self.node.imported then GameTooltip:AddLine('From GatherMate2',.65,.65,.65) end
    if self.node.lastGathered and date then GameTooltip:AddLine('Last gathered: '..date('%d %b %H:%M',self.node.lastGathered),.8,.8,.8) end
-   GameTooltip:AddLine(details.source=='reference' and 'Source: Reference data (Classic)' or 'Source: Unknown',.55,.55,.55)
+   GameTooltip:AddLine(details.source=='reference' and ('Source: '..A.Resources.referenceLabel) or 'Source: Unknown',.55,.55,.55)
   elseif self.index and not self.mini then GameTooltip:AddLine('Drag this circle to move the waypoint.',.8,.9,.9);GameTooltip:AddLine('Changes affect your draft until you save.',.7,.7,.7) end
   GameTooltip:Show()
  end)

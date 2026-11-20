@@ -97,7 +97,7 @@ end)
 local function markerSetup()
  dofile('tests/wow.lua'); fakeUI();local A={}; module('Store',A);module('Client',A);module('Map',A)
  A.Client.Position=function() return point(.1) end;A.Client.Distance=distance
- A.Resources.Skills=function() return {herb=25} end
+ A.Resources.Skills=function() return {herb=26} end
  LibStub=function() return {AddWorldMapIconMap=function() end,AddMinimapIconMap=function() end,RemoveWorldMapIcon=function() end,RemoveMinimapIcon=function() end} end
  A.db=A.Store.Open();local display=A.Resources.Settings(A.db.settings);display.groupWorld=false;display.groupMini=false
  return A
@@ -562,7 +562,7 @@ test('minimap colours and tooltip guidance receive the same cap and bonus contex
  A.Map.Refresh(A.db,nil);local pin=A.Map.byKey['m:node:'..earth.key]
  near(pin.outline.vertexColor[1],A.Resources.colors.grey[1]);pin.scripts.OnEnter(pin);eq(right,'At profession skill cap')
  rank,cap,bonus=110,150,5;A.Map.Refresh(A.db,nil);pin=A.Map.byKey['m:node:'..steel.key]
- near(pin.outline.vertexColor[1],A.Resources.colors.orange[1]);pin.scripts.OnEnter(pin);eq(right,'High skill-up chance')
+ near(pin.outline.vertexColor[1],A.Resources.colors.orange[1]);pin.scripts.OnEnter(pin);eq(right,'Always a skill-up')
  LibStub=nil
 end)
 

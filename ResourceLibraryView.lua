@@ -225,7 +225,7 @@ function V.New(parent,U)
    if source then
     local d=A.Resources.SkillDetails(source.node,skills,context);row.node=source.node;row.details=d
     row.name:SetText(safe(source.node.name));row.requirement:SetText(safe(d.requirement));row.summary:SetText(safe(d.summary));row.summary:SetTextColor(unpack(d.color))
-    row.transition:SetText(safe(d.transition or (d.source=='profession' and 'Profession not learned' or d.source=='reference' and 'Source: Reference data (Classic)' or 'Source: Unknown')))
+    row.transition:SetText(safe(d.transition or (d.source=='profession' and 'Profession not learned' or d.source=='reference' and ('Source: '..A.Resources.referenceLabel) or 'Source: Unknown')))
    else row.node=nil;row.details=nil end
   end
   view.LayoutSources(#item.sources)

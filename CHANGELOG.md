@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 - 2026-11-20
+
+- Align supported gathering resources with Mastercraft 2.0.7's minimum-relative skill-colour model, including starter-node transitions at 26/51/101.
+- Use its plain skill-up guidance, including “Always a skill-up” for orange, and identify the Mastercraft reference model in map and Codex source labels. Profession caps, bonuses and unknown-data handling remain supported.
+
 ## 1.0.0 - 2026-11-19
 
 - First 1.0 release package for WoW Forever 1.60.1, with the existing MIT license and saved-data format.

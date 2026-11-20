@@ -2,7 +2,7 @@
 
 Herb and ore locations, resource information and farming route guidance for **WoW Forever 1.60.1**.
 
-![Gatherly logo](https://raw.githubusercontent.com/Red463/Gatherly/v1.0.0/docs/images/logo.png)
+![Gatherly logo](https://raw.githubusercontent.com/Red463/Gatherly/v1.0.1/docs/images/logo.png)
 
 ## Locations and materials
 

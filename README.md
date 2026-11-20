@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 1.0.0 | **Client interface:** 16001 | **Command:** `/gatherly`
+**Current version:** 1.0.1 | **Client interface:** 16001 | **Command:** `/gatherly`
 
 ## What it does
 
@@ -61,7 +61,7 @@ route guidance continue normally.
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-1.0.0.zip` from
+1. Download `Gatherly-1.0.1.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -398,8 +398,12 @@ can overlap; personal gather counts are successful interactions, not item quanti
 Recorded coordinates reflect the interaction position, which can differ from the
 object's exact centre.
 
-Skill colours use **Classic reference data**, current profession rank and readable
-cap/bonus information. A confirmed missing profession is red with Learn Mining or
+Skill colours use the **Mastercraft 2.0.7 reference model** for supported resources:
+yellow at required skill +25, green at +50, and grey at +100. This includes starter
+nodes: requirement 1, yellow 26, green 51, grey 101. Orange reads “Always a skill-up,”
+yellow “Usually a skill-up,” and green “Sometimes a skill-up.” These are reference
+descriptions, not verified Forever percentages. Current profession rank and readable
+cap/bonus information still apply. A confirmed missing profession is red with Learn Mining or
 Learn Herbalism guidance. Failed/incomplete queries and unreadable ranks remain
 neutral. Native tooltip inspection
 is optional, stored locally and does not automatically change the skill rules.

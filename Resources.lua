@@ -4,12 +4,12 @@ local S=A.Store
 local dbtype={herb='Herb Gathering',ore='Mining'}
 local profession={herb=182,ore=186}
 local fallback={herb='Interface\\Icons\\Trade_Herbalism',ore='Interface\\Icons\\Trade_Mining'}
--- Resource identities and Classic requirements only, no spawn dataset. These
--- are Classic reference data, not server-provided skill-up probabilities.
+-- Existing resource requirements with the minimum-relative difficulty model
+-- inspected in Mastercraft 2.0.7. This is reference guidance, not server odds.
+R.referenceLabel='Reference data (Mastercraft model)'
 local catalog={herb={},ore={}}; local names={herb={},ore={}}
 local function resource(kind,id,name,item,required,texture)
- local first=required==1 and 0 or required
- local row={id=id,name=name,item=item,required=required,yellow=first+25,green=first+50,grey=first+100,texture=texture}
+ local row={id=id,name=name,item=item,required=required,yellow=required+25,green=required+50,grey=required+100,texture=texture}
  catalog[kind][id]=row; names[kind][name:lower()]=row
 end
 local herbs={
@@ -198,7 +198,7 @@ function R.Difficulty(node,skills,context)
  end
  local source=ctx and ctx.known==false and 'profession' or key=='unknown' and 'unknown' or 'reference'
  local label=source=='profession' and ((node.kind=='ore' and 'Mining' or 'Herbalism')..' not learned.') or key=='unknown' and 'Unknown: node thresholds or profession rank unavailable.' or
-  ('Reference data (Classic): '..key..' (base skill '..rank..'; requires '..info.required..').')
+  (R.referenceLabel..': '..key..' (base skill '..rank..'; requires '..info.required..').')
  return R.colors[key],label,key,source
 end
 -- Structured guidance shares the exact thresholds used by minimap outlines.
@@ -214,7 +214,7 @@ function R.SkillDetails(node,skills,context)
  if source=='profession' then local name=node.kind=='ore' and 'Mining' or 'Herbalism';result.requirement='Requires '..name;result.summary='Learn '..name..' to gather';return result end
  if info then result.requirement=string.format('Requires %d (%s)',info.required,rank and ('you have '..(effective or rank)) or 'skill unavailable')
  else result.requirement='Required skill unknown'..(rank and (' (you have '..rank..')') or '') end
- local descriptions={red="Can't gather yet",orange='High skill-up chance',yellow='Usually a skill-up',green='Sometimes a skill-up',grey='No more skill-ups here',unknown='Skill-up chance unknown'}
+ local descriptions={red="Can't gather this yet",orange='Always a skill-up',yellow='Usually a skill-up',green='Sometimes a skill-up',grey='No more skill-ups here',unknown='Skill-up chance unknown'}
  result.summary=descriptions[key]
  local notes={}
  if rank and bonus and bonus~=0 then notes[#notes+1]=string.format('Base skill %d %+d bonus.',rank,bonus)

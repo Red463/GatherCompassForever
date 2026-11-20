@@ -48,10 +48,12 @@ test('each route opacity clamps finite values and replaces malformed values',fun
  s=R.Settings({nodeDisplay={routeOpacity='0'}})
  eq(s.miniLineOpacity,.65);eq(s.miniHeatOpacity,.65)
 end)
-test('Classic difficulty colours use boundaries and never guess unknown resources',function()
+test('starter resources follow minimum-relative boundaries and never guess unknown resources',function()
  local A=resources(); local R=A.Resources
- for _,case in ipairs({{1,'orange'},{24,'orange'},{25,'yellow'},{49,'yellow'},{50,'green'},{99,'green'},{100,'grey'}}) do
-  local _,label,key=R.Difficulty(herb,{herb=case[1]}); eq(key,case[2]); assert(label:find('Reference data',1,true))
+ for _,node in ipairs({herb,{kind='herb',materialID='gm:herb:402'},{kind='ore',materialID='gm:ore:201'}}) do
+  for _,case in ipairs({{0,'red'},{1,'orange'},{25,'orange'},{26,'yellow'},{50,'yellow'},{51,'green'},{100,'green'},{101,'grey'}}) do
+   local _,label,key=R.Difficulty(node,{[node.kind]=case[1]});eq(key,case[2]);assert(label:find('Reference data',1,true))
+  end
  end
  local _,_,key=R.Difficulty({kind='ore',materialID='gm:ore:202'},{ore=64}); eq(key,'red')
  _,_,key=R.Difficulty(herb,{}); eq(key,'unknown')
@@ -104,8 +106,8 @@ end)
 
 test('difficulty reports explicit source without implying native verification',function()
  local R=resources().Resources
- local _,label,key,source=R.Difficulty(herb,{herb=25})
- eq(key,'yellow');eq(source,'reference');assert(label:find('Classic',1,true))
+ local _,label,key,source=R.Difficulty(herb,{herb=26})
+ eq(key,'yellow');eq(source,'reference');assert(label:find('Mastercraft',1,true))
  local _,unknown,_,unknownSource=R.Difficulty({kind='herb',name='Custom node'},{});eq(unknownSource,'unknown')
  assert(unknown:find('Unknown',1,true));assert(not label:lower():find('estimat',1,true))
 end)
@@ -122,7 +124,15 @@ test('skill details describe the current tier and distance to its next colour',f
   local d=R.SkillDetails(earthroot,{herb=case[1]});eq(d.key,case[2]);eq(d.nextIn,case[3])
  end
  local locked=R.SkillDetails(earthroot,{herb=14},{herb={maxRank=300,bonus=0}});eq(locked.transition,'Gatherable at +1 skill')
- local orange=R.SkillDetails(earthroot,{herb=15});eq(orange.summary,'High skill-up chance')
+ local orange=R.SkillDetails(earthroot,{herb=15});eq(orange.summary,'Always a skill-up')
+end)
+
+test('starter skill guidance changes tier and remaining distance together',function()
+ local R=resources().Resources
+ for _,case in ipairs({{25,'orange',1,'yellow'},{26,'yellow',25,'green'},{50,'yellow',1,'green'},{51,'green',50,'grey'},{100,'green',1,'grey'},{101,'grey'}}) do
+  local d=R.SkillDetails(herb,{herb=case[1]},{herb={maxRank=150,bonus=0}})
+  eq(d.key,case[2]);eq(d.nextIn,case[3]);eq(d.nextKey,case[4])
+ end
 end)
 
 test('skill details keep missing thresholds and unreadable ranks unknown without invented transitions',function()

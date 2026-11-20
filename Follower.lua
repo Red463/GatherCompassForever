@@ -35,9 +35,14 @@ function A.Follower.New(route,start,distance,options)
   local target=self.route.points[self.index]
   self.connector=nil;self.connectorIndex=nil;self.transit=nil
   if not target or not terrain.Allowed(position) then return suspend(self,'Move onto permitted terrain in the route zone before resuming guidance.') end
+  if self.route.maxLink then
+   local d=self.distance(position,target)
+   if not A.Store.Number(d) or d>self.route.maxLink then return suspend(self,'Move nearer the current route leg before resuming guidance.') end
+  end
   if terrain.Segment(position,target) then return true end
-  local path,reason=terrain.Path(position,target,pathOptions)
-  if not path then return suspend(self,'Terrain-safe connection unavailable: '..tostring(reason)) end
+  local path,length=terrain.Path(position,target,pathOptions)
+  if not path then return suspend(self,'Terrain-safe connection unavailable: '..tostring(length)) end
+  if self.route.maxLink and (not A.Store.Number(length) or length>self.route.maxLink) then return suspend(self,'Move nearer the current route leg before resuming guidance.') end
   local connector={}
   for i=2,#path-1 do
    local p=A.Store.Copy(path[i]);p.kind='travel';p.mandatory=true;p.navigation=true
@@ -45,6 +50,15 @@ function A.Follower.New(route,start,distance,options)
   end
   if #connector==0 then return suspend(self,'Terrain-safe connection unavailable.') end
   self.connector=connector;self.connectorIndex=1;return true
+ end
+ local function reconnect(self,position,pathOptions)
+  if self.terrainFailure then return suspend(self,self.terrainFailure) end
+  -- Recovery continues the established leg. A fresh nearest-point join can
+  -- rewind progress and choose the opposite direction after a position gap.
+  if not connect(self,position,pathOptions) then return nil,self.reason end
+  self.position=A.Store.Copy(position)
+  self.arrivedAt=nil;self.armed=nil;self.needsDeparture=nil;self.initialDistance=nil
+  return true
  end
  local function nextPoint(self)
   if self.connector then return self.connector[self.connectorIndex+1] or self.route.points[self.index] end
@@ -114,7 +128,9 @@ function A.Follower.New(route,start,distance,options)
  function f:Pause() if self.status~='complete' and self.status~='stopped' then self.status='paused'; self.reason='Paused by you.' end end
  function f:Resume(position)
   if self.status~='paused' and self.status~='suspended' then return end
-  if (terrain or self.route.maxLink) and not self:Rejoin(position) then return nil,self.reason end
+  if terrain then
+   if not reconnect(self,position) then return nil,self.reason end
+  elseif self.route.maxLink and not self:Rejoin(position) then return nil,self.reason end
   self.status='running';self.reason=nil;return true
  end
  function f:Stop() self.status='stopped'; self.reason=nil end
@@ -229,7 +245,7 @@ function A.Follower.New(route,start,distance,options)
    if self.status=='suspended' then
     if A.Store.Number(now) and self.lastRecovery and now-self.lastRecovery<1 then return end
     self.lastRecovery=A.Store.Number(now) and now or nil
-    if not self:Rejoin(position,recovery) then return end;self.status='running';self.reason=nil
+    if not reconnect(self,position,recovery) then return end;self.status='running';self.reason=nil
    end
    if not terrain.Segment(position,self:Target()) and not connect(self,position,recovery) then self.lastRecovery=A.Store.Number(now) and now or nil;return end
   end

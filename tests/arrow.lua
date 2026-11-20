@@ -6,6 +6,31 @@ local function arrowSetup()
 end
 local function delta(a,b) return (b-a+math.pi)%(2*math.pi)-math.pi end
 
+for _,arrowFirst in ipairs({false,true}) do
+ test('arrow stays above gameplay and below open panels when built '..(arrowFirst and 'before' or 'after')..' the main panel',function()
+  local A=arrowSetup();moduleUI(A);A.Client.Position=function() return point(.2) end
+  if arrowFirst then A.Arrow.Build() end
+  assert(A.UI.Build());A.UI.OpenRoutes()
+  A.db.settings.arrowNodeName=true
+  local target=point(.4);target.name='Silverleaf'
+  A.Arrow.Update(point(.2),0,target,distance,{status='running',index=1,total=2})
+  local arrow=A.Arrow.frame
+  -- Even ordinary native panels may use MEDIUM; dialogs sit higher still.
+  WorldMapFrame:SetFrameStrata('MEDIUM')
+  local dialog=CreateFrame('Frame',nil,UIParent);dialog:SetFrameStrata('DIALOG')
+  local strata={BACKGROUND=1,LOW=2,MEDIUM=3,HIGH=4,DIALOG=5,FULLSCREEN=6,FULLSCREEN_DIALOG=7,TOOLTIP=8}
+  assert(arrow:IsShown() and A.UI.frame:IsShown())
+  assert(arrow.nodeName:IsShown() and arrow.progress:IsShown())
+  for _,region in ipairs({arrow,arrow.icon,arrow.shadow,arrow.label,arrow.nodeName,arrow.progress,arrow.stateGlyph,arrow.zoomHint}) do
+   local layer=strata[region:GetFrameStrata()]
+   assert(layer>strata.BACKGROUND,'Guide must remain visible above the gameplay background')
+   for _,panel in ipairs({A.UI.frame,WorldMapFrame,dialog}) do
+    assert(layer<strata[panel:GetFrameStrata()],'Guide must render below '..(panel.name or 'native dialog')..' regardless of frame creation order')
+   end
+  end
+ end)
+end
+
 test('arrow interpolates the shortest angular path at consistent speed across frame rates',function()
  local A=arrowSetup();local smooth=A.Arrow.SmoothAngle;assert(type(smooth)=='function')
  local current=math.rad(179);local target=math.rad(-179)

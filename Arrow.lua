@@ -47,7 +47,8 @@ function R.Build()
  if R.frame or not CreateFrame then return end
  local f=CreateFrame('Frame','GatherlyArrow',UIParent); R.frame=f
  f:SetSize(156,84); f:SetPoint('CENTER',UIParent,'CENTER',0,140); f:SetMovable(true); f:EnableMouse(true); f:RegisterForDrag('LeftButton'); f:SetClampedToScreen(true)
- f:SetFrameStrata('DIALOG')
+ -- Keep the gameplay guide behind normal panels, maps, and dialogs.
+ f:SetFrameStrata('LOW')
  f:SetScript('OnMouseDown',function(self,button) if button=='LeftButton' then self.wasDragged=false end end)
  f:SetScript('OnMouseUp',function(self,button) if button=='LeftButton' and not self.wasDragged and A.UI then A.UI.OpenRoutes() end end)
  f:SetScript('OnDragStart',function(self) self.wasDragged=true; self:StartMoving() end)

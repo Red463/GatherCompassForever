@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve the current route leg, direction and lap progress when terrain guidance recovers from a position gap or resumes. Reconnect safely to the current target instead of choosing a fresh nearest waypoint that can rewind or reverse the route.
+- Render the guide arrow below normal windows and dialogs so it no longer covers the open Gatherly panel.
 - Show linked resource names on the arrow for farming corridors and terrain detours, following the current route direction without changing navigation waypoints.
 - Replace world-map icon and minimap icon/outline size menus with sliders from 4 to 32 in whole-number steps. Show plain values without pixel units and update marker previews immediately.
 - Supply terrain masks for all 55 local maps in Forever build 70959, including its additional zones. Reproduce the final Ashenvale mask byte-for-byte: 50-degree cutoff, isolated one/two-cell restriction cleanup, enclosed-pocket filling, swimming and backtracking allowed. Missing sections remain restricted.

@@ -42,6 +42,36 @@ local function terrainSetup(lines)
  return A,p,d
 end
 
+local function openLoop()
+ local A,p,d=terrainSetup({'11111','11111','11111','11111','11111'})
+ local route={mapID=1,generated=true,loop=true,maxLink=450,points={p(1,1),p(5,1),p(5,5),p(1,5)}}
+ return A,p,d,A.Follower.New(route,p(1,1),d,{arrival=5})
+end
+
+test('automatic terrain recovery keeps the established route direction',function()
+ local A,p,d,f=openLoop();f:Tick(p(1,1),0,false);eq(f.index,2);eq(f.direction,1)
+ f:Tick(nil,1,false);eq(f.status,'suspended')
+ local position={mapID=1,x=.85,y=.05}
+ f:Tick(position,2,false);eq(f.status,'running');eq(f.direction,1);eq(f.index,2)
+ assert(A.Terrain.Segment(position,f:Target()))
+end)
+
+test('terrain recovery does not send the player back to an already passed waypoint',function()
+ local A,p,d,f=openLoop();f:Tick(p(1,1),0,false);f:Tick(p(5,1),1,false)
+ eq(f.index,3);assert(f.lapSeen[2]);local lapCount=f.lapCount
+ f:Tick(nil,2,false);eq(f.status,'suspended')
+ local position={mapID=1,x=.85,y=.15}
+ f:Tick(position,3,false);eq(f.status,'running');eq(f.index,3);eq(f.direction,1);eq(f.lapCount,lapCount)
+ assert(A.Terrain.Segment(position,f:Target()))
+end)
+
+test('terrain resume keeps a manually reversed direction and the current leg',function()
+ local A,p,d,f=openLoop();f:Tick(p(1,1),0,false);f:Reverse();eq(f.direction,-1);f:Pause()
+ local position={mapID=1,x=.95,y=.15}
+ assert(f:Resume(position));eq(f.status,'running');eq(f.direction,-1);eq(f.index,2)
+ assert(A.Terrain.Segment(position,f:Target()))
+end)
+
 test('terrain follower joins and resumes using a safe connector through a ridge pass',function()
  local A,p,d=terrainSetup();local start=p(1,1);local route={mapID=1,points={p(5,1)},loop=false}
  local f=A.Follower.New(route,start,d,{arrival=5})
@@ -175,12 +205,12 @@ test('cancelling a yielded resume preserves the live paused follower and publish
  f.session=session;f.markerFilter=filter
  local connector,position,index,reason=f.connector,f.position,f.index,f.reason;assert(connector)
  local U={Refresh=function() end,Filter=function() return filter end,DisplayRoute=function() return A.follower.route end}
- local actions=A.UIActions.Bind(U);local path,calls=A.Terrain.Path,0
+ local actions=A.UIActions.Bind(U);local path,yielded=A.Terrain.Path,false
  A.Terrain.Path=function(a,b,options)
-  calls=calls+1;if calls==2 then coroutine.yield() end
+  if not yielded then yielded=true;coroutine.yield() end
   return path(a,b,options)
  end
- player=p(1,2);actions.pause();A.PlanningJob.Tick();eq(calls,2)
+ player=p(1,2);actions.pause();A.PlanningJob.Tick();assert(yielded)
  eq(A.follower,f);eq(f.status,'paused');eq(f.connector,connector);eq(f.position,position);eq(f.index,index);eq(f.reason,reason)
  A.PlanningJob.Cancel();A.PlanningJob.Tick()
  eq(A.follower,f);eq(f.connector,connector);eq(f.position,position);eq(f.status,'paused')

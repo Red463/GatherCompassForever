@@ -66,6 +66,13 @@ Automatic recovery uses a smaller search budget and can suspend until the player
 moves nearer or chooses Resume. Missing data, unreachable paths and exhausted
 budgets produce explanations instead of straight-line fallback guidance.
 
+The initial join selects a nearby route entry and direction. Recovery and Resume
+keep that established direction, current leg and lap accounting; they reconnect
+to the current target rather than selecting an earlier nearby waypoint. A failed
+or overly long connection suspends guidance until the player moves nearer.
+The Reverse control still changes direction deliberately, and planned branch
+returns remain part of the route.
+
 The follower checks connectors after skipping, reversing, arrival and movement.
 Old saved paths are expanded into a terrain-safe copy before use; saved data is
 not rewritten. Both line views retain terrain bends. Heat is visual paint around

@@ -3,6 +3,21 @@ local C={}; A.Client=C
 local S=A.Store
 function C.Read(v) if issecretvalue and issecretvalue(v) then return nil end; return v end
 function C.Now() return GetTime and GetTime() or 0 end
+function C.Timestamp()
+ local query=GetServerTime or time
+ if type(query)=='function' then local ok,n=pcall(query);if ok and S.Number(n) and n>=0 then return math.floor(n) end end
+ return 0
+end
+function C.Character()
+ local key,name,realm
+ if type(UnitGUID)=='function' then local ok,value=pcall(UnitGUID,'player');if ok then value=C.Read(value);if type(value)=='string' and value:match('^Player%-') then key=value end end end
+ if type(UnitFullName)=='function' then local ok,n,r=pcall(UnitFullName,'player');if ok then name=C.Read(n);realm=C.Read(r) end end
+ if (type(realm)~='string' or realm=='') and type(GetRealmName)=='function' then local ok,r=pcall(GetRealmName);if ok then realm=C.Read(r) end end
+ if type(name)~='string' or name=='' then name=nil end
+ if type(realm)~='string' or realm=='' then realm=nil end
+ key=key or name and realm and (realm..':'..name)
+ if key then return {key=key,name=name,realm=realm} end
+end
 function C.HBD() return LibStub and LibStub('HereBeDragons-2.0',true) end
 function C.Position()
  if not C_Map or not C_Map.GetBestMapForUnit or not C_Map.GetPlayerMapPosition then return nil,'map-api-unavailable' end
@@ -131,7 +146,9 @@ function C.LootEvidence()
      local objectID=tonumber(guid:match('^GameObject%-%d+%-%d+%-%d+%-%d+%-(%d+)%-'))
      local itemName=link:match('%[(.-)%]')
      if not itemName and C_Item and C_Item.GetItemNameByID then local good,name=pcall(C_Item.GetItemNameByID,itemID); if good then itemName=C.Read(name) end end
-     result[#result+1]={sourceGUID=guid,objectID=objectID,itemID=itemID,itemName=itemName}
+     local quantity=C.Read(sources[i+1])
+     result[#result+1]={sourceGUID=guid,objectID=objectID,itemID=itemID,itemName=itemName,itemLink=link,slot=slot,
+      quantity=S.Number(quantity) and quantity>=1 and quantity%1==0 and quantity or nil}
      sourcesSeen[guid]=true
     else ambiguous=true end
    end

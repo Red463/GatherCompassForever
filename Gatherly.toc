@@ -23,6 +23,7 @@ ResourceLibrary.lua
 DifficultyProbe.lua
 Gathering.lua
 SessionHistory.lua
+SessionLoot.lua
 Imports.lua
 Editor.lua
 Recorder.lua

@@ -6,6 +6,16 @@ test('client rejects secret or unavailable map coordinates',function()
  C_Map=nil; eq(A.Client.Position(),nil); eq(A.Client.Probe().position,false)
 end)
 
+test('session character identity uses player identity and realm without inventing a shared fallback',function()
+ local A={};module('Store',A);module('Client',A)
+ local oldGUID,oldName,oldRealm=UnitGUID,UnitFullName,GetRealmName
+ UnitGUID=function() return 'Player-1-A' end;UnitFullName=function() return 'Tom','Realm' end
+ local c=A.Client.Character();eq(c.key,'Player-1-A');eq(c.name,'Tom');eq(c.realm,'Realm')
+ UnitGUID=nil;eq(A.Client.Character().key,'Realm:Tom')
+ UnitFullName=nil;GetRealmName=nil;eq(A.Client.Character(),nil)
+ UnitGUID,UnitFullName,GetRealmName=oldGUID,oldName,oldRealm
+end)
+
 test('corridor range uses actual zoomed-out minimap radius without changing zoom',function()
  local A={};module('Store',A);module('Client',A)
  local oldMap,oldAPI=Minimap,C_Minimap;local zoom=0

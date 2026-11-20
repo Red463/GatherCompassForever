@@ -14,6 +14,9 @@ function A.UIActions.Bind(U)
   if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
  end
  local function clearArrow() if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end end
+ local function beginSession(f)
+  if f and A.sessions then A.sessions:Begin(f.route,A.Client.Timestamp()) end
+ end
  local function guardFollower(f)
   if not f or not A.Terrain or f.status=='complete' or f.status=='stopped' then return end
   local p=A.Client.Position();f.position=A.Store.Copy(p)
@@ -50,6 +53,7 @@ function A.UIActions.Bind(U)
    if not plan then say(reason);return nil end
    guardFollower(replacement)
    A.plan=plan;A.follower=replacement;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
+   beginSession(replacement)
    if A.Map and A.Map.SetEditor then A.Map.SetEditor(nil) end
    U.tab='routes';U.compact=false
    if startNow then U.frame:Hide() else U.frame:Show() end
@@ -120,6 +124,7 @@ function A.UIActions.Bind(U)
    guardFollower(replacement)
    if A.plan and A.plan.route==r then replacement.session=A.plan;A.plan.review=false end
    A.follower=replacement;A.mapPreviewRoute=nil;refreshMap();U.frame:Hide()
+   beginSession(replacement)
    say(replacement.reason or 'Following a terrain-safe farming route.')
   end)
  end
@@ -155,10 +160,12 @@ function A.UIActions.Bind(U)
  function actions.stop()
   if A.PlanningJob and A.PlanningJob.Cancel then A.PlanningJob.Cancel() end
   if A.follower then A.follower:Stop(); A.follower=nil end
+  local saved=A.sessions and A.sessions:Stop(A.Client.Timestamp())
   if A.plan then A.plan.review=false end
   if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end
   if A.Map then A.Map.Refresh(A.db,U.DisplayRoute(),nil) end
   U.Refresh()
+  if saved and U.OpenHistory then U.OpenHistory(saved.id) end
  end
  function actions.arrival()
   local value=(tonumber(A.db.settings.arrival) or 15)+5;actions.arrivalValue(nil,value>40 and 5 or value)

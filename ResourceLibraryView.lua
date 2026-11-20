@@ -175,6 +175,7 @@ function V.New(parent,U)
    if A.Terrain and not A.Terrain.Segment(currentPosition,follower:Target()) then follower.status='suspended';follower.reason='Position changed while planning. Resume to find a safe connection.' end
    if A.plan then A.plan.review=false end
    A.follower=follower
+   if A.sessions then A.sessions:Begin(follower.route,A.Client.Timestamp()) end
    A.mapPreviewRoute=nil;if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
    U.frame:Hide();message(follower.reason or 'Guiding to a known '..item.name..' location.')
   end

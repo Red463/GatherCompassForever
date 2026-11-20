@@ -55,14 +55,22 @@ function A.Import()
  end)
  A.status='Import queued for all available zones.'; A.UI.Refresh()
 end
+local function setupSessions()
+ if not A.sessions and A.SessionHistory and A.db then
+  A.sessions=A.SessionHistory.New(A.db,A.Client.Character())
+  if A.sessions and A.SessionLoot then A.sessionLoot=A.SessionLoot.New(A.sessions) end
+ end
+end
 function A.Initialize()
- if A.initialized then A.MinimapButton.Build();return true end
+ if A.initialized then setupSessions();A.MinimapButton.Build();return true end
  if A.uiError then return nil,A.uiError end
  if not A.dataReady then
   A.Store.distance=A.Client.Distance
   A.db,A.writable,A.storageReason=A.Store.Open(GatherlyDB)
   if A.writable then GatherlyDB=A.db end
+  setupSessions()
   A.detector=A.Gathering.New(function(o)
+   if A.sessionLoot then A.sessionLoot:Gather(o) end
    o.time=time and time() or 0
    local n,created=A.Store.Observe(A.db,o)
    if n then
@@ -140,6 +148,7 @@ function A.OnEvent(_,event,...)
   if A.Client.Read(unit)=='player' then
    local attempt=A.Client.Attempt(target,guid,id)
    if attempt then
+    local session=A.sessions and A.sessions:Active();attempt.sessionID=session and session.id
     local f=A.follower
     if f and f.status~='complete' and f.status~='stopped' then attempt.routeRun=f.runID;attempt.routeLap=f.lap end
     A.detector:Sent(attempt)
@@ -152,8 +161,14 @@ function A.OnEvent(_,event,...)
   end
  elseif event=='LOOT_READY' or event=='LOOT_OPENED' then
   local evidence,reason=A.Client.LootEvidence()
+  if A.sessionLoot then A.sessionLoot:Snapshot(evidence,A.Client.Now()) end
   if reason and next(A.detector.pending) then A.detector.reason=reason end
   for _,e in ipairs(evidence) do A.detector:Loot(e,A.Client.Now()) end
+ elseif event=='LOOT_SLOT_CLEARED' then
+  local slot=A.Client.Read(...)
+  if A.sessionLoot and A.Store.Number(slot) then A.sessionLoot:Cleared(slot,A.Client.Now());A.UI.Refresh() end
+ elseif event=='LOOT_CLOSED' then
+  if A.sessionLoot then A.sessionLoot:Closed(A.Client.Now()) end
  elseif event=='SKILL_LINES_CHANGED' then
   A.UI.Refresh();A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.follower)
  elseif event=='PLAYER_LOGOUT' then
@@ -166,6 +181,6 @@ end
 if SlashCmdList then SLASH_GATHERLY1='/gatherly';SlashCmdList.GATHERLY=A.Command end
 if CreateFrame then
  A.frame=CreateFrame('Frame')
- for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_LOGOUT','UNIT_SPELLCAST_SENT','UNIT_SPELLCAST_SUCCEEDED','UNIT_SPELLCAST_FAILED','UNIT_SPELLCAST_INTERRUPTED','LOOT_READY','LOOT_OPENED','SKILL_LINES_CHANGED'}) do A.frame:RegisterEvent(event) end
+ for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_LOGOUT','UNIT_SPELLCAST_SENT','UNIT_SPELLCAST_SUCCEEDED','UNIT_SPELLCAST_FAILED','UNIT_SPELLCAST_INTERRUPTED','LOOT_READY','LOOT_OPENED','LOOT_SLOT_CLEARED','LOOT_CLOSED','SKILL_LINES_CHANGED'}) do A.frame:RegisterEvent(event) end
  A.frame:SetScript('OnEvent',A.OnEvent); A.frame:SetScript('OnUpdate',function(_,elapsed) A.Tick(elapsed) end)
 end

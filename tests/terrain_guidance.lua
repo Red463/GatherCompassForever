@@ -108,6 +108,19 @@ test('40 yard arrival waits for gathering when the nearby waypoint is already in
  f:Tick(moved,2,false);eq(f.index,3)
 end)
 
+for _,kind in ipairs({'gather','travel'}) do
+test('a nearby '..kind..' resource stop advances at the selected radius when its next leg needs a detour',function()
+ local A,p,d=terrainSetup();local start=p(1,3);local node=p(2,4)
+ node.kind=kind;node.nodeKey='kingsblood';node.name=kind=='travel' and 'Farming corridor' or 'Kingsblood';node.mandatory=true
+ local f=A.Follower.New({mapID=1,points={start,node,p(4,4),p(5,5)}},start,d,{arrival=40})
+ f:Tick(start,0,false);eq(f.index,2)
+ local moved=p(1.1,3);assert(d(moved,node)<40);assert(not A.Terrain.Segment(moved,f.route.points[3]))
+ f:Tick(moved,1,true);eq(f.index,2)
+ f:Tick(moved,2,false);eq(f.index,3);eq(f.status,'running')
+ assert(A.Terrain.Segment(moved,f:Target()));eq(next(f.collected),nil)
+end)
+end
+
 test('terrain skip reverse and deviations keep the next target reachable by a safe segment',function()
  local A,p,d=terrainSetup();local start=p(1,1)
  local f=A.Follower.New({mapID=1,points={p(5,1),p(5,5)},loop=true},start,d,{arrival=5})

@@ -285,9 +285,11 @@ function A.Follower.New(route,start,distance,options)
   if gathering then return end
   if self.arrivedAt and not self.armed then return end
   if d<=self.arrival then
-   -- Arrival circles may overlap a ridge. Keep the current bend until the
-   -- player's actual position has a permitted segment to the following leg.
-   local following=terrain and nextPoint(self)
+   -- Resource stops use the selected radius. Advancing builds a safe connector
+   -- to the next leg if needed; visibility of that leg must not hold the node.
+   -- Travel bends still wait until the following segment can be followed.
+   local resourceStop=not self.connector and (p.nodeKey or p.kind=='gather')
+   local following=terrain and not resourceStop and nextPoint(self)
    if following and not outsideMask(self,position) and not terrain.Segment(position,following) then return end
    self:Advance(now,position)
   end

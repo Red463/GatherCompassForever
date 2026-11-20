@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Apply the selected arrival radius to resource stops even when the following leg needs a terrain detour. Build a permitted connector after advancing instead of holding the resource step until that leg is directly visible; retain corner protection for travel bends.
 - Keep guidance active when the player's readable position enters a blocked terrain-mask cell. Preserve the current waypoint and direction, allow arrival/Skip, and resume or recover without requiring the player to leave that cell. Route generation still enforces the supplied masks.
 - Speed terrain searches with bounded decoded-row caching, precomputed movement costs and a stronger grid-distance heuristic. Retain a local planning graph's path results and proven unreachable pairs for reuse; never cache exhausted search budgets, and invalidate results when masks or dimensions change.
 - Use the full soft planning time budget when the profiling clock advances, keeping the checkpoint-count fallback for missing/frozen clocks. Add an end-to-end routing benchmark with cold, repeated and moved-start runs.

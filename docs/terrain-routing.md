@@ -80,6 +80,12 @@ arrival and Skip remain available. Pause/Resume and position recovery also work
 from blocked cells. When starting there, the nearest planned waypoint is selected
 by direct distance. No blocked endpoint is passed to the terrain pathfinder.
 Once back on permitted terrain, normal connector and corner checks apply again.
+Resource stops advance within the selected arrival radius after gathering ends
+and the overlapping-stop movement guard is satisfied. A blocked direct line to
+the following leg does not delay that resource step: the follower can build a
+permitted connector after advancing. Travel bends still require a clear following
+segment before they can be passed early, so they may need a closer approach than
+the selected radius.
 Unavailable coordinates, another zone and overly long connections can still
 suspend guidance.
 

@@ -3,7 +3,7 @@
 ## Notes: Herb and ore locations, resource codex and farming route guidance. /gatherly
 ## Author: Tom
 ## X-License: MIT
-## Version: 1.1.0
+## Version: 1.1.1
 ## IconTexture: Interface\AddOns\Gatherly\Media\Icon
 ## SavedVariables: GatherlyDB
 ## OptionalDeps: GatherMate2, EnhanceQoL, Auctionator

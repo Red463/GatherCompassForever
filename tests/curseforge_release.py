@@ -25,5 +25,6 @@ assert 'in-game screenshots' in description and 'v0.18.6' in description and '16
 for image in re.findall(r'https://raw.githubusercontent.com/Red463/Gatherly/(?:v[0-9.]+|main)/([^\s)]+)', description):
     assert (root / image).is_file(), image
 changes = (dist / data['changelog']).read_text(encoding='utf-8')
-assert changes.startswith(f'## Gatherly {version}\n') and 'Mastercraft' in changes and '## 0.' not in changes
+assert changes.startswith(f'## Gatherly {version}\n') and re.search(r'^- \S', changes, re.M)
+assert not re.search(r'^## \d+\.', changes, re.M), 'Upload changelog includes an older release'
 print(f'CurseForge kit: version, client flavour, Release type, MIT, {w}x{h} original icon and description/changelog verified')

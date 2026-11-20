@@ -1,5 +1,5 @@
 local addonName, A = ...
-A.version=A.Skin and A.Skin.AddonVersion('1.1.0') or '1.1.0'
+A.version=A.Skin and A.Skin.AddonVersion('1.1.1') or '1.1.1'
 function A.Print(text)
  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage('|cff65dbc1Gatherly:|r '..tostring(text)) end
 end

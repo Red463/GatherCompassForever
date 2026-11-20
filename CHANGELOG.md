@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add character-specific route-session history and automatically open its summary on Stop. Keep one session from route Start until explicit Stop, including detours, pauses, laps, replacement routes and reloads; keep Stop accessible without a follower.
+- Count actual received item quantities from confirmed gathering loot, including bonus items and repeated mining taps, while avoiding duplicate notifications, uncollected loot and unrelated sources. Show successful gathering actions separately from item totals.
+- Optionally snapshot Auctionator's public item prices at Stop, showing estimated gross auction value and unpriced items. Omit valuation when Auctionator is absent; saved reports retain their original price snapshot.
 - Name the world-map icon, minimap icon and outline opacity sliders explicitly so their percentage values are clear.
 - Apply the selected arrival radius to resource stops even when the following leg needs a terrain detour. Build a permitted connector after advancing instead of holding the resource step until that leg is directly visible; retain corner protection for travel bends.
 - Keep guidance active when the player's readable position enters a blocked terrain-mask cell. Preserve the current waypoint and direction, allow arrival/Skip, and resume or recover without requiring the player to leave that cell. Route generation still enforces the supplied masks.

@@ -69,7 +69,7 @@ function U.DisplayRoute()
  if A.follower and A.follower.status~='complete' and A.follower.status~='stopped' then return A.follower.route end
  return A.plan and A.plan.review and A.plan.route or nil
 end
-function U.SetTab(tab) if U.routeSketch then U.routeSketch.picker:Close() end;if tab=='atlas' or tab=='resources' then tab='codex' end;if tab=='welcome' or tab=='routes' or tab=='codex' or tab=='nodes' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
+function U.SetTab(tab) if U.routeSketch then U.routeSketch.picker:Close() end;if tab=='atlas' or tab=='resources' then tab='codex' end;if tab=='welcome' or tab=='routes' or tab=='codex' or tab=='nodes' or tab=='history' or tab=='settings' then S.CloseDropdown();U.tab=tab end; U.Refresh() end
 function U.SetCompact(on) if U.window then U.window:Cancel() end;S.CloseDropdown();U.compact=not not on; U.Refresh(); U.frame:Show() end
 local function buildHeader()
  U.header=place(CreateFrame('Frame',nil,U.frame),U.frame,12,2,936,60)
@@ -82,7 +82,7 @@ local function buildHeader()
  U.controls.close:SetFrameLevel(math.max(U.controls.close:GetFrameLevel(),U.header:GetFrameLevel()+2))
  S.Hint(U.controls.minimize,'Minimise','Keep only the navigation bar visible.')
  U.nav=place(CreateFrame('Frame',nil,U.frame),U.frame,12,64,936,32);U.nav.topTabs=true;U.nav:SetFrameLevel(U.header:GetFrameLevel()+1);U.tabs={}
- for i,t in ipairs({{'welcome','Welcome',154},{'routes','Routes',154},{'codex','Node Codex',154},{'nodes','Node display',154},{'settings','Preferences',154}}) do
+ for i,t in ipairs({{'welcome','Welcome',130},{'routes','Routes',130},{'codex','Node Codex',130},{'nodes','Node display',130},{'history','History',130},{'settings','Preferences',130}}) do
   local b=S.Tab(U.nav,t[2],t[3],function() U.SetTab(t[1]) end,true)
   place(b,U.nav,8+(i-1)*164,0,t[3],32);U.tabs[t[1]]=b;U.controls['tab'..t[1]]=b
  end
@@ -122,6 +122,7 @@ local function buildWindow()
  U.routeView=A.RouteView.New(U.content,U);U.library=U.routeView.frame;buildPreferences(); buildNodeOptions(); buildFooter()
  U.codexView=A.ResourceLibraryView.New(U.content,U);U.resourceLibraryView=U.codexView
  U.welcomeView=A.WelcomeView.New(U.content,U)
+ U.historyView=A.HistoryView.New(U.content,U)
  if UISpecialFrames then UISpecialFrames[#UISpecialFrames+1]='GatherlyWindow' end
  U.frame:HookScript('OnHide',function() S.CloseDropdown();U.routeSketch.picker:Close() end)
  U.frame:RegisterEvent('DISPLAY_SIZE_CHANGED'); U.frame:RegisterEvent('UI_SCALE_CHANGED'); U.frame:SetScript('OnEvent',function() U.window:Cancel();U.Refresh() end)
@@ -143,8 +144,8 @@ function U.RefreshMode()
  place(U.header,U.frame,12,2,width-24,60);place(U.zone,U.header,68,34,width-160,20)
  place(U.controls.minimize,U.header,width-96,2,25,22)
  place(U.nav,U.frame,12,64,width-24,32)
- local tabWidth=math.min(154,(width-60)/5-10)
- local index=0;for _,id in ipairs({'welcome','routes','codex','nodes','settings'}) do
+ local tabWidth=math.min(154,(width-60)/6-10)
+ local index=0;for _,id in ipairs({'welcome','routes','codex','nodes','history','settings'}) do
   local tab=U.tabs[id];place(tab,U.nav,8+index*(tabWidth+10),0,tabWidth,32)
   tab.label:SetWidth(tabWidth-16);index=index+1
  end
@@ -156,6 +157,7 @@ function U.RefreshMode()
   U.routeView.Layout(width-218,height-210)
   U.codexView.Layout(width-24,height-210);U.nodeDisplayView.Layout(width-24,height-210);U.welcomeView.Layout(width-24,height-210)
   U.preferencesView.Layout(width-24,height-210)
+  U.historyView.Layout(width-24,height-210)
   U.layoutsKey=layoutKey
  end
  show(U.chrome,not compact);show(U.compactBackground,compact);show(U.header,not compact); show(U.nav,not compact); show(U.body,not compact)
@@ -173,13 +175,15 @@ end
 local function refreshSidebar(p) U.filterSidebar.Refresh(p) end
 local function refreshFooter(p)
  local f=A.follower;local active=f and (f.status=='running' or f.status=='paused' or f.status=='suspended')
+ local session=A.sessions and A.sessions:Active()
  local r=active and f.route or A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute]
- U.footerName:SetText(safe(r and r.name or 'Ready to farm'))
+ U.footerName:SetText(safe(r and r.name or session and session.routeName or 'Ready to farm'))
  local detail='Choose materials, then Generate & start or Generate & review.'
  if active then detail=(f.status=='paused' and 'Paused' or f.status=='suspended' and 'Guidance suspended' or 'Following route')..' / '..f.index..' of '..#r.points..(r.loop and (' / Lap '..(f.lap+1)) or '')
+ elseif session then detail='Session in progress / Press Stop to save its summary'
  elseif r then detail='Ready to follow / Join at the nearest route point' end
  U.footerMeta:SetText(detail)
- show(U.controls.start,not active);show(U.controls.pause,active);show(U.controls.skip,active);show(U.controls.stop,active)
+ show(U.controls.start,not active);show(U.controls.pause,active);show(U.controls.skip,active);show(U.controls.stop,active or session~=nil)
  show(U.controls.followReverse,active and not U.compact);show(U.controls.expand,U.compact);show(U.controls.workReturn,false)
  U.controls.pause:SetText(f and f.status=='paused' and 'Resume' or 'Pause')
  U.controls.start:SetEnabled(r~=nil and p~=nil and r.mapID==p.mapID and A.Client.Distance(p,r.points[1])~=nil)
@@ -208,8 +212,10 @@ function U.Refresh()
  show(U.library,U.tab=='routes'); show(U.preferencesViewport,U.tab=='settings'); show(U.nodeOptions,U.tab=='nodes')
  show(U.resourceLibraryView.frame,resource)
  show(U.welcomeView.frame,welcome)
- if not full then refreshSidebar(p) elseif U.tab=='settings' then U.zone:SetText('Preferences  -  Panel and guide options') end
+ show(U.historyView.frame,U.tab=='history')
+ if not full then refreshSidebar(p) elseif U.tab=='settings' then U.zone:SetText('Preferences  -  Panel and guide options') elseif U.tab=='history' then U.zone:SetText('History  -  This character\'s route sessions') end
  if U.tab=='routes' then U.routeView.Refresh() elseif resource then U.resourceLibraryView.Refresh() elseif welcome then U.welcomeView.Refresh(p);A.db.settings.welcomeSeen=true end
+ if U.tab=='history' then U.historyView.Refresh() end
  refreshFooter(p); refreshStatus(p)
  U.nodeDisplayView.Refresh()
  U.preferencesView.Refresh()
@@ -217,3 +223,7 @@ end
 function U.Toggle() local ready,reason=U.Build();if not ready then return nil,reason end;if U.frame:IsShown() then U.frame:Hide() else U.frame:Show(); U.Refresh() end end
 
 function U.OpenRoutes() local ready,reason=U.Build();if not ready then return nil,reason end;U.compact=false; U.tab='routes'; U.frame:Show(); U.Refresh() end
+function U.OpenHistory(id)
+ local ready,reason=U.Build();if not ready then return nil,reason end
+ U.compact=false;U.tab='history';U.historyView.selectedID=id;U.frame:Show();U.Refresh()
+end

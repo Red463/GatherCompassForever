@@ -60,6 +60,7 @@ WelcomeView.lua
 MarkerFiltersView.lua
 NodeDisplayView.lua
 PreferencesView.lua
+HistoryView.lua
 UI.lua
 MinimapButton.lua
 Core.lua

@@ -35,6 +35,10 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   and route sketch, plus minimap heat. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
 - **Remember detour pickups.** Confirmed gathers skip a matching later stop for the
   current lap, then become eligible again next lap. Passing nearby does not count.
+- **Keep route-session history.** Record all gathering from route Start until
+  Stop, including detours and pauses. Stop opens a saved summary with successful
+  gathering actions, received item quantities and optional Auctionator valuation.
+  History shows only the logged-in character's sessions.
 - **Explore Node Codex.** Browse skill-coloured item tiles, compare zones and skill
   requirements, and review a resource route or guide to a nearby known location.
 - **Read crowded maps.** Shared count badges group overlapping icons; hover for a
@@ -59,6 +63,27 @@ Untick **Show route controls** on the **Routes** page to disable it. The arrow a
 route guidance continue normally.
 
 ![In-game compact route controls with Stop, Open panel, Skip and a heatmap colour swatch](docs/images/route-controls.png)
+
+### Route sessions and History
+
+A gathering session begins when a route starts and ends only when you press
+**Stop**. It includes herbs, ore and bonus materials collected on detours, while
+paused and across multiple laps. Replacing guidance keeps the same open session.
+Guidance completing does not end the session. After a reload, the session remains
+open and Stop is still available even though guidance itself is not restored.
+
+Stop opens **History** with that session selected. The summary shows the starting
+route and zone, date, duration, successful gathering actions and received item
+quantities. Opening a loot window alone does not count its items. Several mining
+actions can come from one vein, so gathering actions and item totals are separate.
+Only the logged-in character's sessions appear. Existing sessions from before this
+feature cannot be reconstructed.
+
+With Auctionator installed, Stop saves its available item prices and an
+**Estimated auction value**, before auction fees. Unpriced items are excluded
+from the value and identified as missing prices. Without Auctionator, the value
+section is omitted. Historical summaries retain their saved prices when the
+auction market changes. Recorded sessions are not automatically discarded.
 
 ## Install
 

@@ -68,10 +68,11 @@ function C.Build()
 end
 function C.Update(follower)
  local active=follower and (follower.status=='running' or follower.status=='paused' or follower.status=='suspended')
- if not active or not A.db or A.db.settings.routeControls==false then
+ local session=A.sessions and A.sessions:Active()
+ if not (active or session) or not A.db or A.db.settings.routeControls==false then
   if C.frame then C.frame:Hide() end;return
  end
- local f=C.Build();C.skip:SetEnabled(follower:Target()~=nil)
+ local f=C.Build();C.skip:SetEnabled(active and follower:Target()~=nil or false)
  local choice=A.Resources.HeatColour(A.Resources.Settings(A.db.settings).miniHeatColour)
  C.colour:SetValue(choice.value);C.swatch:SetColorTexture(unpack(choice.swatch or choice.rgb));f:Show()
 end

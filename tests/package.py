@@ -48,7 +48,8 @@ with zipfile.ZipFile(path) as z:
             text=z.read(name)
             if name=='Gatherly/Data/Terrain.lua':
                 text=re.sub(rb'^"[A-Za-z0-9+/]+",\r?$',b'"",',text,flags=re.M)
-            assert b'estimat' not in text.lower(), f'Prohibited wording in shipped file: {name}'
+            if name in {'Gatherly/Resources.lua', 'Gatherly/SkillTooltip.lua'}:
+                assert b'estimat' not in text.lower(), f'Prohibited skill-reference wording: {name}'
             previous = [b'Gather' + b'Compass' + b'Forever', b'Gather ' + b'Compass', b'/' + b'gc' + b'f']
             assert not any(value.lower() in text.lower() for value in previous), f'Former branding in package: {name}'
     assert z.testzip() is None

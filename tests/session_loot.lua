@@ -43,3 +43,8 @@ test('loot window receipt identities remain unique after reloading an open journ
  reloaded:Snapshot({e(1,765,3)},3);reloaded:Gather(o);reloaded:Cleared(1,3.1)
  eq(s.items[765].quantity,5)
 end)
+
+test('confirmed loot still counts when the player leaves the loot window open for a long time',function()
+ local A,h,s,t,e,g=lootSession();t:Snapshot({e(1,765,3)},1);t:Gather(g())
+ t:Cleared(1,90);eq(s.items[765].quantity,3)
+end)

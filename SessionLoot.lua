@@ -3,8 +3,7 @@ local L={};A.SessionLoot=L
 function L.New(journal)
  local tracker={windows={}}
  local function prune(self,now)
-  for i=#self.windows,1,-1 do if now-self.windows[i].at>10 then table.remove(self.windows,i) end end
-  if self.current and now-self.current.at>10 then self.current=nil end
+  for i=#self.windows,1,-1 do if self.windows[i]~=self.current and now-self.windows[i].at>10 then table.remove(self.windows,i) end end
  end
  local function flush(window)
   if not window.cast then return end

@@ -20,8 +20,8 @@ w, h = struct.unpack('>II', icon[16:24])
 assert w == h and w >= 400
 description = (dist / data['description']).read_text(encoding='utf-8')
 assert description == (root / 'docs/curseforge-description.md').read_text(encoding='utf-8')
-assert 'not in-game screenshots' in description and '16001' in description
-for image in re.findall(r'https://raw.githubusercontent.com/Red463/Gatherly/v1\.0\.0/([^\s)]+)', description):
+assert 'in-game screenshots' in description and 'v0.18.6' in description and '16001' in description
+for image in re.findall(r'https://raw.githubusercontent.com/Red463/Gatherly/(?:v1\.0\.0|main)/([^\s)]+)', description):
     assert (root / image).is_file(), image
 changes = (dist / data['changelog']).read_text(encoding='utf-8')
 assert changes.startswith('## Gatherly 1.0.0\n') and 'EQoL' in changes and '## 0.' not in changes

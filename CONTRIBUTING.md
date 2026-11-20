@@ -40,9 +40,11 @@ with `python tools/build_branding.py` only when you intend to update those asset
 
 `python tools/render_ui_preview.py` creates illustrative layouts from the real Lua
 frame tree. The preview scripts currently use Windows system fonts and substitute
-native textures. These previews are not in-game screenshots. Curated README images
-are in `docs/images/`; include a real screenshot separately when reporting a native
-rendering issue.
+native textures. These previews are not in-game screenshots and belong in the
+ignored `docs/previews/` directory. Curated in-game screenshots are in
+`docs/images/`; preserve their original pixels and visible version labels. Generated
+technical diagrams in that directory must stay clearly labelled as illustrations.
+Include a real screenshot when reporting a native rendering issue.
 
 ## Scope and licensing
 

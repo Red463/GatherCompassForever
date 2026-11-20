@@ -41,8 +41,11 @@ minimap callbacks, collapsed containers, dragging, return to the minimap and
 visibility changes. This does not replace a final in-game check with the installed
 EQoL version. Existing Gatherly SavedVariables remain compatible.
 
-The gallery assets are clearly labelled layout previews. Add actual in-game
-captures separately when available; do not describe the previews as screenshots.
+The interface gallery uses supplied in-game screenshots captured on v0.18.6.
+Keep the original version labels and settings visible; they may differ from the
+current release. Coverage, route-order and minimap-smoothing diagrams in the README
+remain labelled as generated illustrations. Documentation image links follow
+the main branch; existing release tags and uploaded assets remain unchanged.
 
 References:
 

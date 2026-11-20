@@ -54,7 +54,7 @@ settings are unaffected.
 Untick **Show route controls** on the **Routes** page to disable it. The arrow and
 route guidance continue normally.
 
-![Movable Classic route controls with a minimap heatmap colour menu](docs/images/route-controls.png)
+![In-game compact route controls with Stop, Open panel, Skip and a heatmap colour swatch](docs/images/route-controls.png)
 
 ## Install
 
@@ -122,9 +122,10 @@ without an external data pack.
 
 ## Image examples
 
-These are **layout previews rendered from the addon's Lua UI**, with substitute
-fonts, placeholder resource icons and an illustrative map canvas. They are not
-in-game screenshots; actual Forever textures and rendering can differ.
+The interface examples are **in-game screenshots supplied by the author**, captured
+with Gatherly **v0.18.6** on WoW Forever. The visible version labels and settings are
+unchanged; the current release may differ slightly. The coverage, route-order and
+minimap-smoothing diagrams are generated illustrations, labelled separately below.
 
 ### Welcome and route targets
 
@@ -139,8 +140,6 @@ review sketch. Everyday map markers have separate selections under **Node displa
 Visible nodes**. Both use source/type checkboxes and skill-coloured materials. The route material list supports mouse-wheel
 scrolling and a scrollbar, with icons and skill-coloured names.
 
-![Checkbox filters and a vertically scrolling material list](docs/images/filters.png)
-
 ### Generate and review
 
 Choose materials, then use **Generate & start** or **Generate & review**. Click a node
@@ -151,7 +150,7 @@ map overlays are loaded from the client using attributed MIT metadata. If an art
 is not covered, the sketch falls back to native explored artwork. No OpenMap addon
 is required.
 
-![Large map-backed route review with node selection, removal and undo](docs/images/routes.png)
+![In-game Routes page with herb checkboxes and a line route over Redridge Mountains](docs/images/routes.png)
 
 The generator optimizes the order of the current farming areas to reduce crossings
 and repeated travel, then simplifies the centre path while keeping those locations
@@ -173,13 +172,13 @@ a new generation measures it again. Existing active routes are preserved until
 you replace them. Direct **Guide nearest** in Node Codex still targets that resource
 location and does not require corridor calibration.
 
-![The same corridor in Lines and Heatmap, with a covered spawn outside the painted band](docs/images/corridor-coverage.png)
+![Generated coverage diagram: the same corridor in Lines and Heatmap, with a covered spawn outside the painted band](docs/images/corridor-coverage.png)
 
 Some return trips remain necessary where a farming branch has only one short
 connection. Routes use map distances and cannot identify mountains, bridges or
 walkable roads from spawn coordinates.
 
-![Synthetic comparison with the same 94 farming areas before and after route-order optimization](docs/images/route-order.png)
+![Generated route-order diagram: the same 94 farming areas before and after optimization](docs/images/route-order.png)
 
 ### Overlapping nodes
 
@@ -211,8 +210,6 @@ required stop. Explicit travel waypoints remain, and a collected stop may serve 
 a travel waypoint when bypassing it would exceed the route's connection limit.
 Stored node locations and history are preserved.
 
-![Grouped review markers with an individual-location chooser](docs/images/grouped-nodes.png)
-
 ### Node Codex
 
 Node Codex combines the previous Atlas and Resources pages. Browse the full supported
@@ -232,8 +229,6 @@ actions identify an active route override or the opacity setting when relevant.
 Items without location data remain in the default full catalogue.
 
 ![Node Codex with skill-coloured tiles and browsing filters](docs/images/node-codex.png)
-
-![Codex skill guidance, history, ranked zones and current-zone actions](docs/images/codex-details.png)
 
 ### Heatmap corridor
 
@@ -258,11 +253,9 @@ custom minimap shapes hide heat rather than spilling outside the map. When Forev
 ignores minimap rotation, an addon-owned projection keeps icons, outlines and the
 destination aligned with the heat without modifying the shared pin library.
 
-![Soft density corridor over an illustrative map](docs/images/route-heatmap.png)
+![In-game heatmap route review over Redridge Mountains](docs/images/route-heatmap.png)
 
-![Amber minimap heat on illustrative dark terrain, with simulated tracking dots and player clearance](docs/images/minimap-heat.png)
-
-![Before and after minimap banding correction, rendered from actual Lua paint output over a flat background](docs/images/minimap-smoothing.png)
+![Generated minimap-smoothing diagram: before and after banding correction, rendered from Lua paint output over a flat background](docs/images/minimap-smoothing.png)
 
 ### Guide arrow
 
@@ -276,7 +269,7 @@ The waypoint arrival distance in Preferences applies immediately to the current
 route. Guidance waits during gathering; nearby overlapping stops retain movement
 protection so a stationary player cannot repeatedly advance through a loop.
 
-![Gold guide arrow with distance, optional next resource and waypoint/lap progress](docs/images/guide-arrow.png)
+![In-game gold guide arrow with distance, Farming corridor label and waypoint/lap progress](docs/images/guide-arrow.png)
 
 ## First farming loop
 
@@ -352,10 +345,6 @@ of node-marker visibility. Zero opacity hides that overlay without changing
 coverage, guidance or markers. Existing minimap opacity seeds both new minimap
 values; world values begin at their previous full strength.
 
-![World-map marker controls and preview](docs/images/node-display.png)
-
-![Minimap markers, tracking clearance and route-overlay controls](docs/images/node-display-mini.png)
-
 **Preferences** groups Navigation, Guide arrow and Panel & minimap controls.
 **Advance to next waypoint within** sets a radius: at15 yards, entering a15-yard
 radius advances the guide without requiring a harvest. Larger values advance sooner;
@@ -372,8 +361,6 @@ It follows EQoL Button Sink's position, size and visibility while collected.
 Dragging around the minimap resumes when the collector releases it. The Gatherly
 visibility preference still hides the launcher in either location.
 Use `/gatherly` to reopen the panel when its minimap button is hidden.
-
-![Centred minimap launcher using the supplied compass-and-leaf artwork](docs/images/minimap-launcher.png)
 
 ### Panel size
 
@@ -396,10 +383,6 @@ smaller preset that fits and explains this in Preferences. Only screens too smal
 for Small scale down the whole panel. Your preferred choice returns when space is
 available. These sizes use WoW's UI coordinates, rather than physical monitor pixels.
 Minimising preserves the preset; guide-arrow size remains independent.
-
-![Large fixed panel with a proportional route map and unchanged text size](docs/images/panel-resize.png)
-
-![Fixed size selection in Preferences](docs/images/panel-preferences.png)
 
 ## How to read the data
 

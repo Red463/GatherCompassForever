@@ -24,11 +24,13 @@ Map-marker selections are independent of route targets. An optional route overri
 
 ## Interface examples
 
-These are layout previews rendered from Gatherly's Lua UI, with approximate native textures and fonts. They are not in-game screenshots.
+These in-game screenshots were captured with Gatherly v0.18.6 on WoW Forever. Version labels and settings are unchanged; the current release may differ slightly.
 
-![Route review](https://raw.githubusercontent.com/Red463/Gatherly/v1.0.0/docs/images/routes.png)
+![Line route review in Redridge Mountains](https://raw.githubusercontent.com/Red463/Gatherly/main/docs/images/routes.png)
 
-![Node Codex](https://raw.githubusercontent.com/Red463/Gatherly/v1.0.0/docs/images/node-codex.png)
+![Heatmap route review in Redridge Mountains](https://raw.githubusercontent.com/Red463/Gatherly/main/docs/images/route-heatmap.png)
+
+![Node Codex](https://raw.githubusercontent.com/Red463/Gatherly/main/docs/images/node-codex.png)
 
 ## Getting started
 

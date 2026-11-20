@@ -4,6 +4,12 @@ local floor,abs,sqrt,min,max=math.floor,math.abs,math.sqrt,math.min,math.max
 local alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 local decode={};for i=1,#alphabet do decode[alphabet:byte(i)]=i-1 end
 local powers={32,16,8,4,2,1}
+local expanded={}
+for byte=0,255 do
+ local bits=decode[byte];local chunk={}
+ for i=1,6 do chunk[i]=string.char(bits and floor(bits/powers[i])%2 or 0) end
+ expanded[string.char(byte)]=table.concat(chunk)
+end
 local function number(n)
  return not (issecretvalue and issecretvalue(n)) and type(n)=='number' and n==n and n>-math.huge and n<math.huge
 end
@@ -23,11 +29,24 @@ function T.Zone(mapID)
  if type(z)~='table' or (z.status~='complete' and z.status~='partial') or not number(z.w) or not number(z.h) or z.w<1 or z.h<1 or z.w%1~=0 or z.h%1~=0 or z.w>8192 or z.h>8192 or not number(z.widthYards) or not number(z.heightYards) or z.widthYards<=0 or z.heightYards<=0 or type(z.rows)~='table' then return nil,'unavailable' end
  return z
 end
+local decodedZone,decodedWidth,decodedRows,decodedOrder,decodedBytes=nil,nil,{},{},0
 local function cell(z,x,y)
  if x<0 or y<0 or x>=z.w or y>=z.h then return false end
  local row=z.rows[y+1];if type(row)~='string' then return false end
- local bits=decode[row:byte(floor(x/6)+1)]
- return bits~=nil and floor(bits/powers[x%6+1])%2==1
+ if decodedZone~=z or decodedWidth~=z.w then
+  decodedZone=z;decodedWidth=z.w;decodedRows={};decodedOrder={};decodedBytes=0
+ end
+ local decoded=decodedRows[row]
+ if not decoded then
+  -- Expand a packed row in C once, rather than decoding its bits on every
+  -- search neighbor. Unknown bytes stay prohibited; absent cells stay absent.
+  decoded=row:sub(1,math.ceil(z.w/6)):gsub('.',expanded):sub(1,z.w)
+  while #decodedOrder>=8192 or decodedBytes+#decoded>4194304 do
+   local old=table.remove(decodedOrder,1);decodedBytes=decodedBytes-#decodedRows[old];decodedRows[old]=nil
+  end
+  decodedRows[row]=decoded;decodedOrder[#decodedOrder+1]=row;decodedBytes=decodedBytes+#decoded
+ end
+ return decoded:byte(x+1)==1
 end
 local function coordinates(z,p) return min(z.w-1,floor(p.x*z.w)),min(z.h-1,floor(p.y*z.h)) end
 function T.Allowed(p)
@@ -100,6 +119,17 @@ function T.Approach(p,maxYards)
  return nil,'no approach'
 end
 local cachedZone,cache,order,cachePoints=nil,{},{},0
+local cachedRows,cachedShape={},{}
+local function refreshCache(z)
+ local changed=cachedZone~=z or cachedShape[1]~=z.w or cachedShape[2]~=z.h or cachedShape[3]~=z.widthYards or cachedShape[4]~=z.heightYards
+ if not changed then
+  for i=1,z.h do if cachedRows[i]~=z.rows[i] then changed=true;break end end
+ end
+ if changed then
+  cachedZone=z;cache={};order={};cachePoints=0;cachedRows={};cachedShape={z.w,z.h,z.widthYards,z.heightYards}
+  for i=1,z.h do cachedRows[i]=z.rows[i] end
+ end
+end
 local function cacheKey(a,b)
  local first=string.format('%.17g,%.17g',a.x,a.y);local last=string.format('%.17g,%.17g',b.x,b.y)
  if first>last then return a.mapID..':'..last..':'..first,true end
@@ -108,13 +138,17 @@ end
 local function pathCopy(points,reverse)
  local result={};for i=1,#points do result[i]=point(points[reverse and #points-i+1 or i]) end;return result
 end
-local function remember(key,reverse,points,length)
+local function remember(key,reverse,points,length,reason)
  if cache[key] then return end
- while #order>=128 or cachePoints+#points>8192 do
-  local oldest=table.remove(order,1);cachePoints=cachePoints-#cache[oldest].points;cache[oldest]=nil
+ local count=points and #points or 0
+ -- A 40-area graph has up to 780 pairs. Retain its useful results without
+ -- retaining more geometry: impossible pairs use only a bounded small entry.
+ while #order>=1024 or cachePoints+count>8192 do
+  local oldest=table.remove(order,1);local entry=cache[oldest]
+  cachePoints=cachePoints-(entry.points and #entry.points or 0);cache[oldest]=nil
  end
- order[#order+1]=key;cache[key]={points=pathCopy(points,reverse),length=length}
- cachePoints=cachePoints+#points
+ order[#order+1]=key;cache[key]={points=points and pathCopy(points,reverse) or nil,length=length,reason=reason}
+ cachePoints=cachePoints+count
 end
 -- The heap admits replacement entries; stale entries are discarded on pop.
 local function push(heap,id,f,g)
@@ -139,9 +173,12 @@ function T.Path(a,b,options)
  local z,reason=T.Zone(a.mapID);if not z then return nil,reason end
  if not segment(z,a,a) or not segment(z,b,b) then return nil,'blocked endpoint' end
  if segment(z,a,b) then return {point(a),point(b)},yards(z,a,b) end
- if cachedZone~=z then cachedZone=z;cache={};order={};cachePoints=0 end
+ refreshCache(z)
  local key,reverse=cacheKey(a,b);local hit=cache[key]
- if hit then return pathCopy(hit.points,reverse),hit.length end
+ if hit then
+  if not hit.points then return nil,hit.reason end
+  return pathCopy(hit.points,reverse),hit.length
+ end
  options=type(options)=='table' and options or {}
  local budget=options.maxExpansions or options.budget or 16384
  if not number(budget) or budget<0 then return nil,'invalid budget' end
@@ -149,7 +186,13 @@ function T.Path(a,b,options)
  local yield=type(options.yield)=='function' and options.yield
  local sx,sy=coordinates(z,a);local ex,ey=coordinates(z,b);local start=sy*z.w+sx;local goal=ey*z.w+ex
  local wx,wy=z.widthYards/z.w,z.heightYards/z.h
- local function heuristic(x,y) return sqrt(((ex-x)*wx)^2+((ey-y)*wy)^2) end
+ local diagonal=sqrt(wx*wx+wy*wy)
+ -- Exact unobstructed eight-neighbor distance is admissible on rectangular
+ -- cells and avoids exploring the extra area admitted by Euclidean distance.
+ local function heuristic(x,y)
+  local dx,dy=abs(ex-x),abs(ey-y);local common=min(dx,dy)
+  return common*diagonal+(dx-common)*wx+(dy-common)*wy
+ end
  local heap,scores,previous,closed={},{[start]=0},{},{};push(heap,start,heuristic(sx,sy),0)
  local work=0;local found=false
  while #heap>0 do
@@ -167,13 +210,13 @@ function T.Path(a,b,options)
    for _,offset in ipairs(neighbors) do
     local dx,dy=offset[1],offset[2];local nx,ny=x+dx,y+dy;local nid=ny*z.w+nx
     if not closed[nid] and cell(z,nx,ny) and (dx==0 or dy==0 or (cell(z,x+dx,y) and cell(z,x,y+dy))) then
-     local g=entry.g+sqrt((dx*wx)^2+(dy*wy)^2)
+     local g=entry.g+(dx==0 and wy or dy==0 and wx or diagonal)
      if not scores[nid] or g<scores[nid] then scores[nid]=g;previous[nid]=id;push(heap,nid,g+heuristic(nx,ny),g) end
     end
    end
   end
  end
- if not found then return nil,'unreachable' end
+ if not found then remember(key,reverse,nil,nil,'unreachable');return nil,'unreachable' end
  local backwards={point(b)};local id=goal
  while true do
   backwards[#backwards+1]={mapID=a.mapID,x=(id%z.w+.5)/z.w,y=(floor(id/z.w)+.5)/z.h}

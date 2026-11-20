@@ -22,3 +22,20 @@ test('planning failures clear checkpoint and allow a retry',function()
  A.PlanningJob.Tick();assert(reason:find('bad terrain',1,true));eq(A.Terrain.Checkpoint,nil)
  local done=false;A.PlanJob(function() return true end,function() done=true end);A.PlanningJob.Tick();assert(done)
 end)
+
+test('working profiling clocks use the frame time budget rather than stopping at eight cheap checkpoints',function()
+ local A=setup();local before=debugprofilestop;local time,calls=0,0
+ debugprofilestop=function() time=time+.05;return time end
+ local done=false
+ A.PlanJob(function() for _=1,100 do calls=calls+1;A.Terrain.Checkpoint() end end,function() done=true end)
+ A.PlanningJob.Tick();assert(calls>=60 and calls<=90,'Frame budget stopped after only '..calls..' checkpoints');eq(done,false)
+ A.PlanningJob.Tick();eq(calls,100);eq(done,true)
+ debugprofilestop=before
+end)
+
+test('a profiling clock that stops after advancing still yields bounded work',function()
+ local A=setup();local before=debugprofilestop;local reads,calls=0,0
+ debugprofilestop=function() reads=reads+1;return reads==1 and 0 or 1 end
+ A.PlanJob(function() for _=1,100 do calls=calls+1;A.Terrain.Checkpoint() end end)
+ A.PlanningJob.Tick();assert(calls>0 and calls<100);A.PlanningJob.Cancel();debugprofilestop=before
+end)

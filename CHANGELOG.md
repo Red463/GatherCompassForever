@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Speed terrain searches with bounded decoded-row caching, precomputed movement costs and a stronger grid-distance heuristic. Retain a local planning graph's path results and proven unreachable pairs for reuse; never cache exhausted search budgets, and invalidate results when masks or dimensions change.
+- Use the full soft planning time budget when the profiling clock advances, keeping the checkpoint-count fallback for missing/frozen clocks. Add an end-to-end routing benchmark with cold, repeated and moved-start runs.
 - Add the standard native minimap rim/background around the complete launcher badge, scaling the artwork to collector button sizes.
 - Request EQoL Button Sink discovery after launcher/minimap visibility and addon/login transitions, fixing missed scans that left the custom button attached to the minimap. Preserve collector placement and respect ignored buttons and disabled sinks.
 - Add opt-in `/gatherly trace` diagnostics for arrow dropouts and recovery. Record safe position-read reasons, map/mask and path failures, waypoint/direction and recovery in a bounded local history; `/gatherly trace report` opens a copyable report and stops recording.

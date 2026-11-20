@@ -35,6 +35,9 @@ caches. Keep runtime files in the explicit TOC/packaging manifest.
 Terrain generation and the independent route audit are documented in
 [terrain routing](docs/terrain-routing.md). Use a copied client snapshot for
 extraction; keep raw client data and node reports out of the repository.
+Use `python tools/benchmark_routing.py --nodes path/to/node-report.json` to compare
+planning latency and cache reuse. Its frame-time model and inclusive metrics are
+described in the terrain-routing document.
 
 ## Artwork and examples
 

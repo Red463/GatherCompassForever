@@ -93,7 +93,7 @@ function step() local ok,a,b=coroutine.resume(co);assert(ok,a);return coroutine.
     elapsed = time.perf_counter() - began
     assert route is not None, reason
     lua.execute('A.Terrain.Checkpoint=nil')
-    assert lua.globals().A.Terrain.Validate(route)
+    lua.execute('assert(A.Terrain.Validate(...))', route)
     points = [dict(route['points'][i]) for i in range(1, len(route['points']) + 1)]
     zone = lua.globals().A.Terrain.Zone(args.map)
     segments, cells = audit(points, zone, route['loop'])

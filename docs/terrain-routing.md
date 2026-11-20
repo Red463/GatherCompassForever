@@ -62,6 +62,13 @@ added penalty; necessary branch returns remain.
 Generation, saved-route starts, resource guidance, removal/undo and explicit
 resume use a cooperative planning job. The soft frame budget is four milliseconds,
 with a work cap for frozen timers. This is not a hard real-time guarantee.
+Cheap checkpoints no longer force an early yield while the profiling clock is
+advancing. Decoded mask rows are reused within a four-MiB cache. Local path results
+and completely searched unreachable pairs are retained within 1,024 entries and
+8,192 path vertices for the current zone; search-budget failures are not retained.
+Changes to mask rows or map dimensions invalidate those results. These caches are
+in memory and do not change the supplied overlays. A fresh zone or reload still
+requires searches; repeating a nearby plan can reuse much of that work.
 Automatic recovery uses a smaller search budget and can suspend until the player
 moves nearer or chooses Resume. Missing data, unreachable paths and exhausted
 budgets produce explanations instead of straight-line fallback guidance.
@@ -93,6 +100,19 @@ mandatory bends, coverage, guidance transitions, transactional edits, queued job
 and the production module order. `tools/verify_terrain_routes.py` runs supplied node
 JSON through the actual Lua planner and independently intersects every route
 segment against blocked grid rectangles, without relying on Lua's segment checker.
+
+`python tools/benchmark_routing.py --nodes path/to/node-report.json` benchmarks the
+actual planning job, session and initial follower join. It reports local processing
+time and the number of planning frames at a simulated FPS, rather than sleeping
+between frames. `--repeat 2` compares the first and repeated plan;
+`--move-yards 50` changes the start between runs; `--revision COMMIT` compares an
+older implementation. The per-module metrics are inclusive and overlap; they
+must not be added together. These measurements exclude game rendering and are
+not promises about in-client timing. For example, one local 323-node run at a
+simulated 60 FPS improved from 11.08 to 6.20 seconds initially and from 10.72 to
+0.13 seconds on repetition, with 64 locations included in both versions. A
+different valid detour can change incidental nearby-node coverage; all required
+farming-area approaches and terrain checks remain enforced.
 
 ## Regeneration
 

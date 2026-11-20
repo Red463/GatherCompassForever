@@ -148,3 +148,55 @@ test('terrain long direct validation also checkpoints the generation frame budge
  while coroutine.status(co)~='dead' do local ok,err=coroutine.resume(co);assert(ok,err) end
  assert(calls>=3,'Direct mask traversal must share the generation budget')
 end)
+
+test('terrain rectangular-cell detours fit the bounded search budget',function()
+ local lines={};for y=1,81 do lines[y]=string.rep('1',40)..(y==81 and '1' or '0')..string.rep('1',40) end
+ local T,p=fixture(lines,810,1620)
+ local path,reason=T.Path(p(10,10),p(70,10),{budget=4300})
+ assert(path,'A safe pass should be found within 4300 expansions: '..tostring(reason))
+ assert(T.Validate({points=path}))
+end)
+
+test('terrain row decoding rejects unknown bytes and observes replaced masks',function()
+ local T,p,A=fixture({'1111111','1111111'})
+ local z=A.TerrainData.zones[1]
+ for n=0,255 do
+  z.rows[1]=string.char(n)..'g'
+  local value=alphabet:find(string.char(n),1,true)
+  for x=1,6 do
+   local expected=value~=nil and math.floor((value-1)/2^(6-x))%2==1
+   eq(T.Allowed(p(x,1)),expected)
+  end
+  assert(T.Allowed(p(7,1)))
+ end
+ z.rows[1]='';assert(not T.Allowed(p(1,1)))
+ z.rows[1]='/g';assert(T.Allowed(p(1,1)))
+ z.rows[1]='Ag';assert(not T.Allowed(p(1,1)))
+ local replacement={w=7,h=2,widthYards=70,heightYards=20,rows={'/g','/g'},status='complete'}
+ A.TerrainData.zones[1]=replacement;assert(T.Allowed(p(1,1)))
+end)
+
+test('terrain retains useful detours across a complete local planning graph',function()
+ local lines={};for y=1,5 do lines[y]=string.rep('1',25)..(y==5 and '1' or '0')..string.rep('1',25) end
+ local T,p=fixture(lines);local a,b=p(1,1),p(51,1);assert(T.Path(a,b))
+ for i=1,180 do assert(T.Path(p(2+i%20,1+math.floor(i/20)%4),p(31+math.floor(i/20)%20,1+i%4))) end
+ local path,reason=T.Path(a,b,{budget=0});assert(path,'A retained valid detour should not be searched again: '..tostring(reason))
+ assert(T.Validate({points=path}));path[1].x=.5
+ local again=assert(T.Path(a,b,{budget=0}));near(again[1].x,a.x)
+end)
+
+test('fully searched unreachable pairs are reusable but budget failures are not cached',function()
+ local T,p=fixture({'11011','11011','11011'})
+ local a,b=p(1,1),p(5,1);local path,reason=T.Path(a,b);eq(path,nil);eq(reason,'unreachable')
+ path,reason=T.Path(a,b,{budget=0});eq(path,nil);eq(reason,'unreachable')
+ T,p=fixture({'11011','11011','11111'});a,b=p(1,1),p(5,1)
+ path,reason=T.Path(a,b,{budget=0});eq(path,nil);eq(reason,'budget');assert(T.Path(a,b))
+end)
+
+test('terrain result caches invalidate when an existing zone mask changes',function()
+ local T,p,A=fixture({'11011','11011','11011'})
+ local a,b=p(1,1),p(5,1);local path,reason=T.Path(a,b);eq(path,nil);eq(reason,'unreachable')
+ local z=A.TerrainData.zones[1];z.rows[3]='+'
+ path,reason=T.Path(a,b);assert(path,reason);assert(T.Validate({points=path}))
+ z.rows[3]='2';path,reason=T.Path(a,b);eq(path,nil);eq(reason,'unreachable')
+end)

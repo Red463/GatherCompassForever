@@ -34,3 +34,14 @@ test('production manifest loads supplied terrain and uses it for queued generati
  A.Command('trace');eq(A.GuidanceTrace.frame:IsShown(),false);A.Command('trace off');eq(A.GuidanceTrace.active,false)
  A.UI.actions.stop();eq(A.follower,nil)
 end)
+
+test('Ashenvale reported blocked cell keeps guidance available at the current waypoint',function()
+ local A={};for _,name in ipairs({'Store','Data/Terrain','Terrain','Follower'}) do module(name,A) end
+ local function p(x,y) return {mapID=1440,x=x,y=y} end
+ local function d(a,b) if not a or not b or a.mapID~=b.mapID then return end;return math.sqrt(((a.x-b.x)*5766.6664)^2+((a.y-b.y)*3843.7499)^2) end
+ local blocked,recovered,target=p(.3765,.6128),p(.3779,.6143),p(.391,.635)
+ eq(A.Terrain.Allowed(blocked),false);eq(A.Terrain.Allowed(recovered),true)
+ local f=A.Follower.New({mapID=1440,points={target}},target,d,{arrival=5});f.direction=-1
+ f:Tick(blocked,70,true);eq(f.status,'running');near(f:Target().x,.391);near(f:Target().y,.635);eq(f.direction,-1);eq(f.index,1)
+ f:Tick(recovered,71,true);eq(f.status,'running');assert(f:Target());eq(f.direction,-1);eq(f.index,1)
+end)

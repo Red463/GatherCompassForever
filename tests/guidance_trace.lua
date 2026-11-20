@@ -22,17 +22,25 @@ test('guidance trace is opt-in and captures position dropout plus unchanged reco
  D.Stop();D.Sample(nil,nil,nil,4);eq(#events,count+1)
 end)
 
-test('guidance trace distinguishes blocked mask cells map changes and search budgets',function()
- for _,failure in ipairs({'terrain-cell-blocked','map-changed','path-budget'}) do
+test('guidance trace distinguishes map changes and search budgets',function()
+ for _,failure in ipairs({'map-changed','path-budget'}) do
   local A,D,f,p=traceSetup();D.Start();D.Sample(f,p(.9,.9),nil,0)
   local position
-  if failure=='terrain-cell-blocked' then position=p(.5,.1)
-  elseif failure=='map-changed' then position={mapID=2,x=.9,y=.9}
+  if failure=='map-changed' then position={mapID=2,x=.9,y=.9}
   else position=p(.1,.1);A.Terrain.Path=function() return nil,'budget' end end
   f:Tick(position,1,false);D.Sample(f,position,nil,1)
   local e=A.db.guidanceTrace.events[#A.db.guidanceTrace.events];eq(e.event,'dropout');eq(e.cause,failure)
-  if failure=='terrain-cell-blocked' then eq(e.cellX,2);eq(e.cellY,0);eq(e.allowed,false) end
  end
+end)
+
+test('guidance trace does not report a dropout for a readable blocked mask cell',function()
+ local A,D,f,p=traceSetup();D.Start();D.Sample(f,p(.9,.9),nil,0)
+ local position=p(.5,.1);eq(A.Terrain.Allowed(position),false)
+ f:Tick(position,1,false);D.Sample(f,position,nil,1)
+ eq(f.status,'running');assert(f:Target());eq(#A.db.guidanceTrace.events,1)
+ -- The mask remains useful diagnostic context when guidance really is paused.
+ f:Pause();D.Sample(f,position,nil,2)
+ local e=A.db.guidanceTrace.events[2];eq(e.event,'paused');eq(e.allowed,false);eq(e.cellX,2);eq(e.cellY,0)
 end)
 
 test('guidance history stays bounded and saved reports remain readable after reload',function()

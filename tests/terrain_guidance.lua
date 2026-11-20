@@ -114,8 +114,46 @@ test('terrain skip reverse and deviations keep the next target reachable by a sa
  f:Skip();assert(f:Target());assert(A.Terrain.Segment(start,f:Target()))
  f:Reverse();assert(A.Terrain.Segment(start,f:Target()))
  f:Tick(p(1,2),1,false);assert(A.Terrain.Segment(p(1,2),f:Target()))
- f:Tick(p(3,1),2,false);eq(f.status,'suspended');eq(f:Target(),nil)
+ local target=f:Target();local index,direction=f.index,f.direction
+ f:Tick(p(3,1),2,false);eq(f.status,'running');eq(f:Target(),target);eq(f.index,index);eq(f.direction,direction)
  f:Tick(p(1,1),3,false);eq(f.status,'running');assert(A.Terrain.Segment(p(1,1),f:Target()))
+end)
+
+test('blocked player cells preserve the current terrain connector and route progress',function()
+ local A,p,d=terrainSetup();local start=p(1,1)
+ local f=A.Follower.New({mapID=1,points={p(5,1)}},start,d,{arrival=5})
+ local target,connector=f:Target(),f.connector;assert(connector)
+ for i=1,3 do
+  f:Tick(p(3,i),i,false);eq(f.status,'running');eq(f:Target(),target);eq(f.connector,connector);eq(f.index,1);eq(f.lap,0)
+ end
+end)
+
+test('guidance can resume and recover at a blocked player cell without reversing or rewinding',function()
+ local A,p,d=terrainSetup();local start=p(1,1)
+ local f=A.Follower.New({mapID=1,points={p(5,1)}},start,d,{arrival=5})
+ f:Reverse();f:Pause();assert(f:Resume(p(3,1)));eq(f.status,'running');assert(f:Target());eq(f.direction,-1)
+ f:Tick(nil,1,false);eq(f.status,'suspended');eq(f:Target(),nil)
+ f:Tick(p(3,2),2,false);eq(f.status,'running');assert(f:Target());eq(f.index,1);eq(f.direction,-1);eq(f.lap,0)
+end)
+
+test('guidance can join a planned route while the player is outside the terrain mask',function()
+ local A,p,d=terrainSetup()
+ local f=A.Follower.New({mapID=1,points={p(5,1)}},p(3,1),d,{arrival=5})
+ eq(f.status,'running');assert(f:Target());eq(f:Target().x,.9)
+end)
+
+test('a blocked player cell does not trap guidance inside the waypoint arrival radius',function()
+ local A,p,d=terrainSetup()
+ local f=A.Follower.New({mapID=1,points={p(2,1),p(1,1)}},p(2,1),d,{arrival=25})
+ f:Tick(p(3,1),1,false);eq(f.status,'running');eq(f.index,2);assert(f:Target())
+end)
+
+test('skipping a connector outside the mask discards its old detour',function()
+ local A,p,d=terrainSetup()
+ local f=A.Follower.New({mapID=1,loop=true,points={p(5,1),p(5,2)}},p(1,1),d,{arrival=5})
+ assert(f.connector);local nextIndex=f.index==1 and 2 or 1
+ f:Tick(p(3,1),1,true);eq(f.status,'running');f:Skip()
+ eq(f.status,'running');eq(f.index,nextIndex);eq(f.connector,nil);eq(f:Target(),f.route.points[nextIndex])
 end)
 
 test('terrain follower suspends an unreachable initial connector and max-link uses walking distance',function()

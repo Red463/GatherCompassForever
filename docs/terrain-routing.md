@@ -71,7 +71,17 @@ in memory and do not change the supplied overlays. A fresh zone or reload still
 requires searches; repeating a nearby plan can reuse much of that work.
 Automatic recovery uses a smaller search budget and can suspend until the player
 moves nearer or chooses Resume. Missing data, unreachable paths and exhausted
-budgets produce explanations instead of straight-line fallback guidance.
+budgets produce explanations when searching for permitted connections.
+
+The masks constrain planned paths, not the player's actual movement. A readable
+player position in a blocked cell does not suspend guidance or trigger a new
+join. The follower keeps its current waypoint/connector, direction and lap;
+arrival and Skip remain available. Pause/Resume and position recovery also work
+from blocked cells. When starting there, the nearest planned waypoint is selected
+by direct distance. No blocked endpoint is passed to the terrain pathfinder.
+Once back on permitted terrain, normal connector and corner checks apply again.
+Unavailable coordinates, another zone and overly long connections can still
+suspend guidance.
 
 The initial join selects a nearby route entry and direction. Recovery and Resume
 keep that established direction, current leg and lap accounting; they reconnect

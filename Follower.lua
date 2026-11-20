@@ -31,19 +31,25 @@ function A.Follower.New(route,start,distance,options)
   self.failureCode=code or 'connection-unavailable'
   return nil,self.reason
  end
+ local function outsideMask(self,position)
+  return terrain and A.Store.Position(position) and position.mapID==self.route.mapID and not terrain.Allowed(position)
+ end
  local function connect(self,position,pathOptions)
   if not terrain then return true end
   local target=self.route.points[self.index]
-  self.connector=nil;self.connectorIndex=nil;self.transit=nil
   if not A.Store.Position(position) then return suspend(self,'Player position is unavailable.','position-unavailable') end
   if position.mapID~=self.route.mapID then return suspend(self,'Return to the route zone before resuming guidance.','map-changed') end
   if terrain.Zone and not terrain.Zone(position.mapID) then return suspend(self,'Terrain data is unavailable in the route zone.','terrain-unavailable') end
-  if not target or not terrain.Allowed(position) then return suspend(self,'Move onto permitted terrain in the route zone before resuming guidance.','terrain-cell-blocked') end
+  if not target then return suspend(self,'Route waypoint is unavailable.','connection-unavailable') end
   if self.route.maxLink then
    local d=self.distance(position,target)
    if not A.Store.Number(d) then return suspend(self,'Route distance is unavailable.','distance-unavailable') end
    if d>self.route.maxLink then return suspend(self,'Move nearer the current route leg before resuming guidance.','connection-too-long') end
   end
+  -- The supplied mask plans routes; it does not prohibit the player's actual
+  -- position. Keep the established waypoint/connector while outside the mask.
+  if outsideMask(self,position) then return true end
+  self.connector=nil;self.connectorIndex=nil;self.transit=nil
   if terrain.Segment(position,target) then return true end
   local path,length=terrain.Path(position,target,pathOptions)
   if not path then
@@ -76,21 +82,21 @@ function A.Follower.New(route,start,distance,options)
  end
  function f:Rejoin(position,pathOptions)
   if self.terrainFailure then self.status='suspended';self.reason=self.terrainFailure;return nil,self.reason end
-  if terrain and not terrain.Allowed(position) then return suspend(self,'Move onto permitted terrain in the route zone before resuming guidance.') end
+  local useTerrain=terrain and not outsideMask(self,position)
   local best,index;local candidates={}
   for i,p in ipairs(self.route.points) do
    local lower=self.distance(position,p)
    if A.Store.Number(lower) and lower>=0 then candidates[#candidates+1]={index=i,point=p,lower=lower} end
   end
-  if terrain then table.sort(candidates,function(a,b) if a.lower==b.lower then return a.index<b.index end;return a.lower<b.lower end) end
+  if useTerrain then table.sort(candidates,function(a,b) if a.lower==b.lower then return a.index<b.index end;return a.lower<b.lower end) end
   local budgetFailure=false
   local searches=0
   for _,candidate in ipairs(candidates) do
-   if terrain and (best and candidate.lower>best or self.route.maxLink and candidate.lower>self.route.maxLink) then break end
-   if terrain and pathOptions and pathOptions.searches and searches>=pathOptions.searches then budgetFailure=true;break end
+   if useTerrain and (best and candidate.lower>best or self.route.maxLink and candidate.lower>self.route.maxLink) then break end
+   if useTerrain and pathOptions and pathOptions.searches and searches>=pathOptions.searches then budgetFailure=true;break end
    searches=searches+1
    local i,p=candidate.index,candidate.point
-   local d,reason;if terrain then d,reason=terrain.Distance(position,p,pathOptions);if reason=='budget' then budgetFailure=true end else d=candidate.lower end
+   local d,reason;if useTerrain then d,reason=terrain.Distance(position,p,pathOptions);if reason=='budget' then budgetFailure=true end else d=candidate.lower end
    if A.Store.Number(d) and d>=0 and (not best or d<best) then best=d;index=i end
   end
   if not best or self.route.maxLink and best>self.route.maxLink then
@@ -99,6 +105,7 @@ function A.Follower.New(route,start,distance,options)
    self.reason='Move nearer the farming area, or generate again from your current position.';return nil,self.reason
   end
   self.index=index
+  self.connector=nil;self.connectorIndex=nil
   if self.route.generated and self.route.loop and #self.route.points>2 then
    local nextPoint=self.route.points[self.index%#self.route.points+1]
    local previous=self.route.points[(self.index-2)%#self.route.points+1]
@@ -144,6 +151,7 @@ function A.Follower.New(route,start,distance,options)
  function f:Stop() self.status='stopped'; self.reason=nil end
  local function step(self,now,position)
   local previous=self:Target()
+  self.connector=nil;self.connectorIndex=nil
   self.visited[self.index]=true
   if not self.lapSeen[self.index] then self.lapSeen[self.index]=true;self.lapCount=self.lapCount+1 end
   local nextIndex=self.index+self.direction
@@ -188,7 +196,7 @@ function A.Follower.New(route,start,distance,options)
    self.connectorIndex=self.connectorIndex+1
    if self.connectorIndex>#self.connector then self.connector=nil;self.connectorIndex=nil end
    self.arrivedAt=nil;self.armed=nil
-   if not terrain.Segment(position,self:Target()) then connect(self,position) end
+   if not outsideMask(self,position) and not terrain.Segment(position,self:Target()) then connect(self,position) end
    return
   end
   local previous=self:Target();step(self,now,position);self:SkipCollected(position or previous)
@@ -255,7 +263,7 @@ function A.Follower.New(route,start,distance,options)
     self.lastRecovery=A.Store.Number(now) and now or nil
     if not reconnect(self,position,recovery) then return end;self.status='running';self.reason=nil
    end
-   if not terrain.Segment(position,self:Target()) and not connect(self,position,recovery) then self.lastRecovery=A.Store.Number(now) and now or nil;return end
+   if (outsideMask(self,position) or not terrain.Segment(position,self:Target())) and not connect(self,position,recovery) then self.lastRecovery=A.Store.Number(now) and now or nil;return end
   end
   local p=self:Target(); local d=self.distance(position,p)
   if not d then self.status='suspended'; self.reason='Return to the route zone with readable coordinates.';self.failureCode='distance-unavailable'; return end
@@ -280,7 +288,7 @@ function A.Follower.New(route,start,distance,options)
    -- Arrival circles may overlap a ridge. Keep the current bend until the
    -- player's actual position has a permitted segment to the following leg.
    local following=terrain and nextPoint(self)
-   if following and not terrain.Segment(position,following) then return end
+   if following and not outsideMask(self,position) and not terrain.Segment(position,following) then return end
    self:Advance(now,position)
   end
  end

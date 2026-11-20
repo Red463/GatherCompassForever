@@ -29,7 +29,8 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   remove individual nodes with undo. No save step is needed.
 - **Route around restricted terrain.** Bundled masks cover all 55 local maps in
   Forever build 70959. Travel waypoints lead around restrictions; joining,
-  skipping and Codex guidance use the same masks. Swimming and return trips are allowed.
+  skipping and Codex guidance use the same masks. Stepping outside a mask does not
+  interrupt the arrow; it continues towards the current waypoint. Swimming and return trips are allowed.
 - **Follow the path.** Choose thin lines or a soft heatmap corridor on the world map
   and route sketch, plus minimap heat. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
 - **Remember detour pickups.** Confirmed gathers skip a matching later stop for the

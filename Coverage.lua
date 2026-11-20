@@ -33,17 +33,99 @@ function Index:Insert(e)
  end
  return e
 end
-function Index:Find(p,skipA,skipB)
+function Index:Find(p,skipA,skipB,predicate)
  local last=self.last
- if last and not last.retired and last~=skipA and last~=skipB and within(p,last,self.radius2) then return last end
+ if last and not last.retired and last~=skipA and last~=skipB and within(p,last,self.radius2) and (not predicate or predicate(p,last)) then return last end
  local column=self.grid[math.floor(p.x/self.cell)]
  local bucket=column and column[math.floor(p.y/self.cell)]
  if bucket then
   for _,edge in ipairs(bucket) do
    self.work=self.work+1
-   if not edge.retired and edge~=skipA and edge~=skipB and within(p,edge,self.radius2) then self.last=edge;return edge end
+   if not edge.retired and edge~=skipA and edge~=skipB and within(p,edge,self.radius2) and (not predicate or predicate(p,edge)) then self.last=edge;return edge end
   end
  end
+end
+
+-- Terrain geometry has already been selected by walking costs. Coverage can
+-- add safe return excursions, but must never replace its mandatory bends with
+-- the straight shortcuts used by the legacy corridor simplifier.
+function C.TerrainPlan(route,valid,groups,component,radius)
+ local T=A.Terrain;local width,height=route.width,route.height
+ local spacing=C.HeatSpacing(.65*radius)
+ if spacing<=0 or math.max(width,height)/math.min(radius,spacing,35)>=2^52 then return nil,'Zone or minimap distance data cannot represent this corridor.' end
+ local expanded,reason=T.Route(route)
+ if not expanded then return nil,'Terrain route expansion failed: '..tostring(reason) end
+ local function yards(p) return {x=p.x*width,y=p.y*height,point=p} end
+ local function makeIndex(points)
+  local path={};for i,p in ipairs(points) do path[i]=yards(p) end
+  return C.ClosedIndex(path,radius)
+ end
+ local function safeApproach(p,edge)
+  local t=0
+  if edge.length2>0 then t=math.max(0,math.min(1,((p.x-edge.a.x)*edge.dx+(p.y-edge.a.y)*edge.dy)/edge.length2)) end
+  local projection={mapID=route.mapID,x=(edge.a.x+t*edge.dx)/width,y=(edge.a.y+t*edge.dy)/height}
+  return T.Segment(projection,p.point)
+ end
+ local index=makeIndex(expanded.points)
+ local positions={}
+ for _,e in ipairs(valid) do
+  -- The minimap band promises visibility of the spawn's supplied position;
+  -- its nearby permitted approach is the connector target, not that witness.
+  local p=yards(e.node);p.point=e.point;positions[e]=p
+ end
+ local excursions,required={},{}
+ local workReason='Too many locations to audit this terrain corridor. Narrow the material filters.'
+ for _,i in ipairs(component) do
+  local g=groups[i];local anchor=yards(g.point)
+  for _,e in ipairs(g.members) do
+   required[e]=true
+   if not index:Find(positions[e],nil,nil,safeApproach) then
+    -- Group construction proves this spoke safe; check again at the point
+    -- where it becomes emitted guidance, rather than relying on radius alone.
+    if not T.Segment(g.point,e.point) then return nil,'A farming area has no safe terrain approach.' end
+    local branches=excursions[g.entry.key];if not branches then branches={};excursions[g.entry.key]=branches end
+    branches[#branches+1]=e
+    index:Insert(segment(anchor,yards(e.point)))
+   end
+   if index.work>2000000 then return nil,workReason end
+  end
+  if T.Checkpoint then T.Checkpoint() end
+ end
+ local points={}
+ local function point(p,key)
+  return {mapID=route.mapID,x=p.x,y=p.y,kind='travel',name='Farming corridor',nodeKey=key,mandatory=true}
+ end
+ for _,p in ipairs(route.points) do
+  points[#points+1]=point(p,p.nodeKey)
+  local branches=excursions[p.nodeKey]
+  if branches then
+   for _,e in ipairs(branches) do points[#points+1]=point(e.point,e.key);points[#points+1]=point(p,p.nodeKey) end
+   excursions[p.nodeKey]=nil
+  end
+ end
+ route.points=points
+ expanded,reason=T.Route(route)
+ if not expanded then return nil,'Terrain route expansion failed: '..tostring(reason) end
+ local final=makeIndex(expanded.points)
+ local keys,nodes={},{}
+ for i,e in ipairs(valid) do
+  if final:Find(positions[e],nil,nil,safeApproach) then keys[e.key]=true;nodes[#nodes+1]=e.node
+  elseif required[e] then return nil,'Could not verify a selected terrain approach.' end
+  if final.work>2000000 then return nil,workReason end
+  if i%64==0 and T.Checkpoint then T.Checkpoint() end
+ end
+ -- Heat detail may be coarser than navigation. Increasing sample spacing
+ -- preserves the complete route instead of truncating mandatory waypoints.
+ local total=0
+ for i,p in ipairs(expanded.points) do
+  local b=expanded.points[i%#expanded.points+1]
+  total=total+math.sqrt(((p.x-b.x)*width)^2+((p.y-b.y)*height)^2)
+  p.kind='travel';p.name='Farming corridor';p.materialID=nil;p.resourceKind=nil
+ end
+ expanded.corridor=true;expanded.coverageRadius=radius;expanded.heatRadius=.65*radius
+ expanded.heatSpacing=math.max(spacing,total/math.max(1,C.MAX_HEAT_SAMPLES-#expanded.points))
+ expanded.includedKeys=keys
+ return {route=expanded,nodes=nodes}
 end
 function C.ClosedIndex(points,radius)
  local index=setmetatable({grid={},edges={},radius=radius,radius2=radius*radius,

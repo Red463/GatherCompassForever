@@ -16,6 +16,10 @@ __pycache__/
 /docs/classic-ui-design.md
 /docs/classic-ui-mockup.html
 /docs/difficulty-colour-research.md
+/docs/gathering-skill-source-research.md
+/docs/local-client-datamine-70959.md
+/docs/terrain-api-feasibility.md
+/docs/terrain-routing-feasibility.md
 
 # Reproducible preview output; curated examples live in docs/images
 /docs/previews/

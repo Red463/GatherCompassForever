@@ -4,7 +4,7 @@ import zipfile
 
 root = Path(__file__).resolve().parents[1]
 toc = root / 'Gatherly.toc'
-files = ['Gatherly.toc', 'README.md', 'NOTICE.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md',
+files = ['Gatherly.toc', 'README.md', 'NOTICE.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md', 'docs/terrain-routing.md',
          'Libs/LICENSE.txt', 'Libs/HereBeDragons-LICENSE.txt','Libs/OpenMap-Reveal-LICENSE.txt',
          'Media/Icon.tga','Media/Header.tga','Media/LogoSheet.tga','Media/EmptyEmblem.tga','Media/README.txt','Media/NodeRing.tga','Media/NodeSquare.tga','Media/GuideArrow.tga','Media/HeatBlob.tga','Media/MinimapMasks.tga']
 files += [line.strip() for line in toc.read_text().splitlines()

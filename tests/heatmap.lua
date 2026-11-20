@@ -21,3 +21,23 @@ test('heat palette remains dark red',function()
  A.Heatmap.Draw(pool,UIParent,route,function(p) return p.x*1000,0 end,function(r) return r,r end)
  for _,t in ipairs(pool) do assert(t.vertexColor[1]<.9 and t.vertexColor[2]<.5) end
 end)
+
+test('bounded terrain heat sampling includes the tail of routes with thousands of mandatory bends',function()
+ local A={};module('Heatmap',A)
+ local points={}
+ for i=0,5999 do points[#points+1]={mapID=1,x=i/5999,y=.5+(i%2)*.0001,mandatory=true} end
+ local route={mapID=1,width=12000,height=6000,terrainVersion=1,corridor=true,heatRadius=2,heatSpacing=1.2,points=points}
+ local samples=A.Heatmap.Samples(route)
+ assert(#samples<=4096 and #samples>0)
+ local first,last=false,false
+ for _,p in ipairs(samples) do
+  first=first or p.x<.0001;last=last or p.x>.9999
+  -- Each stamp must remain on the actual bent geometry, rather than a chord
+  -- between sparsely retained navigation points.
+  local at=math.min(5998,math.floor(p.x*5999));local t=p.x*5999-at
+  local expected=.5+((at%2)*(1-t)+((at+1)%2)*t)*.0001
+  near(p.y,expected)
+ end
+ assert(first and last,'Heat budget cropped the beginning or tail of the route')
+ eq(#route.points,6000);assert(points[6000].mandatory)
+end)

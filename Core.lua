@@ -107,6 +107,7 @@ local fast,slow=0,0
 function A.Tick(elapsed)
  if not A.initialized then return end
  fast=fast+elapsed; slow=slow+elapsed
+ local planned=A.PlanningJob and A.PlanningJob.Tick()
  local imported=false
  if A.importJob then
   local ok,err=coroutine.resume(A.importJob)
@@ -122,7 +123,7 @@ function A.Tick(elapsed)
   local f=A.follower
   A.Arrow.Update(p,A.Client.Facing(),f and f:Target() or nil,A.Client.Distance,f and f:Snapshot() or nil)
  end
- if imported or slow>=.5 then
+ if imported or planned or slow>=.5 then
   slow=0; A.UI.Refresh(); A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.editor and nil or A.follower)
  end
 end

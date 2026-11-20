@@ -30,5 +30,9 @@ function A.Planner.Name(nodes,mapID,options)
  return name
 end
 function A.Planner.Generate(nodes,start,distance,options)
+ if A.Terrain then
+  local zone,reason=A.Terrain.Zone(type(start)=='table' and start.mapID)
+  if not zone then return nil,'Terrain routing unavailable: '..tostring(reason) end
+ end
  return A.Corridor.Generate(nodes,start,distance,options)
 end

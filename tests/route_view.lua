@@ -5,6 +5,14 @@ local function setup(count)
  A.UI.Build();A.UI.OpenRoutes();return A,A.UI
 end
 
+test('terrain review renders every mandatory bend on long routes',function()
+ local A,U=setup(0);local route={mapID=1,terrainVersion=1,points={}}
+ for i=1,700 do route.points[i]={mapID=1,x=.2+i*.0005,y=i%2==0 and .5 or .501} end
+ U.routeSketch:Draw(route,nil,{nodes={},style='lines'})
+ local shown=0;for _,line in ipairs(U.routeSketch.lines) do if line:IsShown() then shown=shown+1 end end
+ eq(shown,699)
+end)
+
 test('review group shares dominant resource icons and compact hover without changing node selection',function()
  local A,U=setup(0)
  for i,id in ipairs({401,402,402}) do A.Store.Observe(A.db,{mapID=1,x=.2+i*.0001,y=.5,kind='herb',materialID='gm:herb:'..id,name=id==401 and 'Peacebloom' or 'Silverleaf',source='imported'}) end
@@ -31,7 +39,7 @@ test('failed live edits preserve guidance and resume rejoins locally or keeps a 
  U.actions.selectNode(plan.candidates[1].key);A.Client.Position=function() return point(1) end
  U.actions.removeNode();eq(A.follower,f);eq(plan.route~=nil,true);eq(#plan.undo,0)
  f:Pause();U.actions.pause();eq(f.status,'paused')
- A.Client.Position=function() return point(.4) end;U.actions.pause();eq(f.status,'running');assert(distance(point(.4),f:Target())<=450)
+ A.Client.Position=function() return point(.4) end;U.actions.pause();eq(f.status,'paused');assert(A.follower~=f);eq(A.follower.status,'running');assert(distance(point(.4),A.follower:Target())<=450)
 end)
 
 test('stopped or completed plans retain candidates but clear sketch lines and heat',function()

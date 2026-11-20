@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Supply terrain masks for all 55 local maps in Forever build 70959, including its additional zones. Reproduce the final Ashenvale mask byte-for-byte: 50-degree cutoff, isolated one/two-cell restriction cleanup, enclosed-pocket filling, swimming and backtracking allowed. Missing sections remain restricted.
+- Use bounded pathfinding for generation, coverage, starts, rejoining, resume, reverse, skip, removal/undo and Codex guidance. Preserve required travel bends in the arrow and both line views; reject unavailable connections instead of falling back to straight lines.
+- Spread planning across frames, cancel obsolete work on replacement/Stop/zone change, and publish completed plans transactionally. Keep heat sampling across the whole path without changing navigation geometry.
+- Apply the floating colour selector to minimap route lines as well as the heatmap, using the saved palette choice immediately and across route-style changes.
+
 ## 1.0.1 - 2026-11-20
 
 - Align supported gathering resources with Mastercraft 2.0.7's minimum-relative skill-colour model, including starter-node transitions at 26/51/101.

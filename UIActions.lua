@@ -14,6 +14,16 @@ function A.UIActions.Bind(U)
   if A.Map then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
  end
  local function clearArrow() if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end end
+ local function guardFollower(f)
+  if not f or not A.Terrain or f.status=='complete' or f.status=='stopped' then return end
+  local p=A.Client.Position();f.position=A.Store.Copy(p)
+  if not A.Terrain.Segment(p,f:Target()) then f.status='suspended';f.reason='Position changed while planning. Resume to find a safe connection.' end
+ end
+ local function planJob(work,done)
+  if not A.PlanJob then return done(work()) end
+  say('Planning terrain-safe route...')
+  return A.PlanJob(work,done,function(reason) say('Route planning failed: '..tostring(reason)) end)
+ end
  local function prepareFollower(route,p)
   if not route or not A.Store.Position(p) or route.mapID~=p.mapID or not A.Client.Distance(p,route.points[1]) then return nil,'Generate a route in your current zone with readable position and distance data.' end
   local f=A.Follower.New(route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
@@ -25,19 +35,26 @@ function A.UIActions.Bind(U)
   player=player or A.Client.Position()
   local range,rangeReason=A.Client.CorridorRange()
   if not range then say(rangeReason);return nil end
-  local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,{zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter(),markerFilter=markerFilter or U.Filter(),coverageRadius=range.coverageRadius,viewRadius=range.viewRadius})
-  if not plan then say(reason);return nil end
-  local replacement
-  if startNow then
-   local failure;replacement,failure=prepareFollower(plan.route,A.Client.Position())
-   if not replacement then say(failure);return nil end
-   replacement.session=plan;replacement.markerFilter=A.Selection.Snapshot(plan.options.markerFilter or plan.options.filter);plan.review=false
-  end
-  A.plan=plan;A.follower=replacement;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
-  if A.Map and A.Map.SetEditor then A.Map.SetEditor(nil) end
-  U.tab='routes';U.compact=false
-  if startNow then U.frame:Hide() else U.frame:Show() end
-  refreshMap();say(reason);return true
+  local options={zoneName=U.ZoneName(player and player.mapID),routes=A.db.routes,filter=U.Filter(),markerFilter=markerFilter or U.Filter(),coverageRadius=range.coverageRadius,viewRadius=range.viewRadius}
+  return planJob(function()
+   local plan,reason=A.FarmingSession.New(nodes,player,A.Client.Distance,options)
+   if not plan then return nil,reason end
+   local replacement
+   if startNow then
+    local failure;replacement,failure=prepareFollower(plan.route,A.Client.Position())
+    if not replacement then return nil,failure end
+    replacement.session=plan;replacement.markerFilter=A.Selection.Snapshot(plan.options.markerFilter or plan.options.filter);plan.review=false
+   end
+   return plan,reason,replacement
+  end,function(plan,reason,replacement)
+   if not plan then say(reason);return nil end
+   guardFollower(replacement)
+   A.plan=plan;A.follower=replacement;A.editor=nil;A.mapPreviewRoute=nil;clearArrow()
+   if A.Map and A.Map.SetEditor then A.Map.SetEditor(nil) end
+   U.tab='routes';U.compact=false
+   if startNow then U.frame:Hide() else U.frame:Show() end
+   refreshMap();say(replacement and replacement.reason or reason);return true
+  end)
  end
  function actions.generateStart() return U.ReviewNodes(U.SelectedNodes(),nil,true) end
  function actions.generateReview() return U.ReviewNodes(U.SelectedNodes()) end
@@ -48,6 +65,33 @@ function A.UIActions.Bind(U)
  local function rebuild(method)
   local plan=A.plan;if not plan then return end
   local old=A.follower;local ok,reason;local p=A.Client.Position()
+  if plan.Propose and plan.CommitProposal then
+   local selected=plan.selected
+   return planJob(function()
+    local proposal,failure=plan:Propose(method,selected,p)
+    if not proposal then return nil,nil,failure end
+    local replacement
+    if old and old.session==plan and old.status~='complete' and old.status~='stopped' and proposal.route then
+     replacement=A.Follower.New(proposal.route,p,A.Client.Distance,{arrival=A.db.settings.arrival})
+     if replacement.status~='running' then return nil,nil,replacement.reason end
+     replacement.session=plan;replacement.markerFilter=A.Selection.Snapshot(old.markerFilter or plan.options.markerFilter or plan.options.filter);replacement.lap=old.lap
+     replacement:RestoreGathers(old)
+     if old.status=='paused' then replacement:Pause() end
+    end
+    return proposal,replacement
+   end,function(proposal,replacement,failure)
+    if not proposal then say(failure);return end
+    if A.plan~=plan then return end
+    local committed,message=plan:CommitProposal(proposal)
+    if not committed then say(message);return end
+    if old and old.session==plan and old.status~='complete' and old.status~='stopped' then
+     guardFollower(replacement)
+     A.follower=replacement
+     if not replacement then clearArrow();plan.review=true end
+    elseif not old then plan.review=true end
+    refreshMap();say(replacement and replacement.reason or plan.message)
+   end)
+  end
   if method=='Remove' then ok,reason=plan:Remove(plan.selected,p) else ok,reason=plan:Undo(p) end
   if not ok then say(reason);return end
   if old and old.session==plan and old.status~='complete' and old.status~='stopped' then
@@ -70,20 +114,46 @@ function A.UIActions.Bind(U)
  function actions.reverse() if A.follower then A.follower:Reverse() end;U.Refresh() end
  function actions.start()
   local r=A.plan and A.plan.route or A.selectedRoute and A.db.routes[A.selectedRoute]
-  local replacement,reason=prepareFollower(r,position());if not replacement then say(reason);return end
-  if A.plan and A.plan.route==r then replacement.session=A.plan;A.plan.review=false end
-  A.follower=replacement;A.mapPreviewRoute=nil;refreshMap();U.frame:Hide()
-  say('Following a local farming corridor. Terrain may require a detour.')
+  local p=position()
+  return planJob(function() return prepareFollower(r,p) end,function(replacement,reason)
+   if not replacement then say(reason);return end
+   guardFollower(replacement)
+   if A.plan and A.plan.route==r then replacement.session=A.plan;A.plan.review=false end
+   A.follower=replacement;A.mapPreviewRoute=nil;refreshMap();U.frame:Hide()
+   say(replacement.reason or 'Following a terrain-safe farming route.')
+  end)
  end
  function actions.pause()
   local f=A.follower
   if f then
-   if f.status=='paused' then local ok,reason=f:Resume(A.Client.Position());if not ok then say(reason);return end else f:Pause() end
+   if f.status=='paused' or f.status=='suspended' then
+    local before={index=f.index,direction=f.direction,status=f.status,arrival=f.arrival,lap=f.lap,gathers=#f.gatherRecords}
+    return planJob(function()
+     -- Resume can yield while finding a connector. Keep its mutable state
+     -- private until the complete result is ready to replace this follower.
+     local draft={}
+     for key,value in pairs(f) do
+      if key=='session' or key=='markerFilter' then draft[key]=value else draft[key]=A.Store.Copy(value) end
+     end
+     local ok,reason=draft:Resume(A.Client.Position())
+     if not ok then return nil,reason end
+     return draft
+    end,function(draft,reason)
+     if A.follower~=f then return end
+     if f.index~=before.index or f.direction~=before.direction or f.status~=before.status or f.arrival~=before.arrival or f.lap~=before.lap or #f.gatherRecords~=before.gathers then
+      say('Guidance changed while the connection was being calculated. Try resuming again.');return
+     end
+     if not draft then say(reason);return end
+     guardFollower(draft);A.follower=draft;refreshMap()
+     if draft.reason then say(draft.reason) else U.Refresh() end
+    end)
+   else f:Pause() end
   end
   U.Refresh()
  end
  function actions.skip() if A.follower then A.follower:Skip() end; U.Refresh() end
  function actions.stop()
+  if A.PlanningJob and A.PlanningJob.Cancel then A.PlanningJob.Cancel() end
   if A.follower then A.follower:Stop(); A.follower=nil end
   if A.plan then A.plan.review=false end
   if A.Arrow then A.Arrow.Update(nil,nil,nil,A.Client.Distance) end

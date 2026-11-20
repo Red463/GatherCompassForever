@@ -25,6 +25,9 @@ Gathering.lua
 Imports.lua
 Editor.lua
 Recorder.lua
+Data/Terrain.lua
+Terrain.lua
+PlanningJob.lua
 Coverage.lua
 Corridor.lua
 Planner.lua

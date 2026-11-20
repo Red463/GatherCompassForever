@@ -145,15 +145,44 @@ function V.New(parent,U)
  end
  function view.Guide()
   if blocked() then return end
-  local nodes,player=current();local nearest,best
-  for _,n in ipairs(nodes) do local d=A.Client.Distance(player,n);if A.Store.Number(d) and (not best or d<best) then nearest,best=n,d end end
-  if not nearest then message('Select this resource in Routes with readable current-zone locations.');return end
-  local target={mapID=nearest.mapID,x=nearest.x,y=nearest.y,kind='gather',nodeKey=nearest.key,name=nearest.name or view.item.name}
-  if A.plan then A.plan.review=false end
-  A.follower=A.Follower.New({name='Nearest '..view.item.name,mapID=nearest.mapID,points={target},loop=false},player,A.Client.Distance,{arrival=A.db.settings.arrival})
-  A.follower.markerFilter=A.ResourceLibrary.ActionFilter(A.db,view.item,U.Filter())
-  A.mapPreviewRoute=nil;if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
-  U.frame:Hide();message('Guiding to a known '..view.item.name..' location.')
+  local nodes,player=current()
+  if A.Terrain and not A.Terrain.Allowed(player) then message('Move onto permitted terrain in the current zone before starting guidance.');return end
+  local item=view.item;local markerFilter=A.ResourceLibrary.ActionFilter(A.db,item,U.Filter())
+  local function work()
+   local nearest,best,approach,failure;local ordered={}
+   for _,n in ipairs(nodes) do local d=A.Client.Distance(player,n);if A.Store.Number(d) then ordered[#ordered+1]={node=n,distance=d} end end
+   table.sort(ordered,function(a,b) return a.distance<b.distance end)
+   for _,entry in ipairs(ordered) do
+    if best and entry.distance-15>best then break end
+    local n=entry.node;local destination,d
+    if A.Terrain then
+     destination,failure=A.Terrain.Approach(n,15)
+     if destination then local path;path,d=A.Terrain.Path(player,destination);if not path then failure=d;d=nil end end
+     if failure=='budget' then return nil,'Terrain search reached its budget before the nearest resource could be determined. Move nearer and try again.' end
+    else destination=n;d=entry.distance end
+    if A.Store.Number(d) and (not best or d<best) then nearest,best,approach=n,d,destination end
+   end
+   if not nearest then return nil,failure and ('Terrain-safe resource guidance unavailable: '..tostring(failure)) or 'Select this resource in Routes with readable current-zone locations.' end
+   local target={mapID=approach.mapID,x=approach.x,y=approach.y,kind='gather',nodeKey=nearest.key,name=nearest.name or item.name,
+    resourceKind=nearest.kind,materialID=nearest.materialID,objectID=nearest.objectID,resourcePosition={mapID=nearest.mapID,x=nearest.x,y=nearest.y}}
+   local follower=A.Follower.New({name='Nearest '..item.name,mapID=nearest.mapID,points={target},loop=false},player,A.Client.Distance,{arrival=A.db.settings.arrival})
+   if follower.status~='running' then return nil,follower.reason or 'No terrain-safe connection is available.' end
+   follower.markerFilter=markerFilter;return follower
+  end
+  local function done(follower,reason)
+   if not follower then message(reason);return end
+   local currentPosition=A.Client.Position();follower.position=A.Store.Copy(currentPosition)
+   if A.Terrain and not A.Terrain.Segment(currentPosition,follower:Target()) then follower.status='suspended';follower.reason='Position changed while planning. Resume to find a safe connection.' end
+   if A.plan then A.plan.review=false end
+   A.follower=follower
+   A.mapPreviewRoute=nil;if A.Map and A.Map.SetNodeFocus then A.Map.SetNodeFocus(nil);A.Map.Refresh(A.db,U.DisplayRoute(),A.follower) end
+   U.frame:Hide();message(follower.reason or 'Guiding to a known '..item.name..' location.')
+  end
+  if A.PlanJob then
+   message('Planning terrain-safe resource guidance...')
+   return A.PlanJob(work,done,function(reason) message('Resource guidance failed: '..tostring(reason)) end)
+  end
+  return done(work())
  end
  button(detail,'codexPlan','Review resource route',0,369,206,26,view.Plan)
  button(detail,'codexGuide','Guide nearest',216,369,150,26,view.Guide)

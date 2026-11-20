@@ -34,12 +34,126 @@ local function optimize(trace,edges)
   prune()
  end
 end
+local function terrainGenerate(nodes,start,options)
+ local T=A.Terrain
+ local zone,reason=T.Zone(start.mapID)
+ if not zone then return nil,'Terrain routing unavailable: '..tostring(reason) end
+ local width,height=zone.widthYards,zone.heightYards
+ if not S.Number(width) or not S.Number(height) or width<=0 or height<=0 then return nil,'Terrain zone dimensions are unavailable.' end
+ local function straight(a,b) return math.sqrt(((a.x-b.x)*width)^2+((a.y-b.y)*height)^2) end
+ local maxLink,cell=450,120
+ local valid,total={},0
+ for i,n in ipairs(nodes) do
+  if S.Position(n) and n.mapID==start.mapID then
+   total=total+1
+   local p=T.Approach(n,30)
+   if p and (not options.coverageRadius or straight(n,p)<=options.coverageRadius) then
+    valid[#valid+1]={node=n,point=p,key=nodeKey(n),distance=straight(start,p)}
+   end
+  end
+  if i%64==0 and T.Checkpoint then T.Checkpoint() end
+ end
+ if #valid==0 then return nil,'No selected spawn points have a safe terrain approach.' end
+ table.sort(valid,function(a,b) if a.distance==b.distance then return a.key<b.key end;return a.distance<b.distance end)
+ local first,nearest
+ for i,e in ipairs(valid) do
+  if e.distance>maxLink or nearest and e.distance>nearest then break end
+  local path,d=T.Path(start,e.point)
+  if path then if d<=maxLink and (not nearest or d<nearest) then first,nearest=e,d end
+  elseif d=='budget' then return nil,'Terrain routing exceeded its search budget. Narrow the material filters or move closer.' end
+  if i%64==0 and T.Checkpoint then T.Checkpoint() end
+ end
+ if not first then return nil,'No selected nodes have a safe nearby walking connection.' end
+ -- Cell sharing alone cannot merge opposite sides of a wall. Representatives
+ -- are actual permitted approaches, and every member has a direct safe spoke.
+ local grid,groups={},{}
+ for i,e in ipairs(valid) do
+  local p=e.point;local key=math.floor(p.x*width/cell)..':'..math.floor(p.y*height/cell)
+  local bucket=grid[key];if not bucket then bucket={};grid[key]=bucket end
+  local group
+  for _,g in ipairs(bucket) do if T.Segment(g.point,p) then group=g;break end end
+  if not group then group={point=p,entry=e,members={}};bucket[#bucket+1]=group;groups[#groups+1]=group end
+  group.members[#group.members+1]=e
+  if e==first then group.point=p;group.entry=e;group.first=true end
+  if i%64==0 and T.Checkpoint then T.Checkpoint() end
+ end
+ -- A changed root representative must still see all its group members.
+ -- Rebuild its group if the nearest approach is around a corner from one.
+ local root
+ for _,g in ipairs(groups) do if g.first then root=g;break end end
+ for i=#root.members,1,-1 do local e=root.members[i]
+  if not T.Segment(root.point,e.point) then
+   table.remove(root.members,i);groups[#groups+1]={point=e.point,entry=e,members={e}}
+  end
+ end
+ table.sort(groups,function(a,b)
+  if a==root then return b~=root end;if b==root then return false end
+  local da,db=straight(start,a.point),straight(start,b.point)
+  if da==db then return a.entry.key<b.entry.key end;return da<db
+ end)
+ -- Fine mask searches are much costlier than the old scalar metric. Keep the
+ -- local area budget small; mandatory path geometry has no such point cap.
+ while #groups>40 do table.remove(groups) end
+ local edges={};for i=1,#groups do edges[i]={} end
+ for i=1,#groups do for j=i+1,#groups do
+  if straight(groups[i].point,groups[j].point)<=maxLink then
+   local path,d=T.Path(groups[i].point,groups[j].point)
+   if path then if d<=maxLink then edges[i][j]=d;edges[j][i]=d end
+   elseif d=='budget' then return nil,'Terrain routing exceeded its search budget. Narrow the material filters or move closer.' end
+  end
+ end;if T.Checkpoint then T.Checkpoint() end end
+ local component={[1]=true};local queue={1};local head=1
+ while queue[head] do local i=queue[head];head=head+1
+  for j in pairs(edges[i]) do if not component[j] then component[j]=true;queue[#queue+1]=j end end
+ end
+ local costs,parent,used,tree={[1]=0},{},{},{}
+ for i=1,#groups do tree[i]={} end
+ for _=1,#queue do
+  local best
+  for i in ipairs(groups) do if component[i] and not used[i] and costs[i] and (not best or costs[i]<costs[best] or costs[i]==costs[best] and i<best) then best=i end end
+  if not best then break end;used[best]=true
+  if parent[best] then tree[parent[best]][#tree[parent[best]]+1]=best;tree[best][#tree[best]+1]=parent[best] end
+  for j,d in pairs(edges[best]) do if not used[j] and (not costs[j] or d<costs[j]) then costs[j]=d;parent[j]=best end end
+ end
+ local trace,visited={},{}
+ local function walk(i)
+  visited[i]=true;trace[#trace+1]={index=i}
+  table.sort(tree[i],function(a,b) if edges[i][a]==edges[i][b] then return a<b end;return edges[i][a]<edges[i][b] end)
+  for _,j in ipairs(tree[i]) do if not visited[j] then walk(j);trace[#trace+1]={index=i,travel=true} end end
+ end
+ walk(1);if #trace>1 then table.remove(trace) end
+ optimize(trace,edges)
+ local includedNodes,keys={},{}
+ for _,i in ipairs(queue) do for _,e in ipairs(groups[i].members) do includedNodes[#includedNodes+1]=e.node;keys[e.key]=true end end
+ local points={}
+ for _,step in ipairs(trace) do
+  local g=groups[step.index];local p,n=g.point,g.entry.node
+  points[#points+1]={mapID=start.mapID,x=p.x,y=p.y,kind=step.travel and 'travel' or 'gather',mandatory=true,
+   nodeKey=g.entry.key,name=not step.travel and n.name or nil,density=#g.members,resourceKind=n.kind,materialID=n.materialID,objectID=n.objectID}
+ end
+ local route={mapID=start.mapID,loop=true,generated=true,points=points,maxLink=maxLink,width=width,height=height,
+  includedKeys=keys,includedCount=#includedNodes,omittedCount=total-#includedNodes,areaCount=#queue}
+ if options.coverageRadius then
+  local plan
+  plan,reason=A.Coverage.TerrainPlan(route,valid,groups,queue,options.coverageRadius)
+  if not plan then return nil,reason end
+  route=plan.route;includedNodes=plan.nodes
+  route.includedCount=#includedNodes;route.omittedCount=total-#includedNodes
+  route.minimapViewRadius=options.viewRadius
+ else
+  route,reason=T.Route(route)
+  if not route then return nil,'Terrain route expansion failed: '..tostring(reason) end
+ end
+ route.name=options.name or A.Planner.Name(includedNodes,start.mapID,options)
+ return route,'Local corridor: '..route.includedCount..' of '..total..' selected locations have safe terrain approaches.'
+end
 function C.Generate(nodes,start,distance,options)
  options=options or {}
  local radius=options.coverageRadius
  if radius~=nil and (not S.Number(radius) or radius<=0) then return nil,'A readable corridor coverage radius is required.' end
  if not S.Position(start) then return nil,'A readable player position is required.' end
  if #nodes>20000 then return nil,'Too many candidates in this zone. Narrow the material filters.' end
+ if A.Terrain then return terrainGenerate(nodes,start,options) end
  local maxLink=450;local cell=120;local valid={}
  local function measure(a,b)
   local d=distance(a,b);if S.Number(d) and d>=0 then return d end

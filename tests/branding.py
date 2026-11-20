@@ -22,6 +22,10 @@ for name in sorted(set(filter(None, names))):
     if path.suffix.lower() not in {'.lua', '.md', '.py', '.ps1', '.txt', '.toc', '.yml', '.yaml', '.html', '.svg'}:
         continue
     content = path.read_text(encoding='utf-8-sig')
+    if name == 'Data/Terrain.lua':
+        # Packed mask bytes can coincidentally spell a former slash command.
+        # Keep all comments/metadata in the audit; row integrity is checked separately.
+        content = re.sub(r'^"[A-Za-z0-9+/]+",$', '"",', content, flags=re.M)
     assert not any(value.casefold() in content.casefold() for value in former), f'Former branding in {name}'
     for addon in re.findall(r'Interface[\\/]+AddOns[\\/]+([^\\/\s\'"]+)', content):
         assert addon == 'Gatherly', f'Wrong runtime addon path in {name}: {addon}'

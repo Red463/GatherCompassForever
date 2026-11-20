@@ -28,9 +28,29 @@ function H.Samples(route)
   if occupied[id] then return end;occupied[id]=true
   if #samples<budget then samples[#samples+1]={x=x,y=y,density=density or 1} end
  end
- for _,e in ipairs(edges) do
-  local steps=math.max(1,math.ceil(e.length/spacing))
-  for i=0,steps do local t=i/steps;add(e.a.x+(e.b.x-e.a.x)*t,e.a.y+(e.b.y-e.a.y)*t,(e.a.density or 1)*(1-t)+(e.b.density or 1)*t) end
+ if route.terrainVersion and total>0 then
+  -- Navigation can contain thousands of mandatory bends. Allocate stamps
+  -- over the whole measured path before emitting any; filling the budget
+  -- one edge at a time silently erased the route's tail. Samples interpolate
+  -- only within their actual edge, so coarser paint cannot create shortcuts.
+  local count=math.min(budget,math.max(2,math.ceil(total/spacing)+1))
+  local interval=total/(count-1)
+  samples.coarsened=interval>spacing
+  local at,travelled=0,0
+  for _,e in ipairs(edges) do
+   local finish=travelled+e.length
+   while at<count and at*interval<=finish+1e-9 do
+    local t=e.length>0 and math.max(0,math.min(1,(at*interval-travelled)/e.length)) or 0
+    add(e.a.x+(e.b.x-e.a.x)*t,e.a.y+(e.b.y-e.a.y)*t,(e.a.density or 1)*(1-t)+(e.b.density or 1)*t)
+    at=at+1
+   end
+   travelled=finish
+  end
+ else
+  for _,e in ipairs(edges) do
+   local steps=math.max(1,math.ceil(e.length/spacing))
+   for i=0,steps do local t=i/steps;add(e.a.x+(e.b.x-e.a.x)*t,e.a.y+(e.b.y-e.a.y)*t,(e.a.density or 1)*(1-t)+(e.b.density or 1)*t) end
+  end
  end
  if #edges==0 and points[1] then add(points[1].x,points[1].y,points[1].density) end
  local bins={}

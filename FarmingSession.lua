@@ -27,21 +27,32 @@ function M.New(nodes,position,distance,options)
   return route,message
  end
  local function available(p) return A.Store.Position(p) and p.mapID==self.mapID end
- function self:Remove(key,p)
+ function self:Propose(method,key,p)
   if not available(p) then return nil,'Return to the route zone with readable coordinates before changing nodes.' end
-  if self.excluded[key] then return nil,'That node is already removed.' end
-  local found=false;for _,n in ipairs(self.candidates) do if M.Key(n)==key then found=true;break end end
-  if not found then return nil,'Select a node on the current route map.' end
-  local excluded=A.Store.Copy(self.excluded);excluded[key]=true
+  local revision=self.revision
+  local excluded=A.Store.Copy(self.excluded);local undo=A.Store.Copy(self.undo)
+  if method=='Remove' then
+   if excluded[key] then return nil,'That node is already removed.' end
+   if not key or not self.byKey[key] then return nil,'Select a node on the current route map.' end
+   excluded[key]=true;undo[#undo+1]=key
+  elseif method=='Undo' then
+   key=undo[#undo];if not key then return nil,'No removal to undo.' end
+   excluded[key]=nil;table.remove(undo)
+  else return nil,'Unknown plan change.' end
   local route,message,ok=proposed(excluded,p);if not ok then return nil,message end
-  commit(route,message,excluded);self.undo[#self.undo+1]=key;return true
+  return {route=route,message=message,excluded=excluded,undo=undo,baseRevision=revision}
+ end
+ function self:CommitProposal(proposal)
+  if type(proposal)~='table' or proposal.baseRevision~=self.revision then return nil,'The plan changed while this route was being calculated. Try again.' end
+  commit(proposal.route,proposal.message,proposal.excluded);self.undo=proposal.undo;return true
+ end
+ function self:Remove(key,p)
+  local proposal,reason=self:Propose('Remove',key,p);if not proposal then return nil,reason end
+  return self:CommitProposal(proposal)
  end
  function self:Undo(p)
-  if not available(p) then return nil,'Return to the route zone with readable coordinates before changing nodes.' end
-  local key=self.undo[#self.undo];if not key then return nil,'No removal to undo.' end
-  local excluded=A.Store.Copy(self.excluded);excluded[key]=nil
-  local route,message,ok=proposed(excluded,p);if not ok then return nil,message end
-  commit(route,message,excluded);table.remove(self.undo);return true
+  local proposal,reason=self:Propose('Undo',nil,p);if not proposal then return nil,reason end
+  return self:CommitProposal(proposal)
  end
  return self,reason
 end

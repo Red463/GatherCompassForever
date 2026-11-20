@@ -3,6 +3,26 @@ local function setup()
  local nodes={};for i=1,5 do nodes[i]={key='n'..i,mapID=1,x=.1+i*.12,y=.5,kind='herb',materialID='herb',name='Herb'} end
  return A,nodes
 end
+
+test('session proposals do not mutate live state and reject stale commits',function()
+ local A,nodes=setup();local plan=A.FarmingSession.New(nodes,point(.1),distance)
+ local route,revision=plan.route,plan.revision
+ local proposal=assert(plan:Propose('Remove','n1',point(.1)))
+ eq(plan.route,route);eq(plan.revision,revision);eq(plan.excluded.n1,nil);eq(#plan.undo,0)
+ assert(plan:CommitProposal(proposal));eq(plan.excluded.n1,true);eq(#plan.undo,1)
+ eq(plan:CommitProposal(proposal),nil);eq(#plan.undo,1)
+ local undo=assert(plan:Propose('Undo',nil,point(.1)));eq(plan.excluded.n1,true)
+ assert(plan:CommitProposal(undo));eq(plan.excluded.n1,nil);eq(#plan.undo,0)
+end)
+
+test('session proposals retain the revision from before yielding calculations',function()
+ local A,nodes=setup();local plan=A.FarmingSession.New(nodes,point(.1),distance);local route=plan.route
+ local generate=A.Planner.Generate;A.Planner.Generate=function(...) coroutine.yield();return generate(...) end
+ local job=coroutine.create(function() return plan:Propose('Remove','n1',point(.1)) end)
+ assert(coroutine.resume(job));plan.revision=plan.revision+1
+ local ok,proposal=coroutine.resume(job);assert(ok and proposal)
+ eq(plan:CommitProposal(proposal),nil);eq(plan.route,route);eq(plan.excluded.n1,nil)
+end)
 test('farming session snapshots candidates and removes or restores a spawn without changing history',function()
  local A,nodes=setup();local original=nodes[1].x
  local session=A.FarmingSession.New(nodes,point(.1),distance,{filter={source='combined',kind='herb'}});assert(session and session.route)

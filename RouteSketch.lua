@@ -81,7 +81,7 @@ function A.RouteSketch.New(parent)
     used=used+1;local l=self.lines[used];if not l then l=self.canvas:CreateLine(nil,'ARTWORK');self.lines[used]=l end
     l:SetColorTexture(1,.78,.28,.9*lineOpacity);l:SetThickness(1.5);l:SetStartPoint('TOPLEFT',self.canvas,x1,-y1);l:SetEndPoint('TOPLEFT',self.canvas,x2,-y2);l:Show()
    end
-   local stride=math.max(1,math.ceil((#points-1)/255))
+   local stride=route and route.terrainVersion and 1 or math.max(1,math.ceil((#points-1)/255))
    for i=1,#points-1,stride do line(points[i],points[math.min(i+stride,#points)]) end
    if route and route.loop and #points>1 then line(points[#points],points[1]) end
   end

@@ -40,6 +40,29 @@ test('saved minimap heat colour reaches actual map rendering without recolouring
  C_Minimap=nil;GetCVar=nil;GetMinimapShape=nil
 end)
 
+test('minimap route palette recolours every line while preserving opacity world colours and guidance',function()
+ local A,db,s,route,f=setup();A.Map.Refresh(db,route,f)
+ local world=A.Store.Copy(A.Map.worldLines[1].color)
+ local alpha,width=A.Map.miniLines[1].color[4],A.Map.miniLines[1].thickness
+ local target=f:Target()
+ for _,choice in ipairs({{'cyan',.1,.9,1},{'pink',1,.3,.85},{'green',.3,1,.25},{'white',1,1,1},{'yellow',1,.95,.1},{'amber',1,.6,.06}}) do
+  s.miniHeatColour=choice[1];A.Map.Refresh(db,route,f)
+  local count=0
+  for _,stroke in ipairs(A.Map.miniLines) do if stroke:IsShown() then
+   count=count+1;for i=1,3 do near(stroke.color[i],choice[i+1]) end
+  end end
+  assert(count>0);near(A.Map.miniLines[1].color[4],alpha);near(A.Map.miniLines[1].thickness,width)
+  for i=1,4 do near(A.Map.worldLines[1].color[i],world[i]) end
+  eq(f:Target(),target);eq(f.status,'running')
+ end
+ s.miniHeatColour='cyan';db.settings.routeStyle='heatmap';A.Map.Refresh(db,route,f)
+ near(A.Map.miniHeat[1].color[1],.1);near(A.Map.miniHeat[1].color[2],.9)
+ db=A.Store.Open(A.Store.Copy(db));db.settings.routeStyle='lines'
+ A.Resources.Settings(db.settings).miniLineOpacity=.4;A.Map.Refresh(db,route,f)
+ local mini=A.Map.miniLines[1].color;near(mini[1],.1);near(mini[2],.9);near(mini[3],1);near(mini[4],alpha*.4)
+ C_Minimap=nil;GetCVar=nil;GetMinimapShape=nil
+end)
+
 test('corridor paint radius is narrower than coverage and fixed independently of opacity',function()
  local A={};module('Heatmap',A)
  local route={mapID=1,width=1000,height=500,coverageRadius=180,heatRadius=117,corridor=true,points={point(.2),point(.6)}}
@@ -67,4 +90,29 @@ test('unrepresentable heat bins fail within a bounded instruction count',functio
  local ticks=0;debug.sethook(function() ticks=ticks+1;if ticks>100 then error('Heat loop exceeded instruction budget') end end,'',1000)
  local ok,samples=pcall(A.Heatmap.Samples,route);debug.sethook()
  assert(ok,tostring(samples));eq(#samples,0);eq(samples.invalid,true)
+end)
+
+test('terrain map drawing preserves every bend instead of striding across restrictions',function()
+ local A,db,s,route=setup();route.terrainVersion=1;route.loop=false;route.points={}
+ for i=1,700 do route.points[i]={mapID=1,x=.2+i*.0005,y=i%2==0 and .5 or .501} end
+ A.plan={route=route,review=true}
+ A.Map.Refresh(db,route,nil)
+ local count=0
+ for _,stroke in ipairs(A.Map.worldLines) do if stroke:IsShown() then
+  count=count+1
+  local found=false;for i=1,#route.points-1 do if stroke.fromPoint==route.points[i] and stroke.toPoint==route.points[i+1] then found=true;break end end
+  assert(found,'Rendered line skipped a mandatory terrain bend')
+ end end
+ eq(count,699)
+ C_Minimap=nil;GetCVar=nil;GetMinimapShape=nil
+end)
+
+test('map refresh cannot draw an unsafe live connector between follower updates',function()
+ local A,db,s,route,f=setup()
+ A.Terrain={Segment=function() return false end}
+ A.Map.Refresh(db,route,f)
+ for _,stroke in ipairs(A.Map.worldLines) do
+  if stroke:IsShown() then assert(stroke.fromPoint.x~=.1,'Unvalidated live player connector was drawn') end
+ end
+ C_Minimap=nil;GetCVar=nil;GetMinimapShape=nil
 end)

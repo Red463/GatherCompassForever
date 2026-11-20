@@ -487,6 +487,8 @@ function M.Refresh(db,route,follower)
  local facing=A.Client.MinimapFacing()
  -- Editing draws only on the world map; minimap paths require navigation.
  local mini=active and player and player.mapID==route.mapID and w and A.Store.Number(radius) and radius>0 and facing~=nil and Minimap and Minimap:IsShown()
+ local miniChoice=A.Resources.HeatColour(settings.miniHeatColour)
+ local miniTint=miniChoice.rgb or miniChoice.swatch
  local holes={}
  if mini and not heat and settings.routeLines and settings.miniLineOpacity>0 then
   holes[1]={x=0,y=0,r=8} -- Native player arrow.
@@ -516,7 +518,7 @@ function M.Refresh(db,route,follower)
   if snapshot and snapshot.target then local x,y=project(snapshot.target);heatHoles[#heatHoles+1]={x=x,y=y,r=3,feather=4} end
   M.miniHeatWorkspace=M.miniHeatWorkspace or {}
   M.miniHeatField=A.MiniHeat.Field(route,project,mw,mh,shape,heatHoles,settings.miniHeatOpacity,function(r) return r/radius*mw/2,r/radius*mh/2 end,M.miniHeatWorkspace)
-  A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape,A.Resources.HeatColour(settings.miniHeatColour).rgb)
+  A.MiniHeat.Draw(M.miniHeat,M.miniHeatLayer,M.miniHeatField,shape,miniChoice.rgb)
  end
  local wi,mi=0,0
  local zoom=map and map.GetCanvasScale and map:GetCanvasScale() or 1
@@ -531,14 +533,14 @@ function M.Refresh(db,route,follower)
   local stroke=M.worldLines[index];stroke.fromPoint=a;stroke.toPoint=b;stroke.shadow=M.worldShadows[index]
  end
  local function segment(a,b,color)
-  if world and not heat and settings.worldLineOpacity>0 and wi<600 then wi=wi+1;drawWorld(wi,a,b,color) end
+  if world and not heat and settings.worldLineOpacity>0 and (route.terrainVersion or wi<600) then wi=wi+1;drawWorld(wi,a,b,color) end
   if mini and not heat and settings.routeLines and settings.miniLineOpacity>0 and mi<200 then
    local mw,mh=Minimap:GetWidth(),Minimap:GetHeight()
    local x1,y1=miniRaw(a,player,w,h,radius,mw,mh,facing); local x2,y2=miniRaw(b,player,w,h,radius,mw,mh,facing)
    x1,y1,x2,y2=M.Clip(x1,y1,x2,y2,mw,mh)
    if x1 then
     local thickness=color==gold and 1.5 or 1
-    local miniColor={color[1],color[2],color[3],math.min(color[4] or 1,.55)*settings.miniLineOpacity,thickness}
+    local miniColor={miniTint[1],miniTint[2],miniTint[3],math.min(color[4] or 1,.55)*settings.miniLineOpacity,thickness}
     for _,piece in ipairs(M.GapSegments(x1,y1,x2,y2,holes,thickness/2)) do
      if mi>=200 then break end
      mi=mi+1; line(M.miniLines,mi,Minimap,piece[1],piece[2],piece[3],piece[4],miniColor,true)
@@ -546,8 +548,8 @@ function M.Refresh(db,route,follower)
    end
   end
  end
- if snapshot and snapshot.status=='running' and player and player.mapID==route.mapID then segment(player,snapshot.target,gold) end
- local stride=math.max(1,math.ceil(#points/550))
+ if snapshot and snapshot.status=='running' and player and player.mapID==route.mapID and (not A.Terrain or A.Terrain.Segment(player,snapshot.target)) then segment(player,snapshot.target,gold) end
+ local stride=route.terrainVersion and 1 or math.max(1,math.ceil(#points/550))
  for i=1,#points-1,stride do
   local j=math.min(i+stride,#points);local color=snapshot and snapshot.visited[i] and snapshot.visited[j] and done or teal
   if M.editor and route==M.editor.draft and A.editIndex and A.editIndex>i and A.editIndex<j then segment(points[i],points[A.editIndex],color);segment(points[A.editIndex],points[j],color)

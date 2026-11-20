@@ -27,6 +27,9 @@ where resources grow, build farming routes and follow a clear in-game guide arro
   one-time Gatherable (including grey) or Skill-ups material selection.
 - **Generate a local corridor.** Start immediately, or review a large zone map and
   remove individual nodes with undo. No save step is needed.
+- **Route around restricted terrain.** Bundled masks cover all 55 local maps in
+  Forever build 70959. Travel waypoints lead around restrictions; joining,
+  skipping and Codex guidance use the same masks. Swimming and return trips are allowed.
 - **Follow the path.** Choose thin lines or a soft heatmap corridor on the world map
   and route sketch, plus minimap heat. A smooth gold arrow guides the same route. Optionally show the next resource, waypoint progress and lap number.
 - **Remember detour pickups.** Confirmed gathers skip a matching later stop for the
@@ -49,7 +52,7 @@ Starting guidance opens a compact Classic toolbar with **Stop**, **Open panel** 
 It remains available while paused and closes when the route stops or finishes.
 Click the **colour swatch** to choose Amber, Yellow, Cyan, Pink, Green or White for the
 minimap terrain. The colour swatch shows your selection, which applies immediately
-and is remembered. Amber restores the original tint. World-map heat and opacity
+to both Lines and Heatmap and is remembered. Amber is the default colour. World-map colours and opacity
 settings are unaffected.
 Untick **Show route controls** on the **Routes** page to disable it. The arrow and
 route guidance continue normally.
@@ -73,6 +76,14 @@ Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 
 Manual route creation, recording and the saved-route list are no longer exposed.
 Existing saved routes remain in your SavedVariables.
+
+Terrain routing uses the final Ashenvale rules: a 50-degree slope cutoff,
+removal of isolated one- or two-cell blocked patches, and filling enclosed
+walkable pockets. Twelve maps have missing terrain sections; these remain blocked.
+Terrain masks do not describe buildings, bridges, caves or every collision object,
+so routes still need checking in the client. Planning stays local and can omit
+disconnected or distant nodes. No external tool or player-drawn overlay is needed
+to use the addon. See [terrain data and routing](docs/terrain-routing.md).
 
 When updating Gatherly, replace the complete addon folder. **Keep SavedVariables**
 to retain routes, known locations and preferences. The addon is built for Forever's

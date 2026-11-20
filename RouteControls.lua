@@ -63,7 +63,7 @@ function C.Build()
  C.colour:SetPoint('TOPLEFT',f,'TOPLEFT',232,-32);C.colour:SetSize(26,24);C.colour.menuWidth=156
  C.colour.label:Hide();C.colour.caret:Hide()
  C.swatch=C.colour:CreateTexture(nil,'ARTWORK');C.swatch:SetPoint('CENTER',C.colour,'CENTER',0,0);C.swatch:SetSize(14,14)
- S.Hint(C.colour,'Minimap heatmap colour','Choose a colour that stands out against the terrain. Applies immediately to minimap heat only, without restarting guidance. Opacity is set in Node display. Amber restores the original tint.')
+ S.Hint(C.colour,'Minimap route colour','Choose a colour that stands out against the terrain. Applies immediately to minimap Lines and Heatmap, without restarting guidance. Opacity is set in Node display. Amber is the default colour.')
  C.Position();f:Hide();return f
 end
 function C.Update(follower)

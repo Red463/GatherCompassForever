@@ -32,6 +32,10 @@ API behavior. Check relevant changes inside Forever too.
 The ZIP in `dist/` is generated output. Do not commit build ZIPs or dependency
 caches. Keep runtime files in the explicit TOC/packaging manifest.
 
+Terrain generation and the independent route audit are documented in
+[terrain routing](docs/terrain-routing.md). Use a copied client snapshot for
+extraction; keep raw client data and node reports out of the repository.
+
 ## Artwork and examples
 
 Original brand images are in `assets/source/`; their WoW TGA conversions are in

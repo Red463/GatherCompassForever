@@ -4,6 +4,7 @@ test('production manifest loads supplied terrain and uses it for queued generati
  C_Minimap={GetViewRadius=function() return 200 end};GetTime=function() return 0 end;GetPlayerFacing=function() return 0 end
  LibStub=nil;GatherMate2=nil
  for line in io.lines('Gatherly.toc') do
+  line=line:match('^%s*(.-)%s*$')
   if line~='' and line:sub(1,1)~='#' and line:sub(1,5)~='Libs/' then module(line:gsub('%.lua$',''),A) end
  end
  assert(A.Terrain and A.TerrainData and A.PlanningJob)

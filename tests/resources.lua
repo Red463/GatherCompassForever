@@ -68,7 +68,9 @@ test('marker defaults validate saved settings and hide only a nearby minimap ico
  eq(R.Presentation(herb,settings,false,1,{}).icon,true)
  s.hideDistance=0; eq(R.Presentation(herb,settings,true,1,{}).icon,true)
  s.outline='none';s.icon=false;s.iconSize=0/0;s.outlineSize=100000;s.hideDistance=-1
- s=R.Settings(settings); eq(s.icon,true);eq(s.iconSize,14);eq(s.outlineSize,40);eq(s.hideDistance,0)
+ s=R.Settings(settings); eq(s.icon,true);eq(s.iconSize,14);eq(s.outlineSize,32);eq(s.hideDistance,0)
+ s.iconSize=2;s.worldIconSize=7.6;s.outlineSize=9.2
+ s=R.Settings(settings);eq(s.iconSize,4);eq(s.worldIconSize,8);eq(s.outlineSize,9)
 end)
 test('profession reads use stable IDs handle missing APIs and do not retain other characters ranks',function()
  local R=resources().Resources

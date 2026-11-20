@@ -19,8 +19,22 @@ test('Node display provides full-width world and minimap pages without diagnosti
  eq(U.sidebar:IsShown(),false);eq(U.content:GetWidth(),U.frame:GetWidth()-24);eq(V.world:IsShown(),true);eq(V.mini:IsShown(),false);eq(U.controls.inspectNode,nil);eq(U.professionRanks,nil)
  U.controls.displayMini.scripts.OnClick();eq(V.mini:IsShown(),true);eq(V.world:IsShown(),false)
  U.controls.nodeGroupMini.scripts.OnClick();eq(A.Resources.Settings(A.db.settings).groupMini,false)
- U.controls.nodeWorldIconSize:SelectValue(20);eq(A.Resources.Settings(A.db.settings).worldIconSize,20)
+ U.controls.nodeWorldIconSize:SetValue(20);eq(A.Resources.Settings(A.db.settings).worldIconSize,20)
  U.controls.nodeMini.scripts.OnClick();eq(U.controls.nodeIconSize:IsEnabled(),false);eq(U.controls.nodeRouteLine:IsEnabled(),true)
+end)
+
+test('marker size sliders support small whole-number sizes with plain labels and live previews',function()
+ local A,U,V=nodeDisplay()
+ for _,choice in ipairs({{'world','nodeWorldIconSize','worldIconSize','Icon size',7},{'mini','nodeOutlineSize','outlineSize','Outline size',9},{'mini','nodeIconSize','iconSize','Icon size',5}}) do
+  V.SetPage(choice[1]);local control=U.controls[choice[2]]
+  eq(control.kind,'Slider');local lo,hi=control:GetMinMaxValues();eq(lo,4);eq(hi,32)
+  eq(control.lowLabel:GetText(),'4');eq(control.highLabel:GetText(),'32')
+  control:SetValue(choice[5]);eq(A.Resources.Settings(A.db.settings)[choice[3]],choice[5])
+  eq(V.sizeLabels[choice[2]]:GetText(),choice[4]..': '..choice[5])
+ end
+ eq(V.miniOutline:GetWidth(),9);eq(V.miniIcon:GetWidth(),5)
+ local saved=A.Resources.Settings(A.Store.Open(A.Store.Copy(A.db)).settings)
+ eq(saved.worldIconSize,7);eq(saved.outlineSize,9);eq(saved.iconSize,5)
 end)
 test('four route opacity controls persist independent values without changing active navigation',function()
  local A,U,V=nodeDisplay()
@@ -65,14 +79,14 @@ test('only the minimap route master controls availability of minimap route opaci
  local s=A.Resources.Settings(A.db.settings);near(s.miniLineOpacity,.15);eq(s.miniHeatOpacity,0)
  c.nodeRouteLine.scripts.OnClick();eq(c.nodeMiniLineOpacity:IsEnabled(),true);eq(c.nodeMiniHeatOpacity:IsEnabled(),true)
 end)
-test('route opacity sliders and their endpoint labels fit within each fixed panel size',function()
+test('display sliders and their endpoint labels fit within each fixed panel size',function()
  local _,U,V=nodeDisplay()
  for _,preset in ipairs({'small','standard','large'}) do
   U.window:SetPreset(preset)
-  for page,keys in pairs({world={'nodeWorldLineOpacity','nodeWorldHeatOpacity'},mini={'nodeMiniLineOpacity','nodeMiniHeatOpacity'}}) do
+  for page,keys in pairs({world={'nodeWorldIconSize','nodeWorldLineOpacity','nodeWorldHeatOpacity'},mini={'nodeOutlineSize','nodeIconSize','nodeMiniLineOpacity','nodeMiniHeatOpacity'}}) do
    V.SetPage(page)
    for _,key in ipairs(keys) do
-    local slider=assert(U.controls[key],'Missing '..key);local caption=V.opacityLabels[key]
+    local slider=assert(U.controls[key],'Missing '..key);local caption=V.opacityLabels[key] or V.sizeLabels[key]
     local card=slider:GetParent();local cardX,cardY=card.point[4],-card.point[5]-V[page].point[5]
     eq(caption.fontSize,12);eq(slider.lowLabel.fontSize,11);eq(slider.highLabel.fontSize,11)
     eq(U.frame.scale,1);assert(slider:IsVisible())

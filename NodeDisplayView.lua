@@ -1,8 +1,8 @@
 local _,A=...
 local S=A.Skin;local V={};A.NodeDisplayView=V
 function V.New(parent,U)
- local v={page='filters',opacityLabels={}}
- local opacityBindings={}
+ local v={page='filters',opacityLabels={},sizeLabels={}}
+ local opacityBindings,sizeBindings={},{}
  local pageTop,panelHeight,panelGap,bottomPadding=106,330,16,9
  local pageHeight=pageTop+panelHeight+bottomPadding
  local function place(f,p,x,y,w,h) f:SetPoint('TOPLEFT',p,'TOPLEFT',x,-y);f:SetSize(w,h);return f end
@@ -23,6 +23,14 @@ function V.New(parent,U)
   U.controls[key]=place(S.Slider(p,0,100,5,U.actions[key],function(n) return n..'%' end),p,x,y+30,w-12,12)
   opacityBindings[#opacityBindings+1]={key=key,setting=setting,text=text}
  end
+ local function size(p,key,setting,text,x,y,w,inline)
+  v.sizeLabels[key]=label(p,text,x,y,inline and 140 or w,20,12,S.muted)
+  local slider=S.Slider(p,4,32,1,function(_,value)
+   if not U.syncingOptions then U.actions[key](value) end
+  end)
+  U.controls[key]=place(slider,p,x+(inline and 150 or 0),y+(inline and 6 or 30),w-(inline and 162 or 12),12)
+  sizeBindings[#sizeBindings+1]={key=key,setting=setting,text=text}
+ end
  function v.SetPage(page) v.page=page;U.Refresh() end
  for i,page in ipairs({'filters','world','mini'}) do
   local b=place(S.Button(f,page=='filters' and 'Visible nodes' or page=='world' and 'World map' or 'Minimap',function() v.SetPage(page) end,'quiet'),f,(i-1)*164,66,154,26)
@@ -34,7 +42,7 @@ function V.New(parent,U)
  local world=place(S.Panel(v.world),v.world,0,0,438,panelHeight)
  check(world,'nodeWorld','Show node icons',14,14,350)
  check(world,'nodeGroupWorld','Group overlapping icons',14,52,350)
- label(world,'Icon size',18,98,120,26);dropdown(world,'nodeWorldIconSize',sizes({10,12,14,16,18,20,24},' px'),168,98,244)
+ size(world,'nodeWorldIconSize','worldIconSize','Icon size',18,98,394,true)
  opacity(world,'nodeWorldOpacity','worldIconOpacity','World-map icons',18,143,394)
  label(world,'Route guidance',18,216,400,23,16,S.gold)
  opacity(world,'nodeWorldLineOpacity','worldLineOpacity','Line opacity',18,251,184)
@@ -56,8 +64,8 @@ function V.New(parent,U)
  check(mini,'nodeGroupMini','Group overlapping icons',12,40,382)
  label(mini,'Outline',18,76,124,26)
  dropdown(mini,'nodeOutline',{{value='ring',label='Ring'},{value='square',label='Square'},{value='none',label='None (icon only)'}},164,76,248)
- label(mini,'Outline size',18,110,124,26);dropdown(mini,'nodeOutlineSize',sizes({20,24,28,32,36,40},' px'),164,110,248)
- label(mini,'Icon size',18,144,124,26);dropdown(mini,'nodeIconSize',sizes({10,12,14,16,18,20,24},' px'),164,144,248)
+ size(mini,'nodeOutlineSize','outlineSize','Outline size',18,110,184)
+ size(mini,'nodeIconSize','iconSize','Icon size',230,110,184)
  label(mini,'Hide icons within',18,178,142,26)
  local distances=sizes({0,5,10,15,20,30,40,60,80,100},' yards');distances[1].label='Never'
  dropdown(mini,'nodeDistance',distances,164,178,248)
@@ -93,8 +101,12 @@ function V.New(parent,U)
   if v.page=='filters' then v.filters.frame:Show();v.world:Hide();v.mini:Hide();if U.tab=='nodes' then v.filters.Refresh() end else v.filters.frame:Hide();if worldPage then v.world:Show();v.mini:Hide() else v.world:Hide();v.mini:Show() end end
   S.Selected(U.controls.displayFilters,v.page=='filters');S.Selected(U.controls.displayWorld,worldPage);S.Selected(U.controls.displayMini,v.page=='mini')
   for key,value in pairs({nodeWorld=s.world,nodeMini=s.mini,nodeIcon=s.icon,nodeGroupWorld=s.groupWorld,nodeGroupMini=s.groupMini,nodeRouteLine=s.routeLines}) do U.controls[key]:SetChecked(value) end
-  for key,value in pairs({nodeOutline=s.outline,nodeOutlineSize=s.outlineSize,nodeIconSize=s.iconSize,nodeWorldIconSize=s.worldIconSize,nodeDistance=s.hideDistance}) do U.controls[key]:SetValue(value) end
+  for key,value in pairs({nodeOutline=s.outline,nodeDistance=s.hideDistance}) do U.controls[key]:SetValue(value) end
   U.syncingOptions=true
+  for _,binding in ipairs(sizeBindings) do
+   local value=s[binding.setting]
+   U.controls[binding.key]:SetValue(value);v.sizeLabels[binding.key]:SetText(binding.text..': '..value)
+  end
   for _,binding in ipairs(opacityBindings) do
    local value=math.floor(s[binding.setting]*100+.5)
    U.controls[binding.key]:SetValue(value);v.opacityLabels[binding.key]:SetText(binding.text..': '..value..'%')
@@ -116,6 +128,7 @@ function V.New(parent,U)
    v.previewArt:Draw(player and player.mapID,{left=.25,right=.75,top=.5-half,bottom=.5+half},406,180)
    if v.previewArt.available then v.previewFallback:Hide() else v.previewFallback:Show() end
   end
+  v.miniOutline:SetSize(s.outlineSize,s.outlineSize);v.miniIcon:SetSize(s.iconSize,s.iconSize)
   v.miniIcon:SetAlpha(s.miniIconOpacity);v.miniCount:SetAlpha(s.miniIconOpacity)
   if s.mini and s.icon then v.miniIcon:Show() else v.miniIcon:Hide() end
   if s.mini and s.icon and s.groupMini then v.miniCount:Show() else v.miniCount:Hide() end

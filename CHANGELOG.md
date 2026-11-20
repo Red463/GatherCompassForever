@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Replace world-map icon and minimap icon/outline size menus with sliders from 4 to 32 in whole-number steps. Show plain values without pixel units and update marker previews immediately.
 - Supply terrain masks for all 55 local maps in Forever build 70959, including its additional zones. Reproduce the final Ashenvale mask byte-for-byte: 50-degree cutoff, isolated one/two-cell restriction cleanup, enclosed-pocket filling, swimming and backtracking allowed. Missing sections remain restricted.
 - Use bounded pathfinding for generation, coverage, starts, rejoining, resume, reverse, skip, removal/undo and Codex guidance. Preserve required travel bends in the arrow and both line views; reject unavailable connections instead of falling back to straight lines.
 - Spread planning across frames, cancel obsolete work on replacement/Stop/zone change, and publish completed plans transactionally. Keep heat sampling across the whole path without changing navigation geometry.

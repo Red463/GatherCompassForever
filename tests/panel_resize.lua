@@ -88,7 +88,7 @@ test('panel movement and fixed-size changes preserve the saved position',functio
 end)
 
 test('changing preset closes stale dropdowns and grouped marker choosers',function()
- local A=setup();local U=A.UI;U.SetTab('nodes');U.nodeDisplayView.SetPage('world');local control=U.controls.nodeWorldIconSize
+ local A=setup();local U=A.UI;U.SetTab('nodes');U.nodeDisplayView.SetPage('mini');local control=U.controls.nodeOutline
  control.scripts.OnClick(control);eq(A.Skin.dropdownOwner,control);U.window:SetPreset('small');eq(A.Skin.dropdownOwner,nil)
  U.routeSketch.picker.frame:Show();U.window:SetPreset('large');eq(U.routeSketch.picker.frame:IsShown(),false)
 end)

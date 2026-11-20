@@ -97,6 +97,9 @@ function A.Command(text)
  if text=='inspect' then A.DifficultyProbe.Arm()
  elseif text=='inspect report' then A.DifficultyProbe.Report()
  elseif text=='inspect off' then A.DifficultyProbe.Cancel()
+ elseif text=='trace' then A.GuidanceTrace.Start()
+ elseif text=='trace report' then A.GuidanceTrace.Report()
+ elseif text=='trace off' then A.GuidanceTrace.Stop()
  elseif text=='import' then A.Import()
  elseif text=='stop' then A.UI.actions.stop()
  elseif text=='skip' then if A.follower then A.follower:Skip() end
@@ -115,13 +118,14 @@ function A.Tick(elapsed)
   if not ok or coroutine.status(A.importJob)=='dead' then A.importJob=nil;A.importIterator=nil;imported=true end
  end
  if fast>=.1 then
-  fast=0; local p=A.Client.Position(); local now=A.Client.Now()
+  fast=0; local p,positionReason=A.Client.Position(); local now=A.Client.Now()
   A.detector:Expire(now)
   if A.recording then A.recording:Sample(p,now) end
   if A.follower then A.follower:Tick(p,now,A.detector:IsGathering(now)) end
   A.RouteControls.Update(A.follower)
-  local f=A.follower
-  A.Arrow.Update(p,A.Client.Facing(),f and f:Target() or nil,A.Client.Distance,f and f:Snapshot() or nil)
+  local f=A.follower;local facing=A.Client.Facing()
+  A.Arrow.Update(p,facing,f and f:Target() or nil,A.Client.Distance,f and f:Snapshot() or nil)
+  if A.GuidanceTrace then A.GuidanceTrace.Sample(f,p,positionReason,now,not A.Store.Number(facing) and 'facing-unavailable' or nil) end
  end
  if imported or planned or slow>=.5 then
   slow=0; A.UI.Refresh(); A.Map.Refresh(A.db,A.UI.DisplayRoute(),A.editor and nil or A.follower)

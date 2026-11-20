@@ -27,6 +27,7 @@ Editor.lua
 Recorder.lua
 Data/Terrain.lua
 Terrain.lua
+GuidanceTrace.lua
 PlanningJob.lua
 Coverage.lua
 Corridor.lua

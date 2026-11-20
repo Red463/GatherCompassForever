@@ -5,14 +5,20 @@ function C.Read(v) if issecretvalue and issecretvalue(v) then return nil end; re
 function C.Now() return GetTime and GetTime() or 0 end
 function C.HBD() return LibStub and LibStub('HereBeDragons-2.0',true) end
 function C.Position()
- if not C_Map or not C_Map.GetBestMapForUnit or not C_Map.GetPlayerMapPosition then return nil end
- local ok,p=pcall(function()
-  local map=C.Read(C_Map.GetBestMapForUnit('player')); if not S.Number(map) then return end
-  local pos=C_Map.GetPlayerMapPosition(map,'player'); if not pos then return end
-  local x,y=pos:GetXY(); local r={mapID=map,x=C.Read(x),y=C.Read(y)}
+ if not C_Map or not C_Map.GetBestMapForUnit or not C_Map.GetPlayerMapPosition then return nil,'map-api-unavailable' end
+ local ok,p,reason=pcall(function()
+  local rawMap=C_Map.GetBestMapForUnit('player')
+  if issecretvalue and issecretvalue(rawMap) then return nil,'map-id-protected' end
+  local map=C.Read(rawMap);if not S.Number(map) or map<1 or map%1~=0 then return nil,'map-id-unavailable' end
+  local pos=C_Map.GetPlayerMapPosition(map,'player');if not pos then return nil,'position-unavailable' end
+  local x,y=pos:GetXY()
+  if issecretvalue and (issecretvalue(x) or issecretvalue(y)) then return nil,'coordinates-protected' end
+  local r={mapID=map,x=C.Read(x),y=C.Read(y)}
   if S.Position(r) then return r end
+  return nil,'coordinates-invalid'
  end)
- if ok then return p end
+ if ok then return p,reason end
+ return nil,'position-api-error'
 end
 function C.Size(mapID)
  if C_Map and C_Map.GetMapWorldSize then

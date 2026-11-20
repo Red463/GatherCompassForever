@@ -320,6 +320,18 @@ restores its usual display.
 | `/gatherly inspect` | Arm a one-shot native herb/vein tooltip capture |
 | `/gatherly inspect report` | Show the latest local capture |
 | `/gatherly inspect off` | Cancel a pending capture |
+| `/gatherly trace` | Start a local guidance diagnostic history |
+| `/gatherly trace report` | Stop recording and open a report you can copy |
+| `/gatherly trace off` | Stop tracing and keep its saved history |
+
+If the arrow disappears or reconnects unexpectedly, start `/gatherly trace`,
+follow the route until it happens, then use `/gatherly trace report`. Press
+**Ctrl+A**, then **Ctrl+C** in the report window to copy it into a bug report.
+It records up to 40 state changes, including safe position-read failure reasons,
+zone/coordinates, mask cells, path-search/facing failures, waypoints and direction.
+Repeated identical failures are combined. Tracing is off by default, produces
+no continuous chat output, and stops on opening the report or reloading.
+The latest report remains in SavedVariables; starting another trace replaces it.
 
 **Routes > Route targets** controls new route generation and the review sketch.
 Changing these choices does not change everyday map markers or interrupt the current

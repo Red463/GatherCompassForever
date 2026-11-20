@@ -31,7 +31,7 @@ function distance(a,b)
 end
 function point(x,y) return {mapID=1,x=x,y=y or 0.5,kind='travel'} end
 local suites={'map_performance','route_controls','clarity_review','clarity_ui','codex_scroll','virtual_list','filter_modes','panel_resize','store','resources','selection','marker_groups','skill_tooltip','atlas','resource_library','codex','codex_review_regressions','node_display','client','gathering','imports','editor','recorder','planner','coverage','farming_session','map_art','heatmap','mini_heat','follower','map','corridor_render','grouped_maps','skin','dropdown','arrow','minimap_button','difficulty_probe','filter_sidebar','welcome','route_view','corridor_ui','ui','resource_library_view','expedition','bootstrap'}
-for _,name in ipairs({'terrain','terrain_planning','terrain_guidance','planning_job','terrain_runtime'}) do suites[#suites+1]=name end
+for _,name in ipairs({'terrain','terrain_planning','terrain_guidance','planning_job','terrain_runtime','guidance_trace'}) do suites[#suites+1]=name end
 for _,suite in ipairs(suites) do
  local f=io.open('tests/'..suite..'.lua')
  assert(f,'Missing required test suite: '..suite); f:close(); dofile('tests/'..suite..'.lua')

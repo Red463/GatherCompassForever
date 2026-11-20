@@ -26,23 +26,31 @@ function A.Follower.New(route,start,distance,options)
   self.arrival=A.Store.Number(n) and math.max(5,math.min(40,n)) or 15
  end
  f:SetArrival(options and options.arrival)
- local function suspend(self,reason)
+ local function suspend(self,reason,code)
   self.status='suspended';self.reason=reason or 'A terrain-safe connection is unavailable.';self.connector=nil;self.transit=nil
+  self.failureCode=code or 'connection-unavailable'
   return nil,self.reason
  end
  local function connect(self,position,pathOptions)
   if not terrain then return true end
   local target=self.route.points[self.index]
   self.connector=nil;self.connectorIndex=nil;self.transit=nil
-  if not target or not terrain.Allowed(position) then return suspend(self,'Move onto permitted terrain in the route zone before resuming guidance.') end
+  if not A.Store.Position(position) then return suspend(self,'Player position is unavailable.','position-unavailable') end
+  if position.mapID~=self.route.mapID then return suspend(self,'Return to the route zone before resuming guidance.','map-changed') end
+  if terrain.Zone and not terrain.Zone(position.mapID) then return suspend(self,'Terrain data is unavailable in the route zone.','terrain-unavailable') end
+  if not target or not terrain.Allowed(position) then return suspend(self,'Move onto permitted terrain in the route zone before resuming guidance.','terrain-cell-blocked') end
   if self.route.maxLink then
    local d=self.distance(position,target)
-   if not A.Store.Number(d) or d>self.route.maxLink then return suspend(self,'Move nearer the current route leg before resuming guidance.') end
+   if not A.Store.Number(d) then return suspend(self,'Route distance is unavailable.','distance-unavailable') end
+   if d>self.route.maxLink then return suspend(self,'Move nearer the current route leg before resuming guidance.','connection-too-long') end
   end
   if terrain.Segment(position,target) then return true end
   local path,length=terrain.Path(position,target,pathOptions)
-  if not path then return suspend(self,'Terrain-safe connection unavailable: '..tostring(length)) end
-  if self.route.maxLink and (not A.Store.Number(length) or length>self.route.maxLink) then return suspend(self,'Move nearer the current route leg before resuming guidance.') end
+  if not path then
+   local code=length=='budget' and 'path-budget' or length=='unreachable' and 'path-unreachable' or 'path-unavailable'
+   return suspend(self,'Terrain-safe connection unavailable: '..tostring(length),code)
+  end
+  if self.route.maxLink and (not A.Store.Number(length) or length>self.route.maxLink) then return suspend(self,'Move nearer the current route leg before resuming guidance.','connection-too-long') end
   local connector={}
   for i=2,#path-1 do
    local p=A.Store.Copy(path[i]);p.kind='travel';p.mandatory=true;p.navigation=true
@@ -52,7 +60,7 @@ function A.Follower.New(route,start,distance,options)
   self.connector=connector;self.connectorIndex=1;return true
  end
  local function reconnect(self,position,pathOptions)
-  if self.terrainFailure then return suspend(self,self.terrainFailure) end
+  if self.terrainFailure then return suspend(self,self.terrainFailure,'terrain-unavailable') end
   -- Recovery continues the established leg. A fresh nearest-point join can
   -- rewind progress and choose the opposite direction after a position gap.
   if not connect(self,position,pathOptions) then return nil,self.reason end
@@ -131,7 +139,7 @@ function A.Follower.New(route,start,distance,options)
   if terrain then
    if not reconnect(self,position) then return nil,self.reason end
   elseif self.route.maxLink and not self:Rejoin(position) then return nil,self.reason end
-  self.status='running';self.reason=nil;return true
+  self.status='running';self.reason=nil;self.failureCode=nil;return true
  end
  function f:Stop() self.status='stopped'; self.reason=nil end
  local function step(self,now,position)
@@ -238,7 +246,7 @@ function A.Follower.New(route,start,distance,options)
  function f:Reverse() self.direction=-self.direction;self.transit=nil;if terrain and self.status=='running' then connect(self,self.position) end end
  function f:Tick(position,now,gathering)
   if self.status=='complete' or self.status=='paused' or self.status=='stopped' then return end
-  if self.terrainFailure then self.status='suspended';self.reason=self.terrainFailure;return end
+  if self.terrainFailure then self.status='suspended';self.reason=self.terrainFailure;self.failureCode='terrain-unavailable';return end
   if terrain then
    self.position=A.Store.Copy(position)
    local recovery={budget=1024,searches=2}
@@ -250,12 +258,12 @@ function A.Follower.New(route,start,distance,options)
    if not terrain.Segment(position,self:Target()) and not connect(self,position,recovery) then self.lastRecovery=A.Store.Number(now) and now or nil;return end
   end
   local p=self:Target(); local d=self.distance(position,p)
-  if not d then self.status='suspended'; self.reason='Return to the route zone with readable coordinates.'; return end
+  if not d then self.status='suspended'; self.reason='Return to the route zone with readable coordinates.';self.failureCode='distance-unavailable'; return end
   if self.status=='suspended' and self.route.maxLink then
    if not self:Rejoin(position) then return end
    p=self:Target();d=self.distance(position,p)
   end
-  self.status='running'; self.reason=nil
+  self.status='running'; self.reason=nil;self.failureCode=nil
   self:SkipCollected(position);p=self:Target();if not p then return end;d=self.distance(position,p)
   if not d then return end
   if self.arrivedAt and not self.armed then

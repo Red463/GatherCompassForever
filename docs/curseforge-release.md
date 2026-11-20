@@ -43,8 +43,8 @@ EQoL version. Existing Gatherly SavedVariables remain compatible.
 
 The interface gallery uses supplied in-game screenshots captured on v0.18.6.
 Keep the original version labels and settings visible; they may differ from the
-current release. Coverage, route-order and minimap-smoothing diagrams in the README
-remain labelled as generated illustrations. Documentation image links follow
+current release. The README uses in-game captures for all interface examples.
+Documentation image links follow
 the main branch; existing release tags and uploaded assets remain unchanged.
 
 References:

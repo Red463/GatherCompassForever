@@ -124,8 +124,7 @@ without an external data pack.
 
 The interface examples are **in-game screenshots supplied by the author**, captured
 with Gatherly **v0.18.6** on WoW Forever. The visible version labels and settings are
-unchanged; the current release may differ slightly. The coverage, route-order and
-minimap-smoothing diagrams are generated illustrations, labelled separately below.
+unchanged; the current release may differ slightly.
 
 ### Welcome and route targets
 
@@ -172,13 +171,9 @@ a new generation measures it again. Existing active routes are preserved until
 you replace them. Direct **Guide nearest** in Node Codex still targets that resource
 location and does not require corridor calibration.
 
-![Generated coverage diagram: the same corridor in Lines and Heatmap, with a covered spawn outside the painted band](docs/images/corridor-coverage.png)
-
 Some return trips remain necessary where a farming branch has only one short
 connection. Routes use map distances and cannot identify mountains, bridges or
 walkable roads from spawn coordinates.
-
-![Generated route-order diagram: the same 94 farming areas before and after optimization](docs/images/route-order.png)
 
 ### Overlapping nodes
 
@@ -254,8 +249,6 @@ ignores minimap rotation, an addon-owned projection keeps icons, outlines and th
 destination aligned with the heat without modifying the shared pin library.
 
 ![In-game heatmap route review over Redridge Mountains](docs/images/route-heatmap.png)
-
-![Generated minimap-smoothing diagram: before and after banding correction, rendered from Lua paint output over a flat background](docs/images/minimap-smoothing.png)
 
 ### Guide arrow
 

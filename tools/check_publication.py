@@ -11,8 +11,10 @@ assert license_text.startswith('MIT License\n')
 assert 'Copyright (c) 2026 Tom' in license_text
 assert 'Bundled third-party libraries retain' in readme
 assert 'in-game screenshots supplied by the author' in readme and '**v0.18.6**' in readme
-for diagram in ('coverage', 'route-order', 'minimap-smoothing'):
-    assert f'Generated {diagram} diagram:' in readme
+screenshots = {'welcome', 'routes', 'route-heatmap', 'node-codex', 'marker-filters',
+               'preferences', 'guide-arrow', 'route-controls'}
+readme_images = set(re.findall(r'docs/images/([^/)]+)\.png', readme))
+assert readme_images == screenshots | {'logo'}, 'README must use only supplied screenshots and branding'
 
 links = re.findall(r'!?\[[^\]]*\]\(([^)]+)\)', readme)
 links += re.findall(r'<img[^>]+src="([^"]+)"', readme)

@@ -6,7 +6,7 @@
 ## Version: 1.0.1
 ## IconTexture: Interface\AddOns\Gatherly\Media\Icon
 ## SavedVariables: GatherlyDB
-## OptionalDeps: GatherMate2
+## OptionalDeps: GatherMate2, EnhanceQoL
 
 Libs/LibStub.lua
 Libs/CallbackHandler-1.0.lua

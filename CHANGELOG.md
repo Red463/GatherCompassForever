@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add the standard native minimap rim/background around the complete launcher badge, scaling the artwork to collector button sizes.
+- Request EQoL Button Sink discovery after launcher/minimap visibility and addon/login transitions, fixing missed scans that left the custom button attached to the minimap. Preserve collector placement and respect ignored buttons and disabled sinks.
 - Add opt-in `/gatherly trace` diagnostics for arrow dropouts and recovery. Record safe position-read reasons, map/mask and path failures, waypoint/direction and recovery in a bounded local history; `/gatherly trace report` opens a copyable report and stops recording.
 - Preserve the current route leg, direction and lap progress when terrain guidance recovers from a position gap or resumes. Reconnect safely to the current target instead of choosing a fresh nearest waypoint that can rewind or reverse the route.
 - Render the guide arrow below normal windows and dialogs so it no longer covers the open Gatherly panel.

@@ -15,8 +15,28 @@ end
 local function radii()
  return Minimap:GetWidth()/2+8,Minimap:GetHeight()/2+8
 end
+local function artwork(b)
+ local w,h=b:GetWidth(),b:GetHeight()
+ b.icon:SetSize(w*20/32,h*20/32);b.background:SetSize(w*24/32,h*24/32)
+ -- This native border includes transparent padding beyond its visible rim.
+ b.border:SetSize(w*53/32,h*53/32)
+end
+function M.NotifyCollector()
+ local b=M.frame;local eqol=EnhanceQoL
+ if not b or M.notifying or collected(b) or A.db.settings.minimapButton==false or not b:IsVisible() then return end
+ if type(eqol)~='table' or type(eqol.db)~='table' or not eqol.db.enableMinimapButtonBin or eqol.db.ignoreMinimapButtonBin_GatherlyMinimapButton then return end
+ local functions,variables=eqol.functions,eqol.variables
+ if type(functions)~='table' or type(variables)~='table' or not variables.buttonSink or type(functions.gatherMinimapButtons)~='function' or type(functions.LayoutButtons)~='function' then return end
+ -- EQoL automatically hears LibDBIcon Show/Hide calls, but custom launchers
+ -- need to request discovery when they become available after its first scan.
+ M.notifying=true
+ local ok=pcall(function() functions.gatherMinimapButtons();functions.LayoutButtons() end)
+ M.notifying=nil
+ if ok and collected(b) then stopDrag(b) end
+end
 function M.Refresh()
  local b=M.frame;if not b or not A.db then return end
+ artwork(b)
  b.db.hide=A.db.settings.minimapButton==false
  if b.db.hide then M.hiddenBySetting=true;stopDrag(b);b:Hide();return end
  if collected(b) then
@@ -29,7 +49,7 @@ function M.Refresh()
  M.hiddenBySetting=nil;b:SetSize(32,32)
  local radians=angle();local x,y=math.cos(radians),math.sin(radians);local rx,ry=radii()
  if GetMinimapShape and GetMinimapShape()=='SQUARE' then local edge=math.max(math.abs(x),math.abs(y));x,y=x/edge,y/edge end
- b:ClearAllPoints();b:SetPoint('CENTER',Minimap,'CENTER',x*rx,y*ry);b:Show()
+ b:ClearAllPoints();b:SetPoint('CENTER',Minimap,'CENTER',x*rx,y*ry);b:Show();M.NotifyCollector()
 end
 function M.Drag()
  if not M.frame or not M.frame.dragging or not GetCursorPosition or not Minimap.GetCenter then return end
@@ -54,9 +74,10 @@ function M.Build()
  b:SetSize(32,32);b:SetFrameStrata('MEDIUM');b:SetFrameLevel(Minimap:GetFrameLevel()+8)
  b:EnableMouse(true);b:RegisterForClicks('LeftButtonUp');b:RegisterForDrag('LeftButton')
  b:SetHighlightTexture('Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight','ADD')
- -- Use the badge's own gold compass rim and transparent silhouette, rather
- -- than combining a clipped logo with an unrelated node-marker ring.
- b.icon=b:CreateTexture(nil,'ARTWORK');A.Skin.BrandBadge(b.icon);b.icon:SetAllPoints(b)
+ b.background=b:CreateTexture(nil,'BACKGROUND');b.background:SetTexture('Interface\\Minimap\\UI-Minimap-Background');b.background:SetPoint('CENTER',b,'CENTER',0,0)
+ b.icon=b:CreateTexture(nil,'ARTWORK');A.Skin.BrandBadge(b.icon);b.icon:SetPoint('CENTER',b,'CENTER',0,0)
+ b.border=b:CreateTexture(nil,'OVERLAY');b.border:SetTexture('Interface\\Minimap\\MiniMap-TrackingBorder');b.border:SetPoint('TOPLEFT',b,'TOPLEFT',0,0)
+ artwork(b);b:HookScript('OnSizeChanged',artwork)
  b:SetScript('OnMouseDown',function(self,key) if key=='LeftButton' then self.wasDragged=false end end)
  b:SetScript('OnClick',function(self,key) if key=='LeftButton' and not self.wasDragged then A.UI.Toggle() end end)
  b:SetScript('OnDragStart',function(self)
@@ -78,8 +99,12 @@ function M.Build()
  b:SetScript('OnLeave',leave)
  b:SetScript('OnHide',function(self) stopDrag(self);leave(self) end)
  b:SetScript('OnShow',function(self)
-  if A.db.settings.minimapButton==false then self.db.hide=true;M.hiddenBySetting=true;self:Hide() end
+  if A.db.settings.minimapButton==false then self.db.hide=true;M.hiddenBySetting=true;self:Hide() else M.NotifyCollector() end
  end)
- Minimap:HookScript('OnSizeChanged',M.Refresh);Minimap:HookScript('OnShow',M.Refresh)
+ b:SetScript('OnEvent',function(_,event,name)
+  if event~='ADDON_LOADED' or name=='EnhanceQoL' then M.NotifyCollector() end
+ end)
+ for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD'}) do b:RegisterEvent(event) end
+ Minimap:HookScript('OnSizeChanged',M.Refresh);Minimap:HookScript('OnShow',M.Refresh);Minimap:HookScript('OnEnter',M.NotifyCollector)
  M.Refresh()
 end

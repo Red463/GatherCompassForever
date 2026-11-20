@@ -384,9 +384,11 @@ overlapping-stop movement safeguards still apply.
 
 The title bar includes the installed addon version (including prerelease metadata).
 The header shows the complete supplied badge inside the native portrait frame.
-The minimap launcher uses the badge's own gold compass border and transparency,
-without an extra ring or a circular crop that cuts its points.
-It follows EQoL Button Sink's position, size and visibility while collected.
+The minimap launcher fits the complete badge inside the standard native minimap
+border, with artwork that follows the collector's button size.
+It follows EQoL Button Sink's position, size and visibility while collected, and
+requests discovery when shown again or when the minimap/collector becomes available.
+EQoL's disabled-sink and ignored-button settings remain respected.
 Dragging around the minimap resumes when the collector releases it. The Gatherly
 visibility preference still hides the launcher in either location.
 Use `/gatherly` to reopen the panel when its minimap button is hidden.

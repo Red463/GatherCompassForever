@@ -41,8 +41,72 @@ end)
 local function collect(A)
  local b=A.MinimapButton.frame;local sink=CreateFrame('Frame',nil,UIParent)
  b:SetParent(sink);b:SetSize(24,24);b:ClearAllPoints();b:SetPoint('TOPLEFT',sink,'TOPLEFT',6,-6)
+ if b.scripts.OnSizeChanged then b.scripts.OnSizeChanged(b,24,24) end
  return b,sink,b.point
 end
+
+local function eqolCollector(A)
+ local b=A.MinimapButton.frame;local sink=CreateFrame('Frame','EnhanceQoL_ButtonSink',UIParent);local found=false
+ local eq={db={enableMinimapButtonBin=true},variables={buttonSink=sink},functions={},scans=0}
+ function eq.functions.gatherMinimapButtons()
+  eq.scans=eq.scans+1
+  if b:GetParent()==Minimap and b:IsVisible() and not b.db.hide then found=true end
+ end
+ function eq.functions.LayoutButtons()
+  if found then b:SetParent(sink);b:ClearAllPoints();b:SetSize(32,32);b:SetPoint('TOPLEFT',sink,'TOPLEFT',4,-4);b:Show() end
+ end
+ return eq,sink
+end
+
+test('launcher uses the native minimap rim with its complete badge inside',function()
+ local A=launcherSetup();local b=A.MinimapButton.frame
+ assert(b.border,'Standard minimap border is missing');eq(b.border.texture,'Interface\\Minimap\\MiniMap-TrackingBorder')
+ assert(b.background);assert(b.icon:GetWidth()<b:GetWidth());eq(b.icon.texture,A.Skin.media..'EmptyEmblem')
+ b:SetSize(24,24);if b.scripts.OnSizeChanged then b.scripts.OnSizeChanged(b,24,24) end
+ near(b.icon:GetWidth(),15);near(b.border:GetWidth(),53*24/32)
+ GetCursorPosition=nil;GetMinimapShape=nil
+end)
+
+test('EQoL recollects the launcher after a scan while the minimap was hidden',function()
+ local old=EnhanceQoL;local A=launcherSetup();local b=A.MinimapButton.frame;local collector,sink=eqolCollector(A);EnhanceQoL=collector
+ Minimap:Hide();collector.functions.gatherMinimapButtons();collector.functions.LayoutButtons();eq(b:GetParent(),Minimap)
+ Minimap:Show();eq(b:GetParent(),sink);eq(b.point[2],sink)
+ local scans=collector.scans;local anchor=b.point;A.MinimapButton.Refresh();eq(collector.scans,scans);eq(b.point,anchor)
+ EnhanceQoL=old;GetCursorPosition=nil;GetMinimapShape=nil
+end)
+
+test('EQoL discovers a previously hidden launcher when the Gatherly preference enables it',function()
+ local old=EnhanceQoL;local A=launcherSetup();local b=A.MinimapButton.frame;local collector,sink=eqolCollector(A);EnhanceQoL=collector
+ A.db.settings.minimapButton=false;A.MinimapButton.Refresh();collector.functions.gatherMinimapButtons();collector.functions.LayoutButtons()
+ eq(b:GetParent(),Minimap);A.db.settings.minimapButton=true;A.MinimapButton.Refresh();eq(b:GetParent(),sink)
+ EnhanceQoL=old;GetCursorPosition=nil;GetMinimapShape=nil
+end)
+
+test('EQoL ignore preferences and disabled sinks preserve standalone launcher behavior',function()
+ for _,setting in ipairs({'disabled','ignored'}) do
+  local old=EnhanceQoL;local A=launcherSetup();local b=A.MinimapButton.frame;local collector=eqolCollector(A);EnhanceQoL=collector
+  if setting=='disabled' then collector.db.enableMinimapButtonBin=false else collector.db.ignoreMinimapButtonBin_GatherlyMinimapButton=true end
+  A.MinimapButton.Refresh();eq(b:GetParent(),Minimap);eq(collector.scans,0)
+  EnhanceQoL=old;GetCursorPosition=nil;GetMinimapShape=nil
+ end
+end)
+
+test('a late EQoL load collects the existing launcher without reacting to unrelated addons',function()
+ local old=EnhanceQoL;local A=launcherSetup();local b=A.MinimapButton.frame;local collector,sink=eqolCollector(A);EnhanceQoL=collector
+ b.scripts.OnEvent(b,'ADDON_LOADED','OtherAddon');eq(collector.scans,0)
+ b.scripts.OnEvent(b,'ADDON_LOADED','EnhanceQoL');eq(b:GetParent(),sink)
+ EnhanceQoL=old;GetCursorPosition=nil;GetMinimapShape=nil
+end)
+
+test('a faulty collector cannot break the launcher or prevent later discovery',function()
+ local old=EnhanceQoL;local A,toggles=launcherSetup();local b=A.MinimapButton.frame;local collector,sink=eqolCollector(A);EnhanceQoL=collector
+ local scan=collector.functions.gatherMinimapButtons
+ collector.functions.gatherMinimapButtons=function() error('Collector not ready') end
+ assert(pcall(A.MinimapButton.Refresh));eq(b:GetParent(),Minimap);eq(A.MinimapButton.notifying,nil)
+ b.scripts.OnClick(b,'LeftButton');eq(toggles(),1)
+ collector.functions.gatherMinimapButtons=scan;A.MinimapButton.Refresh();eq(b:GetParent(),sink)
+ EnhanceQoL=old;GetCursorPosition=nil;GetMinimapShape=nil
+end)
 
 test('collector placement and visibility survive minimap callbacks and repeated initialization',function()
  local A=launcherSetup();local b,sink,anchor=collect(A);b:Hide()
@@ -82,7 +146,7 @@ test('Gatherly visibility preference remains authoritative inside a collector',f
 end)
 
 test('launcher icon follows collector size and hiding preserves foreign update handlers',function()
- local A=launcherSetup();local b=collect(A);eq(b.icon.all,b);eq(b.icon:GetWidth(),24);eq(b.icon:GetHeight(),24)
+ local A=launcherSetup();local b=collect(A);eq(b.icon.point[2],b);eq(b.icon:GetWidth(),15);eq(b.icon:GetHeight(),15)
  local update=function() end;b:SetScript('OnUpdate',update);b:Hide();eq(b.scripts.OnUpdate,update)
  GetCursorPosition=nil;GetMinimapShape=nil
 end)

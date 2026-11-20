@@ -26,9 +26,9 @@ test('map-marker preview includes a map-backed labelled appearance example',func
  A.Resources.Settings(A.db.settings).groupWorld=false;U.Refresh();eq(v.worldCount:IsShown(),false)
  A.Resources.Settings(A.db.settings).worldIconOpacity=.3;U.Refresh();near(v.worldExamples[1].alpha,.3)
 end)
-test('minimap launcher shows the complete badge without a second border or clipping mask',function()
+test('minimap launcher fits the complete badge inside the standard native rim without clipping',function()
  local A=setup();module('MinimapButton',A);A.MinimapButton.Build();local b=A.MinimapButton.frame
- eq(b.icon.texture,A.Skin.media..'EmptyEmblem');eq(b.icon.all,b)
+ eq(b.icon.texture,A.Skin.media..'EmptyEmblem');eq(b.icon.point[2],b)
  local uv=b.icon.coords;eq(uv[1],0);eq(uv[2],1);eq(uv[3],0);eq(uv[4],1)
- eq(b.icon:GetWidth(),32);eq(b.icon:GetHeight(),32);eq(b.border,nil);eq(b.mask,nil);eq(b.icon.masks,nil)
+ eq(b.icon:GetWidth(),20);eq(b.icon:GetHeight(),20);eq(b.border.texture,'Interface\\Minimap\\MiniMap-TrackingBorder');eq(b.mask,nil);eq(b.icon.masks,nil)
 end)

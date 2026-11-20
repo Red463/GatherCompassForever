@@ -13,8 +13,12 @@ assert 'Bundled third-party libraries retain' in readme
 assert 'in-game screenshots supplied by the author' in readme and '**v0.18.6**' in readme
 screenshots = {'welcome', 'routes', 'route-heatmap', 'node-codex', 'marker-filters',
                'preferences', 'guide-arrow', 'route-controls'}
+diagrams = {'corridor-coverage': 'coverage', 'route-order': 'route-order',
+            'minimap-smoothing': 'minimap-smoothing'}
 readme_images = set(re.findall(r'docs/images/([^/)]+)\.png', readme))
-assert readme_images == screenshots | {'logo'}, 'README must use only supplied screenshots and branding'
+assert readme_images == screenshots | diagrams.keys() | {'logo'}, 'Unexpected README image'
+for label in diagrams.values():
+    assert f'Generated {label} diagram:' in readme, 'Explanatory diagrams must be labelled'
 
 links = re.findall(r'!?\[[^\]]*\]\(([^)]+)\)', readme)
 links += re.findall(r'<img[^>]+src="([^"]+)"', readme)

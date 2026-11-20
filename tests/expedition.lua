@@ -17,7 +17,7 @@ test('node opacity sliders update markers live without changing unrelated opacit
  U.syncingOptions=true;U.controls.nodeWorldOpacity.scripts.OnValueChanged(U.controls.nodeWorldOpacity,0);U.syncingOptions=false
  eq(A.Resources.Settings(A.db.settings).worldIconOpacity,.25);eq(count,3)
  U.controls.nodeWorldOpacity.scripts.OnValueChanged(U.controls.nodeWorldOpacity,0/0);eq(count,3)
- eq(U.nodeOpacityLabels.nodeWorldOpacity:GetText(),'World-map icons: 25%')
+ eq(U.nodeOpacityLabels.nodeWorldOpacity:GetText(),'Icon opacity: 25%')
 end)
 
 test('changing Gathering immediately refreshes both maps and clears an older resource focus',function()

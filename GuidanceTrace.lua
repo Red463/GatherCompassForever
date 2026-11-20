@@ -15,7 +15,7 @@ function D.Start()
  if not A.db then return end
  local build
  if type(GetBuildInfo)=='function' then local ok,_,v=pcall(GetBuildInfo);if ok then build=clean(v) end end
- A.db.guidanceTrace={version=1,addonVersion=A.version or '1.0.1',clientBuild=build,terrainBuild=A.TerrainData and A.TerrainData.build,events={}}
+ A.db.guidanceTrace={version=1,addonVersion=A.version or '1.1.0',clientBuild=build,terrainBuild=A.TerrainData and A.TerrainData.build,events={}}
  D.active=true;D.previous=nil;D.lastPosition=nil;D.started=nil
  if D.frame then D.frame:Hide() end
  message('Guidance trace started. Follow your route; after the arrow disappears and recovers, use /gatherly trace report.')

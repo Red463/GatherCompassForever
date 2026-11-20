@@ -1,27 +1,46 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 - 2026-11-20
 
-- Show a prominent animated route-generation message in the addon window, disable generation buttons while work is pending and provide Cancel generation without stopping existing guidance or its gathering session. Clear the message on completion, cancellation and failure.
-- Add character-specific route-session history and automatically open its summary on Stop. Keep one session from route Start until explicit Stop, including detours, pauses, laps, replacement routes and reloads; keep Stop accessible without a follower.
-- Count actual received item quantities from confirmed gathering loot, including bonus items and repeated mining taps, while avoiding duplicate notifications, uncollected loot and unrelated sources. Show successful gathering actions separately from item totals.
-- Optionally snapshot Auctionator's public item prices at Stop, showing estimated gross auction value and unpriced items. Omit valuation when Auctionator is absent; saved reports retain their original price snapshot.
-- Name the world-map icon, minimap icon and outline opacity sliders explicitly so their percentage values are clear.
-- Apply the selected arrival radius to resource stops even when the following leg needs a terrain detour. Build a permitted connector after advancing instead of holding the resource step until that leg is directly visible; retain corner protection for travel bends.
-- Keep guidance active when the player's readable position enters a blocked terrain-mask cell. Preserve the current waypoint and direction, allow arrival/Skip, and resume or recover without requiring the player to leave that cell. Route generation still enforces the supplied masks.
-- Speed terrain searches with bounded decoded-row caching, precomputed movement costs and a stronger grid-distance heuristic. Retain a local planning graph's path results and proven unreachable pairs for reuse; never cache exhausted search budgets, and invalidate results when masks or dimensions change.
-- Use the full soft planning time budget when the profiling clock advances, keeping the checkpoint-count fallback for missing/frozen clocks. Add an end-to-end routing benchmark with cold, repeated and moved-start runs.
-- Add the standard native minimap rim/background around the complete launcher badge, scaling the artwork to collector button sizes.
-- Request EQoL Button Sink discovery after launcher/minimap visibility and addon/login transitions, fixing missed scans that left the custom button attached to the minimap. Preserve collector placement and respect ignored buttons and disabled sinks.
-- Add opt-in `/gatherly trace` diagnostics for arrow dropouts and recovery. Record safe position-read reasons, map/mask and path failures, waypoint/direction and recovery in a bounded local history; `/gatherly trace report` opens a copyable report and stops recording.
-- Preserve the current route leg, direction and lap progress when terrain guidance recovers from a position gap or resumes. Reconnect safely to the current target instead of choosing a fresh nearest waypoint that can rewind or reverse the route.
-- Render the guide arrow below normal windows and dialogs so it no longer covers the open Gatherly panel.
-- Show linked resource names on the arrow for farming corridors and terrain detours, following the current route direction without changing navigation waypoints.
-- Replace world-map icon and minimap icon/outline size menus with sliders from 4 to 32 in whole-number steps. Show plain values without pixel units and update marker previews immediately.
-- Supply terrain masks for all 55 local maps in Forever build 70959, including its additional zones. Reproduce the final Ashenvale mask byte-for-byte: 50-degree cutoff, isolated one/two-cell restriction cleanup, enclosed-pocket filling, swimming and backtracking allowed. Missing sections remain restricted.
-- Use bounded pathfinding for generation, coverage, starts, rejoining, resume, reverse, skip, removal/undo and Codex guidance. Preserve required travel bends in the arrow and both line views; reject unavailable connections instead of falling back to straight lines.
-- Spread planning across frames, cancel obsolete work on replacement/Stop/zone change, and publish completed plans transactionally. Keep heat sampling across the whole path without changing navigation geometry.
-- Apply the floating colour selector to minimap route lines as well as the heatmap, using the saved palette choice immediately and across route-style changes.
+This entry includes all changes since 1.0.0, including the 1.0.1 gathering-reference update.
+
+### Terrain-aware routes and performance
+
+- Supply terrain overlays for all 55 local zones in Forever build 70959 (43 complete and 12 with restricted missing sections). Use the final Ashenvale rules: 50-degree slope cutoff, isolated one/two-cell restriction cleanup, enclosed-pocket filling, swimming and necessary backtracking allowed.
+- Generate route connections around restricted areas, adding travel waypoints between gathering stops. Apply terrain planning to generation, route starts, rejoining, removal/undo, skips, reversal and Node Codex guidance. Preserve the terrain bends in line routes, heatmaps and arrow guidance.
+- Keep generation responsive by spreading work across frames with a soft time budget. Cancel obsolete work on Stop, replacement or zone change and publish completed plans together.
+- Speed up path searches with decoded-row caching, precomputed movement costs and a stronger distance heuristic. Reuse bounded path results and proven unreachable connections for repeat generation, while invalidating changed masks and never caching exhausted search budgets.
+- Show a prominent animated Generating route message in the addon window, disable generation buttons while work is pending and add Cancel generation. Cancelling a calculation preserves existing guidance and its gathering session.
+
+### Route sessions and History
+
+- Add a character-specific History tab. A gathering session starts with a route and ends only when Stop is pressed; laps, detours, pauses, replacement guidance, route completion and reloads keep that session open.
+- Open the saved session summary on Stop, with its starting route/zone, date, duration, successful gathering actions and received quantities of each item. Keep Stop available for an open session even when no follower was restored after a reload.
+- Track actual received herbs, ores and bonus items from confirmed gathering actions, including repeated mining taps. Reject duplicate notifications, uncollected loot and unrelated sources; handle late confirmations without attributing old receipts to a new session.
+- Optionally save Auctionator prices at Stop and show estimated gross auction value with explicit unpriced-item coverage. Omit valuation when Auctionator is absent, and retain each historical session's original price snapshot.
+
+### Navigation fixes and diagnostics
+
+- Preserve the current route leg, direction and lap progress after position dropouts and Resume. Reconnect to the current target instead of choosing an earlier nearby waypoint that could rewind or reverse guidance.
+- Keep guidance active when the player steps into a blocked overlay cell. The mask constrains planned paths; a blocked current player cell no longer hides the arrow or prevents Resume, recovery, arrival or Skip.
+- Respect the selected arrival radius for resource stops even when the following leg needs a detour. Keep the movement guard for overlapping stops and corner protection for required travel bends.
+- Show linked resource names on the arrow instead of Farming corridor, including through terrain detours and in either route direction.
+- Render the arrow below normal windows and dialogs so it no longer covers the Gatherly panel.
+- Add opt-in /gatherly trace diagnostics for position/arrow dropouts, mask/path reasons and unchanged recovery. /gatherly trace report opens a copyable bounded report and stops recording.
+
+### Display and minimap controls
+
+- Replace world-map and minimap icon/outline size menus with sliders from 4 to 32 in whole-number steps. Show plain size values without pixel units and refresh previews immediately.
+- Label icon and outline opacity sliders explicitly, using Icon opacity within each map tab.
+- Apply the floating route-colour selector to minimap line routes as well as heatmaps, remembering the choice across route-style changes.
+- Restore the standard native minimap border/background and scale the complete launcher badge to collected button sizes.
+- Request EQoL Button Sink discovery after launcher/minimap visibility and addon/login changes. Preserve collector-owned placement, honour ignored buttons and disabled sinks, and avoid a missed scan leaving the button attached to the minimap.
+
+### Gathering references, documentation and verification
+
+- Align supported gathering resources with Mastercraft 2.0.7's minimum-relative skill-colour model, including starter-node transitions at 26/51/101. Use its plain skill-up wording, including Always a skill-up for orange, while retaining profession caps, bonuses and unknown-data handling. This is reference guidance rather than verified server percentages.
+- Replace interface previews with supplied in-game screenshots, retain their original version labels and keep separately labelled diagrams for coverage, route order and minimap heat. Update installation, terrain-routing, History and optional Auctionator documentation.
+- Add route-generation benchmarks, independent blocked-cell geometry audits and regressions for terrain rules, recovery, nearby waypoints, session accounting, character isolation, price snapshots, minimap collection and planning feedback.
 
 ## 1.0.1 - 2026-11-20
 

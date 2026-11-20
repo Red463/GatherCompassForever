@@ -1,4 +1,4 @@
-# Gatherly 1.0.1 submission brief
+# Gatherly 1.1.0 submission brief
 
 The release kit is prepared locally; it does not create or publish a CurseForge project.
 
@@ -12,7 +12,7 @@ The release kit is prepared locally; it does not create or publish a CurseForge 
 | License | MIT License |
 | Source | https://github.com/Red463/Gatherly |
 | Issues | https://github.com/Red463/Gatherly/issues |
-| Release name | Gatherly 1.0.1 |
+| Release name | Gatherly 1.1.0 |
 | Release type | Release |
 | Client flavour | Forever |
 | Game version | 1.60.1 |
@@ -21,7 +21,7 @@ The release kit is prepared locally; it does not create or publish a CurseForge 
 Run `python tools/package.py`, then `python tools/prepare_curseforge_release.py`.
 The generated submission JSON is a reference sheet, not a CurseForge API payload.
 
-Upload `dist/Gatherly-1.0.1.zip` as the addon file. Its single top-level folder is
+Upload `dist/Gatherly-1.1.0.zip` as the addon file. Its single top-level folder is
 `Gatherly/`, containing `Gatherly.toc`; do not upload GitHub's source-code archive.
 The ZIP includes runtime files, documentation, project artwork and all required
 third-party licence notices. Development tools, tests, local dependencies and
@@ -30,10 +30,11 @@ compatibility-research downloads are excluded.
 Use `dist/Gatherly-CurseForge-Icon.png` as the project icon. It is an unchanged copy
 of the supplied square 1254 x 1254 PNG. Paste
 `dist/Gatherly-CurseForge-Description.md` into the Markdown description editor and
-`dist/Gatherly-1.0.1-Changes.md` into the release changelog.
+`dist/Gatherly-1.1.0-Changes.md` into the release changelog.
 
 GatherMate2 and GatherMate2_Data are optional import sources. EQoL is an optional
-button collector. No required external addon dependency is introduced.
+button collector, and Auctionator optionally supplies prices for session summaries.
+No required external addon dependency is introduced.
 Choose the matching Forever files if adding optional project relations.
 
 Compatibility is covered by regression tests for EQoL-style collection, repeated

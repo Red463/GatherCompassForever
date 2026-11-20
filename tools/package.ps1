@@ -2,7 +2,8 @@ $ErrorActionPreference = 'Stop'
 $addonRoot = Split-Path $PSScriptRoot -Parent
 $distRoot = Join-Path $addonRoot 'dist'
 New-Item -ItemType Directory -Force -Path $distRoot | Out-Null
-$archivePath = Join-Path $distRoot 'Gatherly-1.0.1.zip'
+$version = ((Get-Content -LiteralPath (Join-Path $addonRoot 'Gatherly.toc') | Where-Object { $_ -match '^## Version: ' }) -replace '^## Version: ', '').Trim()
+$archivePath = Join-Path $distRoot ('Gatherly-' + $version + '.zip')
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archiveStream = [System.IO.File]::Open($archivePath, [System.IO.FileMode]::Create)

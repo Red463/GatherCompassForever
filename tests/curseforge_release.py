@@ -6,8 +6,9 @@ import struct
 
 root = Path(__file__).resolve().parents[1]
 dist = root / 'dist'
-data = json.loads((dist / 'Gatherly-1.0.1-Submission.json').read_text())
-assert data['version'] == '1.0.1' and data['project'] == 'Gatherly'
+version = dict(line[3:].split(': ', 1) for line in (root / 'Gatherly.toc').read_text().splitlines() if line.startswith('## '))['Version']
+data = json.loads((dist / f'Gatherly-{version}-Submission.json').read_text())
+assert data['version'] == version and data['project'] == 'Gatherly'
 assert data['flavour'] == 'Forever' and data['gameVersions'] == ['1.60.1']
 assert data['releaseType'] == 'Release' and data['license'] == 'MIT License'
 for key in ('archive', 'icon', 'description', 'changelog'):
@@ -21,8 +22,8 @@ assert w == h and w >= 400
 description = (dist / data['description']).read_text(encoding='utf-8')
 assert description == (root / 'docs/curseforge-description.md').read_text(encoding='utf-8')
 assert 'in-game screenshots' in description and 'v0.18.6' in description and '16001' in description
-for image in re.findall(r'https://raw.githubusercontent.com/Red463/Gatherly/(?:v1\.0\.1|main)/([^\s)]+)', description):
+for image in re.findall(r'https://raw.githubusercontent.com/Red463/Gatherly/(?:v[0-9.]+|main)/([^\s)]+)', description):
     assert (root / image).is_file(), image
 changes = (dist / data['changelog']).read_text(encoding='utf-8')
-assert changes.startswith('## Gatherly 1.0.1\n') and 'Mastercraft' in changes and '## 0.' not in changes
+assert changes.startswith(f'## Gatherly {version}\n') and 'Mastercraft' in changes and '## 0.' not in changes
 print(f'CurseForge kit: version, client flavour, Release type, MIT, {w}x{h} original icon and description/changelog verified')

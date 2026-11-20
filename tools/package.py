@@ -14,7 +14,8 @@ for name in files:
     assert (root / name).is_file(), f'Missing package file: {name}'
 dist = root / 'dist'
 dist.mkdir(exist_ok=True)
-path = dist / 'Gatherly-1.0.1.zip'
+metadata = dict(line[3:].split(': ', 1) for line in toc.read_text().splitlines() if line.startswith('## '))
+path = dist / f"Gatherly-{metadata['Version']}.zip"
 with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
     for name in files:
         z.write(root / name, 'Gatherly/' + name)

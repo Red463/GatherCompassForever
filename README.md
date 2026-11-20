@@ -14,7 +14,7 @@ where resources grow, build farming routes and follow a clear in-game guide arro
 ![Tests](https://github.com/Red463/Gatherly/actions/workflows/ci.yml/badge.svg)
 ![MIT license](https://img.shields.io/badge/license-MIT-green.svg)
 
-**Current version:** 1.0.1 | **Client interface:** 16001 | **Command:** `/gatherly`
+**Current version:** 1.1.0 | **Client interface:** 16001 | **Command:** `/gatherly`
 
 ## What it does
 
@@ -90,7 +90,7 @@ auction market changes. Recorded sessions are not automatically discarded.
 Gatherly uses the **Gatherly** folder, **Gatherly.lua** saved-data file and
 **GatherlyDB** global. The only slash command is **/gatherly**.
 
-1. Download `Gatherly-1.0.1.zip` from
+1. Download `Gatherly-1.1.0.zip` from
    [Releases](https://github.com/Red463/Gatherly/releases/latest).
    Choose the addon ZIP asset rather than GitHub's automatic **Source code** ZIP.
 2. Close WoW and extract the `Gatherly` folder into your Forever
@@ -464,11 +464,12 @@ including their return path. Dense areas use representative actual spawn locatio
 the arrow does not visit every candidate individually. Disconnected or distant
 areas are omitted rather than joined across the zone.
 
-This is **not terrain pathfinding**: short connections can still cross cliffs, water,
-walls or caves. Move around obstacles, skip a difficult destination, remove an
-unwanted node, or regenerate from a better position. No third-party terrain engine
-or navigation data is bundled. Return connectors can still show the resource name
-at that coordinate in the optional next-node label. Routes are single-zone and their inputs/visuals are
+Bundled zone masks guide terrain-aware connections around restricted cells, with
+travel bends retained by the arrow and both route styles. The masks describe
+two-dimensional terrain passability; they do not model every building, cave or
+dynamic obstacle. Swimming and necessary return trips are allowed. Move around an
+unmapped obstacle, skip a difficult destination, remove an unwanted node, or
+regenerate from a better position. Routes are single-zone and their inputs/visuals are
 bounded for performance. Entering a waypoint's arrival radius
 can advance the route without a harvest. The addon does not move your character or
 gather automatically, and it does not replace your native waypoint.

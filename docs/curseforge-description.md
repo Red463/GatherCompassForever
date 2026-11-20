@@ -2,7 +2,7 @@
 
 Herb and ore locations, resource information and farming route guidance for **WoW Forever 1.60.1**.
 
-![Gatherly logo](https://raw.githubusercontent.com/Red463/Gatherly/v1.0.1/docs/images/logo.png)
+![Gatherly logo](https://raw.githubusercontent.com/Red463/Gatherly/v1.1.0/docs/images/logo.png)
 
 ## Locations and materials
 
@@ -16,11 +16,19 @@ Herb and ore locations, resource information and farming route guidance for **Wo
 
 Select materials, then **Generate & start** or **Generate & review**. The review map lets you remove unwanted nodes and undo changes.
 
-Follow a line or heatmap corridor with a smooth gold guide arrow. A compact movable toolbar provides Stop, Open panel, Skip and a minimap heatmap colour swatch. Confirmed detour gathers count for the current lap.
+Follow a line or heatmap corridor with a smooth gold guide arrow. Bundled terrain overlays cover all 55 local zones and add travel waypoints around restricted areas. Swimming and necessary return trips are allowed. A visible generation message includes Cancel generation.
+
+A compact movable toolbar provides Stop, Open panel, Skip and a minimap route-colour swatch for both lines and heatmaps. Confirmed detour gathers count for the current lap.
 
 Map-marker selections are independent of route targets. An optional route override shows only tracked nodes while following. The minimap launcher supports collection by EQoL Button Sink.
 
-**Routes use geometric connections. Terrain can require a detour; the addon does not move your character or gather automatically. Known locations are possible spawns, not live node availability.**
+**The addon does not move your character or gather automatically. Terrain overlays do not describe every building or cave, and known locations are possible spawns, not live node availability.**
+
+## Route history
+
+A session runs from route Start until you press Stop, including detours, pauses and multiple laps. Stop opens its summary with the duration, successful gathering actions and received quantities of each item. History keeps previous sessions for the logged-in character and survives reloads.
+
+Auctionator is optional. When present, its available prices are saved at Stop to show estimated auction value before fees, with unpriced items clearly identified. Without Auctionator, valuation is omitted.
 
 ## Interface examples
 

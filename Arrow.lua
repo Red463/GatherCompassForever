@@ -7,7 +7,7 @@ end
 local nameTarget,nameKey,nameNodes,linkedNode
 function R.TargetName(target)
  if type(target)~='table' then return nil end
- if type(target.name)=='string' and target.name:find('%S') then return target.name end
+ if type(target.name)=='string' and target.name~='Farming corridor' and target.name:find('%S') then return target.name end
  local nodes=A.db and A.db.nodes and A.db.nodes[target.mapID]
  if nameTarget~=target or nameKey~=target.nodeKey or nameNodes~=nodes then
   nameTarget,nameKey,nameNodes,linkedNode=target,target.nodeKey,nodes,nil
@@ -127,7 +127,7 @@ function R.Update(position,facing,target,distance,snapshot)
  local d=target and distance(position,target); local w,h
  if position then w,h=A.Client.Size(position.mapID) end
  if not target or snapshot and (snapshot.status=='complete' or snapshot.status=='stopped') then R.UpdateName(nil);R.UpdateZoom(nil);f:Hide();return end
- R.UpdateName(target);R.UpdateProgress(snapshot);R.UpdateZoom(snapshot)
+ R.UpdateName(snapshot and snapshot.nameTarget or target);R.UpdateProgress(snapshot);R.UpdateZoom(snapshot)
  f:SetScale(math.max(.6,math.min(2,tonumber(A.db and A.db.settings.arrowScale) or 1)))
  local paused=snapshot and snapshot.status=='paused'
  local valid=A.Store.Number(d) and A.Store.Number(facing) and w and position

@@ -80,6 +80,42 @@ test('arrow resolves old node-key-only gather points and uses honest unnamed way
  follower:Stop();draw();eq(f:IsShown(),false);eq(f.nodeName:IsShown(),false)
 end)
 
+test('generated corridor arrow shows its linked resource instead of the generic path label',function()
+ local A=arrowSetup();module('Planner',A);module('Follower',A)
+ local node=A.Store.Observe(A.db,{mapID=1,x=.3,y=.5,kind='herb',name='Silverleaf',materialID='gm:herb:402',source='imported'})
+ local route=assert(A.Planner.Generate({node},point(.2),distance,{coverageRadius=90,name='Test route'}))
+ local f=A.Follower.New(route,point(.2),distance);local target=f:Target();eq(target.nodeKey,node.key)
+ A.db.settings.arrowNodeName=true;A.Arrow.Update(point(.2),0,target,distance,f:Snapshot())
+ eq(A.Arrow.frame.nodeName:GetText(),'Silverleaf');eq(f:Target(),target);eq(target.kind,'travel')
+end)
+
+test('terrain corridor arrow names the upcoming resource through bends and reversals',function()
+ local A=arrowSetup()
+ A.TerrainData={version=1,zones={[1]={w=5,h=5,widthYards=100,heightYards=100,rows={'2','2','2','+','2'},status='complete'}}}
+ module('Terrain',A);module('Planner',A);module('Follower',A)
+ local function d(a,b) return a and b and a.mapID==b.mapID and math.sqrt(((a.x-b.x)*100)^2+((a.y-b.y)*100)^2) or nil end
+ A.Client.Size=function() return 100,100 end
+ local left=A.Store.Observe(A.db,{mapID=1,x=.1,y=.1,kind='herb',name='Silverleaf',materialID='gm:herb:402',source='imported'})
+ local right=A.Store.Observe(A.db,{mapID=1,x=.9,y=.1,kind='herb',name='Briarthorn',materialID='gm:herb:405',source='imported'})
+ local route=assert(A.Planner.Generate({left,right},left,d,{coverageRadius=10,name='Terrain test'}))
+ local f=A.Follower.New(route,left,d);A.db.settings.arrowNodeName=true
+ f:Skip();local bend=f:Target();assert(bend.navigation and not bend.nodeKey)
+ A.Arrow.Update(left,0,bend,d,f:Snapshot());eq(A.Arrow.frame.nodeName:GetText(),'Briarthorn')
+ eq(f:Target(),bend);assert(A.Terrain.Segment(left,bend))
+ assert(A.Arrow.TooltipText():find('Briarthorn',1,true))
+ local index=f.index;f:Reverse();A.Arrow.Update(left,0,f:Target(),d,f:Snapshot())
+ eq(A.Arrow.frame.nodeName:GetText(),'Silverleaf');eq(f.index,index);assert(A.Terrain.Validate(f.route))
+ -- Toggling the optional label uses the same display target immediately.
+ module('UIActions',A);A.follower=f;A.db.settings.arrowNodeName=false
+ A.UIActions.Bind({Refresh=function() end}).arrowNodeName();eq(A.Arrow.frame.nodeName:GetText(),'Silverleaf')
+ -- Direct resource guidance also has unnamed initial connector bends.
+ local destination=A.Store.Copy(right);destination.nodeKey=right.key;destination.kind='gather'
+ local direct=A.Follower.New({mapID=1,points={destination}},left,d)
+ local connector=direct:Target();assert(connector.navigation)
+ A.Arrow.Update(left,0,connector,d,direct:Snapshot());eq(A.Arrow.frame.nodeName:GetText(),'Briarthorn')
+ eq(direct:Target(),connector);assert(A.Terrain.Segment(left,connector))
+end)
+
 test('corridor arrow reminds about zoom without changing coverage or legacy arrows',function()
  local A=arrowSetup();module('Follower',A)
  local route={mapID=1,loop=true,corridor=true,coverageRadius=180,points={point(.3),point(.6)}}

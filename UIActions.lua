@@ -186,7 +186,7 @@ function A.UIActions.Bind(U)
  end
  function actions.arrowNodeName()
   A.db.settings.arrowNodeName=A.db.settings.arrowNodeName~=true
-  if A.Arrow then A.Arrow.UpdateName(A.follower and A.follower:Target()) end
+  if A.Arrow then A.Arrow.UpdateName(A.follower and (A.follower.NameTarget and A.follower:NameTarget() or A.follower:Target())) end
   U.Refresh()
  end
  function actions.resetArrow()

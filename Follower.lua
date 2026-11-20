@@ -93,7 +93,24 @@ function A.Follower.New(route,start,distance,options)
  elseif route.maxLink and f.reason then f.status='suspended' end
  f.lapStart=f.lapStart or f.index;f.lapSeen=f.lapSeen or {};f.lapCount=f.lapCount or 0
  function f:Target() if self.status=='complete' or self.status=='stopped' or terrain and self.status=='suspended' then return nil end; return self.connector and self.connector[self.connectorIndex] or self.transit or self.route.points[self.index] end
- function f:Snapshot() return {status=self.status,index=self.index,total=#self.route.points,loop=self.route.loop,lap=self.lap,target=self:Target(),direction=self.direction,reason=self.reason,visited=self.visited,corridor=self.route.corridor,coverageRadius=self.route.coverageRadius} end
+ function f:NameTarget()
+  local target=self:Target()
+  if not target or not (self.route.corridor or self.connector or target.navigation) then return target end
+  -- A bend is a navigation instruction, not a resource. Name the upcoming
+  -- linked stop in the current direction without changing the guidance point.
+  local index=self.index;local points=self.route.points
+  for _=1,#points do
+   local p=points[index]
+   if p.nodeKey or p.kind=='gather' or type(p.name)=='string' and p.name~='Farming corridor' and p.name:find('%S') then return p end
+   index=index+self.direction
+   if index<1 or index>#points then
+    if not self.route.loop then break end
+    index=(index-1)%#points+1
+   end
+  end
+  return target
+ end
+ function f:Snapshot() return {status=self.status,index=self.index,total=#self.route.points,loop=self.route.loop,lap=self.lap,target=self:Target(),nameTarget=self:NameTarget(),direction=self.direction,reason=self.reason,visited=self.visited,corridor=self.route.corridor,coverageRadius=self.route.coverageRadius} end
  function f:Pause() if self.status~='complete' and self.status~='stopped' then self.status='paused'; self.reason='Paused by you.' end end
  function f:Resume(position)
   if self.status~='paused' and self.status~='suspended' then return end
